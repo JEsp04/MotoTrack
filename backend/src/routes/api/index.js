@@ -1,4 +1,6 @@
 import { Router } from "express";
+import authRoutes from "../authRoutes.js";
+import { validarJWT } from "../../middlewares/authMiddleware.js";
 import tallerRoutes from "../tallerRoutes.js";
 import usuarioRoutes from "../usuarioRoutes.js";
 import clienteRoutes from "../clienteRoutes.js";
@@ -16,6 +18,8 @@ import notificacionRoutes from "../notificacionRoutes.js";
 
 const router = Router();
 
+router.use("/auth", authRoutes);
+router.use(validarJWT);
 router.use("/talleres", tallerRoutes);
 router.use("/usuarios", usuarioRoutes);
 router.use("/clientes", clienteRoutes);
