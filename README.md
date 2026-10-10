@@ -47,6 +47,16 @@ Clave para todas: `MotoTrack2026`
 | `npm run seed` | Borra y vuelve a crear los datos de ejemplo (nunca en producción) |
 | `npm run db:studio` | Abre Prisma Studio para ver los datos |
 
+## Pruebas del backend
+
+Las pruebas usan una base MySQL aparte que se borra y se crea sola en cada corrida. Pon en `backend/.env`:
+
+```
+TEST_DATABASE_URL=mysql://root:TU_CLAVE@localhost:3306/mototrack_test
+```
+
+El nombre debe terminar en `_test`; si no, las pruebas se niegan a correr.
+
 ## Comandos útiles (en `backend/` o `frontend/`)
 
 | Comando | Qué hace |
