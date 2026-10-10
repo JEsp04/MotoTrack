@@ -5,8 +5,8 @@
   "description": "MotoTrack es una aplicación web para el seguimiento y gestión de motocicletas, permitiendo a los usuarios registrar, monitorear y mantener información detallada sobre sus vehículos.",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

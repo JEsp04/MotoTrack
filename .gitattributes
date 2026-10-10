@@ -1,0 +1,7 @@
+# Guardar el texto en el repositorio con saltos de línea LF (Windows, Mac y Linux por igual)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary
+*.woff2 binary
