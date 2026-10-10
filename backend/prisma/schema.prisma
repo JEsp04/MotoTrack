@@ -1,0 +1,275 @@
+// Modelo de datos de MotoTrack · primera entrega
+// Documentación: docs/CONTEXTO.md (secciones 3, 6 y 7)
+//
+// Reglas:
+// - Toda tabla de negocio tiene tallerId (multi-taller). Las consultas filtran siempre por él.
+// - El dinero se guarda en pesos enteros (Int), sin decimales.
+// - Las fechas se guardan en UTC.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────
+
+enum Rol {
+  admin
+  mecanico
+  cliente
+}
+
+enum EstadoRegistro {
+  activo
+  inactivo
+}
+
+/// Los 10 estados de una orden. Transiciones en src/modules/ordenes/estados.ts
+enum EstadoOrden {
+  registrada
+  diagnosticada
+  esperando_aprobacion
+  aprobada
+  en_reparacion
+  pendiente_repuesto
+  lista_entrega
+  entregada
+  cerrada
+  cancelada
+}
+
+enum PrioridadDiagnostico {
+  normal
+  urgente
+}
+
+// ─── Talleres y usuarios ──────────────────────────────────────────────────
+
+model Taller {
+  tallerId        Int            @id @default(autoincrement())
+  nombre          String         @db.VarChar(150)
+  nit             String?        @unique @db.VarChar(20)
+  direccion       String?        @db.VarChar(255)
+  telefono        String         @db.VarChar(20)
+  email           String?        @db.VarChar(150)
+  horarioAtencion String?        @db.VarChar(255)
+  estado          EstadoRegistro @default(activo)
+  creadoEn        DateTime       @default(now())
+  actualizadoEn   DateTime       @updatedAt
+
+  usuarios  Usuario[]
+  clientes  Cliente[]
+  motos     Moto[]
+  ordenes   OrdenServicio[]
+  servicios Servicio[]
+
+  @@map("talleres")
+}
+
+model Usuario {
+  usuarioId     Int            @id @default(autoincrement())
+  tallerId      Int
+  nombre        String         @db.VarChar(150)
+  email         String         @unique @db.VarChar(150)
+  passwordHash  String         @db.VarChar(255)
+  telefono      String?        @db.VarChar(20)
+  rol           Rol
+  estado        EstadoRegistro @default(activo)
+  ultimoAcceso  DateTime?
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+
+  taller           Taller           @relation(fields: [tallerId], references: [tallerId])
+  cliente          Cliente?
+  refreshTokens    RefreshToken[]
+  ordenesAsignadas OrdenServicio[]  @relation("MecanicoAsignado")
+  ordenesCreadas   OrdenServicio[]  @relation("CreadaPor")
+  diagnosticos     Diagnostico[]
+  historialOrdenes HistorialOrden[]
+
+  @@index([tallerId, rol])
+  @@map("usuarios")
+}
+
+/// Token de renovación de sesión (7 días). Solo se guarda su hash SHA-256, nunca el token.
+model RefreshToken {
+  refreshTokenId Int       @id @default(autoincrement())
+  usuarioId      Int
+  tokenHash      String    @unique @db.Char(64)
+  expiraEn       DateTime
+  revocadoEn     DateTime?
+  creadoEn       DateTime  @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("refresh_tokens")
+}
+
+// ─── Clientes y motos ─────────────────────────────────────────────────────
+
+/// Cliente del taller. Puede existir sin cuenta (usuarioId vacío) si lo registró el admin;
+/// cuando se registra en la app, se vincula por documento o correo (HU-14).
+model Cliente {
+  clienteId          Int      @id @default(autoincrement())
+  tallerId           Int
+  usuarioId          Int?     @unique
+  nombre             String   @db.VarChar(150)
+  documentoIdentidad String   @db.VarChar(30)
+  telefono           String   @db.VarChar(20)
+  email              String?  @db.VarChar(150)
+  direccion          String?  @db.VarChar(255)
+  creadoEn           DateTime @default(now())
+  actualizadoEn      DateTime @updatedAt
+
+  taller  Taller   @relation(fields: [tallerId], references: [tallerId])
+  usuario Usuario? @relation(fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
+  motos   Moto[]
+
+  @@unique([tallerId, documentoIdentidad])
+  @@index([tallerId, nombre])
+  @@map("clientes")
+}
+
+model Moto {
+  motocicletaId Int      @id @default(autoincrement())
+  tallerId      Int
+  clienteId     Int
+  /// Siempre en mayúsculas y sin espacios, por ejemplo ABC12D
+  placa         String   @db.VarChar(10)
+  marca         String   @db.VarChar(80)
+  referencia    String   @db.VarChar(80)
+  /// Año del modelo, por ejemplo 2022
+  modelo        Int
+  cilindraje    Int?
+  color         String?  @db.VarChar(40)
+  kilometraje   Int      @default(0)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  taller  Taller          @relation(fields: [tallerId], references: [tallerId])
+  cliente Cliente         @relation(fields: [clienteId], references: [clienteId])
+  ordenes OrdenServicio[]
+
+  @@unique([tallerId, placa])
+  @@index([clienteId])
+  @@map("motocicletas")
+}
+
+// ─── Órdenes de servicio ──────────────────────────────────────────────────
+
+model OrdenServicio {
+  ordenServicioId    Int         @id @default(autoincrement())
+  tallerId           Int
+  /// Consecutivo dentro del taller (#1, #2, ...)
+  numero             Int
+  motocicletaId      Int
+  mecanicoId         Int
+  creadoPorId        Int
+  estado             EstadoOrden @default(registrada)
+  motivoIngreso      String      @db.Text
+  kilometrajeIngreso Int
+  /// Suma de los subtotales de detalle_servicios, en pesos
+  costoTotal         Int         @default(0)
+  observaciones      String?     @db.Text
+  fechaIngreso       DateTime    @default(now())
+  fechaEntrega       DateTime?
+  fechaCierre        DateTime?
+  creadoEn           DateTime    @default(now())
+  actualizadoEn      DateTime    @updatedAt
+
+  taller      Taller            @relation(fields: [tallerId], references: [tallerId])
+  moto        Moto              @relation(fields: [motocicletaId], references: [motocicletaId])
+  mecanico    Usuario           @relation("MecanicoAsignado", fields: [mecanicoId], references: [usuarioId])
+  creadoPor   Usuario           @relation("CreadaPor", fields: [creadoPorId], references: [usuarioId])
+  diagnostico Diagnostico?
+  servicios   DetalleServicio[]
+  historial   HistorialOrden[]
+
+  @@unique([tallerId, numero])
+  @@index([tallerId, estado])
+  @@index([mecanicoId, estado])
+  @@index([motocicletaId])
+  @@map("ordenes_servicio")
+}
+
+/// Cada cambio de estado de una orden. Se escribe en la misma transacción que el cambio.
+model HistorialOrden {
+  historialOrdenId Int          @id @default(autoincrement())
+  ordenServicioId  Int
+  usuarioId        Int
+  /// Vacío en el primer registro (cuando se crea la orden)
+  estadoAnterior   EstadoOrden?
+  estadoNuevo      EstadoOrden
+  observacion      String?      @db.Text
+  creadoEn         DateTime     @default(now())
+
+  orden   OrdenServicio @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+  usuario Usuario       @relation(fields: [usuarioId], references: [usuarioId])
+
+  @@index([ordenServicioId, creadoEn])
+  @@map("historial_orden")
+}
+
+model Diagnostico {
+  diagnosticoId      Int                  @id @default(autoincrement())
+  ordenServicioId    Int                  @unique
+  usuarioId          Int
+  hallazgos          String               @db.Text
+  trabajoRecomendado String               @db.Text
+  prioridad          PrioridadDiagnostico @default(normal)
+  creadoEn           DateTime             @default(now())
+  actualizadoEn      DateTime             @updatedAt
+
+  orden    OrdenServicio @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+  mecanico Usuario       @relation(fields: [usuarioId], references: [usuarioId])
+
+  @@map("diagnosticos")
+}
+
+// ─── Catálogo de servicios ────────────────────────────────────────────────
+
+model Servicio {
+  servicioId        Int            @id @default(autoincrement())
+  tallerId          Int
+  nombre            String         @db.VarChar(120)
+  descripcion       String?        @db.Text
+  /// Precio sugerido en pesos
+  precioBase        Int
+  tiempoEstimadoMin Int?
+  estado            EstadoRegistro @default(activo)
+  creadoEn          DateTime       @default(now())
+  actualizadoEn     DateTime       @updatedAt
+
+  taller   Taller            @relation(fields: [tallerId], references: [tallerId])
+  detalles DetalleServicio[]
+
+  @@unique([tallerId, nombre])
+  @@map("servicios")
+}
+
+model DetalleServicio {
+  detalleServicioId Int      @id @default(autoincrement())
+  ordenServicioId   Int
+  servicioId        Int
+  cantidad          Int      @default(1)
+  /// Precio cobrado en esta orden (puede diferir de precioBase)
+  precioUnitario    Int
+  subtotal          Int
+  creadoEn          DateTime @default(now())
+
+  orden    OrdenServicio @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+  servicio Servicio      @relation(fields: [servicioId], references: [servicioId])
+
+  @@index([ordenServicioId])
+  @@map("detalle_servicios")
+}
+
+// Fuera de esta entrega (se agregan en la segunda): citas, repuestos,
+// movimientos de inventario, recomendaciones de IA y notificaciones.
