@@ -16,7 +16,9 @@ Aplicación web *mobile first* para talleres de motos en Medellín: órdenes de 
 # 1. Backend
 cd backend
 cp .env.example .env      # en Windows: copy .env.example .env  (y cambia los valores)
-npm install
+npm install               # también genera el cliente de Prisma
+npm run db:deploy         # crea las tablas en tu MySQL (la base debe existir: CREATE DATABASE mototrack;)
+npm run seed              # datos de ejemplo
 npm run dev               # API en http://localhost:4000/api
 
 # 2. Frontend (en otra terminal)
@@ -25,6 +27,25 @@ cp .env.example .env
 npm install
 npm run dev               # App en http://localhost:5173
 ```
+
+## Cuentas de prueba (después de `npm run seed`)
+
+Clave para todas: `MotoTrack2026`
+
+| Rol | Correo |
+|---|---|
+| Admin | admin@mototrack.co |
+| Mecánico | andres@mototrack.co, felipe@mototrack.co |
+| Cliente | laura@correo.co, juan@correo.co |
+
+## Base de datos (Prisma)
+
+| Comando (en `backend/`) | Qué hace |
+|---|---|
+| `npm run db:migrate -- --name <nombre>` | Crea una migración nueva después de cambiar `prisma/schema.prisma` |
+| `npm run db:deploy` | Aplica las migraciones pendientes (sin crear nuevas) |
+| `npm run seed` | Borra y vuelve a crear los datos de ejemplo (nunca en producción) |
+| `npm run db:studio` | Abre Prisma Studio para ver los datos |
 
 ## Comandos útiles (en `backend/` o `frontend/`)
 
