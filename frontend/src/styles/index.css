@@ -1,0 +1,103 @@
+/* MotoTrack · tokens del sistema de diseño (docs/CONTEXTO.md, sección 9) */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/montserrat/600.css';
+@import '@fontsource/montserrat/700.css';
+@import 'tailwindcss';
+
+@theme {
+  /* Marca */
+  --color-brand-navy: #0b1f33;
+  --color-primary: #00b8d9; /* fondo de botones: texto navy encima */
+  --color-primary-hover: #00a3c2;
+  --color-primary-text: #007a91; /* texto cian sobre blanco */
+  --color-primary-soft: #e0f6fa;
+  --color-accent: #ff7a00;
+  --color-accent-text: #b24f00;
+  --color-accent-soft: #fff1e3;
+  --color-success: #1e9e67;
+  --color-success-text: #13744a;
+  --color-success-soft: #e3f4ec;
+  --color-danger: #c0362f;
+  --color-danger-hover: #a52d27;
+  --color-danger-soft: #fbe9e8;
+  --color-plate: #f7c600;
+
+  /* Superficies y texto */
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-ink: #0b1f33;
+  --color-ink-muted: #5a6b7d;
+  --color-neutral-soft: #eceff3;
+  --color-border: #dde3e9;
+  --color-border-strong: #748391;
+
+  /* Tipografía */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Montserrat', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Radios */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* Sombras */
+  --shadow-card: 0 1px 2px rgb(11 31 51 / 0.06), 0 1px 3px rgb(11 31 51 / 0.04);
+  --shadow-sheet: 0 -8px 32px rgb(11 31 51 / 0.18);
+
+  /* Medidas propias */
+  --spacing-touch: 48px; /* zona de toque mínima: h-touch, min-h-touch, size-touch */
+  --spacing-sidebar: 240px;
+  --spacing-bottom-nav: 64px;
+
+  /* Animaciones */
+  --animate-sheet-up: sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-fade-in: fade-in 160ms ease-out;
+
+  @keyframes sheet-up {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg font-sans text-base text-ink antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-bold text-ink;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}
