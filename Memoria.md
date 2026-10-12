@@ -1,0 +1,74 @@
+# Memoria.md · Estado actual y sesión activa
+
+Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué hay que recordar.
+
+- Se lee al **empezar** cada sesión.
+- Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
+- Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`.
+
+Última actualización: lunes 12 de octubre de 2026.
+
+---
+
+## Estado actual
+
+- **Rama `develop`:** E0, E1, E2 y E3 unidas (HU-01 a HU-18), PR #4 a #8. Último commit: `e6ae0f3 Merge pull request #8 from JEsp04/feature/auth-sesion`.
+- **Backend funcionando:**
+  - API en TypeScript con Prisma 7 y MySQL.
+  - Endpoints de auth completos: `register-taller`, `register`, `login`, `refresh`, `logout` y `me`.
+  - `GET /talleres/publicos`.
+  - 28 pruebas.
+- **Frontend funcionando:**
+  - Sistema de diseño en Tailwind y 16 componentes `ui`.
+  - Menú por rol, rutas con `lazy` y páginas 404 y de error.
+  - Cliente HTTP con renovación única.
+  - 26 pruebas.
+- **Provisional en el frontend (se quita en E4):**
+  - El ingreso usa botones «entrar como…» de `features/auth/demo.ts`.
+  - La sesión se pierde al recargar.
+  - Las pantallas de admin, mecánico y cliente dicen «En construcción».
+- **Base de datos:** 10 tablas, migración `20261010150000_inicial` y seed con un taller de ejemplo (Moto Express Laureles).
+- **Aún no desplegado** (Vercel + Aiven, E7).
+
+## Sesión activa
+
+**Ninguna en curso.** Lo siguiente es **E4 · Autenticación en frontend (HU-19 a HU-22)**:
+- `LoginPage` real con React Hook Form + Zod, que llame a `POST /auth/login`.
+- `RegisterPage` para taller (2 pasos) y cliente, con la lista de `GET /talleres/publicos`.
+- Arranque de la app: llamar a `/auth/refresh` y luego `/auth/me`, y conectar `configureHttpAuth` en `lib/http.ts`.
+- Cerrar sesión con `POST /auth/logout`, y borrar `demo.ts` y los botones provisionales.
+
+Antes de empezar: confirmar con el equipo quién la toma y crear la rama `feature/auth-frontend` desde `develop` actualizado.
+
+## Decisiones vigentes
+
+| Fecha | Decisión |
+|---|---|
+| 9-oct | Backend en TypeScript; Prisma reemplaza a Sequelize; MySQL 8 |
+| 9-oct | 10 estados de orden; se quita el rol `recepcionista`; el cliente entra con correo y contraseña (OTP después) |
+| 9-oct | Sesión: token de acceso en memoria + renovación en cookie `httpOnly`, con rotación |
+| 9-oct | Despliegue aprobado: Vercel Hobby (frontend + API) + Aiven MySQL gratis |
+| 10-oct | Prisma 7 con `@prisma/adapter-mariadb`. No se usa Prisma 8: el 10-oct era una versión candidata (rc) |
+| 10-oct | TypeScript 6.0 (typescript-eslint aún no soporta la 7) y React Router 7 |
+| 10-oct | Citas, repuestos, inventario, IA y notificaciones **no** tienen tabla todavía (segunda entrega) |
+| 10-oct | Los mecánicos no se registran solos: el admin les crea la cuenta (HU-23) |
+| 10-oct | Commits a nombre del integrante (JEsp04), **sin** `Co-Authored-By` |
+| 12-oct | Se crean `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md` en la raíz para no perder el hilo entre sesiones |
+
+## Cosas a tener en cuenta
+
+- **La migración inicial se escribió a mano** porque el entorno de Claude no puede descargar el motor de Prisma. Se probó en MariaDB y Paula la aplicó en MySQL 8 con `prisma migrate reset` el 10-oct. Si algún compañero ve *drift* en una base sin datos: `npx prisma migrate reset`.
+- **Bases viejas de Sequelize:** quien tenga tablas antiguas en `mototrack` debe hacer `npx prisma migrate reset`.
+- **Landing page de un compañero:** se hizo sobre la plantilla JSX anterior. Al hacer `pull` habrá conflictos. Plan: moverla a `pages/LandingPage.tsx` en una rama nueva.
+- **GitHub abre los PR hacia `main` por defecto.** Ya pasó una vez (PR cerrado y rehecho). Siempre revisar que la base sea `develop`.
+- **Windows y saltos de línea:** el repositorio guarda LF (`.gitattributes`). Si `package-lock.json` aparece modificado solo por `npm install`, se descarta.
+- **`docs/CONTEXTO.md`** (del 9-oct) quedó reemplazado por `contexto.md` + `CLAUDE.md`. Pendiente decidir si se borra.
+
+## Bitácora de sesiones
+
+| Fecha | Qué se hizo |
+|---|---|
+| 27-sep | Diseño: prototipo navegable, sistema de diseño, landing con membresías, registro por roles con OTP, pagos, citas, alertas IA (solo diseño) |
+| 9-oct | Contexto y stack definidos (`docs/CONTEXTO.md`), auditoría del repositorio, despliegue elegido, 40 historias de usuario (`docs/HISTORIAS.md`) |
+| 10-oct | E0 a E3 desarrolladas, revisadas y unidas en `develop` (PR #4 a #8). Base local reseteada con Prisma. Autores de commits corregidos |
+| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md` |
