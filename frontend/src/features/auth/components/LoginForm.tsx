@@ -6,7 +6,7 @@ import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
 import type { Usuario } from '@/types';
 import { useLogin } from '../hooks/use-auth';
-import { loginSchema, type LoginForm as LoginValues } from '../schemas/auth-schemas';
+import { LIMITES, loginSchema, type LoginForm as LoginValues } from '../schemas/auth-schemas';
 
 /** HU-19 · Formulario de ingreso con correo y contraseña. */
 export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void }) {
@@ -48,6 +48,7 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
         placeholder="tu@correo.co"
         required
         error={errors.email?.message}
+        maxLength={LIMITES.email}
         {...register('email')}
       />
       <Input
@@ -56,6 +57,7 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
         autoComplete="current-password"
         required
         error={errors.password?.message}
+        maxLength={LIMITES.password}
         {...register('password')}
       />
 

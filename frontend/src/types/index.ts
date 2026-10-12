@@ -15,13 +15,14 @@ export type EstadoOrden =
   | 'cerrada'
   | 'cancelada';
 
+/** Usuario tal como lo devuelve la API: solo publicId, nunca los Int internos. */
 export interface Usuario {
-  usuarioId: number;
-  tallerId: number;
+  publicId: string;
   nombre: string;
   email: string;
   telefono?: string | null;
   rol: Rol;
+  taller: { publicId: string; nombre: string };
 }
 
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────

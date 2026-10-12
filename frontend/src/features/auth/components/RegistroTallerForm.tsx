@@ -6,7 +6,11 @@ import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
 import type { Usuario } from '@/types';
 import { useRegistroTaller } from '../hooks/use-auth';
-import { registroTallerSchema, type RegistroTallerForm as Valores } from '../schemas/auth-schemas';
+import {
+  LIMITES,
+  registroTallerSchema,
+  type RegistroTallerForm as Valores,
+} from '../schemas/auth-schemas';
 
 const CAMPOS_PASO_1 = [
   'taller.nombre',
@@ -105,6 +109,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           required
           autoComplete="organization"
           error={errors.taller?.nombre?.message}
+          maxLength={LIMITES.nombre}
           {...register('taller.nombre')}
         />
         <Input
@@ -114,6 +119,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           required
           placeholder="604 444 1234"
           error={errors.taller?.telefono?.message}
+          maxLength={LIMITES.telefono}
           {...register('taller.telefono')}
         />
         <Input
@@ -122,6 +128,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           inputMode="numeric"
           placeholder="901234567-8"
           error={errors.taller?.nit?.message}
+          maxLength={LIMITES.nit}
           {...register('taller.nit')}
         />
         <Input
@@ -129,6 +136,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           hint="Opcional"
           autoComplete="street-address"
           error={errors.taller?.direccion?.message}
+          maxLength={LIMITES.direccion}
           {...register('taller.direccion')}
         />
         <Button fullWidth onClick={siguiente}>
@@ -142,6 +150,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           required
           autoComplete="name"
           error={errors.admin?.nombre?.message}
+          maxLength={LIMITES.nombre}
           {...register('admin.nombre')}
         />
         <Input
@@ -151,6 +160,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           autoComplete="email"
           required
           error={errors.admin?.email?.message}
+          maxLength={LIMITES.email}
           {...register('admin.email')}
         />
         <Input
@@ -160,6 +170,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           hint="Opcional"
           autoComplete="tel"
           error={errors.admin?.telefono?.message}
+          maxLength={LIMITES.telefono}
           {...register('admin.telefono')}
         />
         <Input
@@ -169,6 +180,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           required
           hint="Mínimo 8 caracteres, con letras y números"
           error={errors.admin?.password?.message}
+          maxLength={LIMITES.password}
           {...register('admin.password')}
         />
         <Input
@@ -177,6 +189,7 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
           autoComplete="new-password"
           required
           error={errors.admin?.confirmar?.message}
+          maxLength={LIMITES.password}
           {...register('admin.confirmar')}
         />
         <div className="flex gap-3">

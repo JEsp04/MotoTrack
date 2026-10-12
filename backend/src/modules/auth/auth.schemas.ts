@@ -24,11 +24,13 @@ export const passwordSchema = z
 /** Celular o fijo colombiano: 10 dígitos (se ignoran espacios y guiones) */
 export const telefonoSchema = z
   .string({ error: 'El teléfono es obligatorio' })
+  .max(20, 'El teléfono admite máximo 20 caracteres')
   .transform((v) => v.replace(/[\s-]/g, ''))
   .pipe(z.string().regex(/^\d{10}$/, 'El teléfono debe tener 10 dígitos'));
 
 export const documentoSchema = z
   .string({ error: 'El documento es obligatorio' })
+  .max(30, 'El documento admite máximo 30 caracteres')
   .transform((v) => v.replace(/[\s.]/g, ''))
   .pipe(z.string().regex(/^[0-9A-Za-z]{5,20}$/, 'Escribe un documento válido, sin puntos'));
 
@@ -56,7 +58,8 @@ export const registerTallerSchema = z.object({
 
 /** POST /api/auth/register (HU-14). El rol siempre es cliente: cualquier "rol" enviado se ignora. */
 export const registerClienteSchema = z.object({
-  tallerId: z.coerce.number({ error: 'Elige tu taller' }).int().positive('Elige tu taller'),
+  /** publicId del taller (de GET /talleres/publicos) */
+  tallerPublicId: z.uuid({ error: 'Elige tu taller' }),
   nombre: texto('Tu nombre', 150),
   documentoIdentidad: documentoSchema,
   telefono: telefonoSchema,
@@ -69,7 +72,8 @@ export const loginSchema = z.object({
   email: emailSchema,
   password: z
     .string({ error: 'La contraseña es obligatoria' })
-    .min(1, 'La contraseña es obligatoria'),
+    .min(1, 'La contraseña es obligatoria')
+    .max(72, 'La contraseña admite máximo 72 caracteres'),
 });
 
 export type RegisterTallerInput = z.infer<typeof registerTallerSchema>;

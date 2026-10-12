@@ -4,6 +4,7 @@
 // Reglas:
 // - Toda tabla de negocio tiene tallerId (multi-taller). Las consultas filtran siempre por él.
 // - El dinero se guarda en pesos enteros (Int), sin decimales.
+// - Los Int son llaves internas. Hacia afuera (URLs, respuestas, enlaces) se usa publicId.
 // - Las fechas se guardan en UTC.
 
 generator client {
@@ -53,6 +54,8 @@ enum PrioridadDiagnostico {
 
 model Taller {
   tallerId        Int            @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId        String         @unique @default(uuid(7)) @db.Char(36)
   nombre          String         @db.VarChar(150)
   nit             String?        @unique @db.VarChar(20)
   direccion       String?        @db.VarChar(255)
@@ -74,6 +77,8 @@ model Taller {
 
 model Usuario {
   usuarioId     Int            @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId      String         @unique @default(uuid(7)) @db.Char(36)
   tallerId      Int
   nombre        String         @db.VarChar(150)
   email         String         @unique @db.VarChar(150)
@@ -118,6 +123,8 @@ model RefreshToken {
 /// cuando se registra en la app, se vincula por documento o correo (HU-14).
 model Cliente {
   clienteId          Int      @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId           String   @unique @default(uuid(7)) @db.Char(36)
   tallerId           Int
   usuarioId          Int?     @unique
   nombre             String   @db.VarChar(150)
@@ -139,6 +146,8 @@ model Cliente {
 
 model Moto {
   motocicletaId Int      @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId      String   @unique @default(uuid(7)) @db.Char(36)
   tallerId      Int
   clienteId     Int
   /// Siempre en mayúsculas y sin espacios, por ejemplo ABC12D
@@ -166,6 +175,8 @@ model Moto {
 
 model OrdenServicio {
   ordenServicioId    Int         @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId           String      @unique @default(uuid(7)) @db.Char(36)
   tallerId           Int
   /// Consecutivo dentro del taller (#1, #2, ...)
   numero             Int
