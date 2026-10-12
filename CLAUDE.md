@@ -47,6 +47,7 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 |---|---|
 | `npm run dev` | App en `http://localhost:5173` |
 | `npm test` | Pruebas con Vitest + Testing Library |
+| `npm run check:tokens` | Revisa que ningún componente use colores fuera de los tokens de `src/styles/index.css` |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Revisa tipos |
 | `npm run build` | Revisa tipos + empaqueta en `dist/` |
@@ -111,7 +112,10 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 - **Datos del servidor:** TanStack Query (`useQuery` y `useMutation`) sobre `http` de `@/lib/http`. **Zustand** solo para la sesión y el estado de interfaz.
 - **Errores de la API:** `parseApiError(error)` → `{ message, fields }` para poner cada mensaje bajo su campo.
 - **Tokens:** el token de acceso vive solo en memoria (Zustand). **Nunca** en `localStorage` ni `sessionStorage`.
-- **Estilos:** clases de Tailwind con los tokens de `src/styles/index.css`. **Prohibido** escribir colores hexadecimales fuera de ese archivo.
+- **Estilos:** clases de Tailwind con los tokens de `src/styles/index.css`. Los colores **solo** se definen ahí.
+  - **Prohibido:** colores escritos a mano (`#fff`, `rgb()`, `hsl()`, `oklch()`, también dentro de un SVG en `url()`), la paleta por defecto de Tailwind (`bg-red-500`, `text-gray-700`), colores arbitrarios (`bg-[#0b1f33]`) y colores con nombre en `style` (`color: 'red'`).
+  - **Antes de entregar un componente** se corre `npm run check:tokens` en `frontend`: revisa todo `src/` y falla si hay un color fuera de los tokens, un token que no existe (`text-primary-txt`) o si se borró o renombró un token de `index.css`. También corre dentro de `npm test` y en la revisión automática de GitHub.
+  - ¿Hace falta un color nuevo? Se agrega como `--color-…` en `index.css` y su nombre en `TOKENS_BASE` (`frontend/scripts/tokens.test.ts`). Una excepción justificada lleva `tokens-permitido` en la línea, con el motivo.
   - Texto sobre `bg-primary` va en `text-brand-navy`.
   - Texto cian sobre blanco va en `text-primary-text`.
 - **Componentes:** reutilizar `components/ui` (Button, Input, Select, Textarea, Card, Badge, StatusBadge, Plate, AppBar, BottomSheet, Tabs, EmptyState, Skeleton, Toaster). Un componente con lógica de negocio va en `features/<f>/components`, no en `ui`.
@@ -153,7 +157,7 @@ Una historia está terminada cuando:
 
 1. Cumple **todos** sus criterios de aceptación (`docs/HISTORIAS.md`).
 2. Se ve y funciona en **390 px y 1280 px**, sin desplazamiento horizontal.
-3. Usa los tokens del sistema de diseño y los componentes `ui`.
+3. Usa los tokens del sistema de diseño y los componentes `ui`; `npm run check:tokens` pasa.
 4. Valida datos en frontend **y** backend; los permisos se revisan en el backend.
 5. Tiene al menos una prueba, y `lint`, `typecheck`, `test` y `build` pasan.
 6. Está en un PR hacia `develop`, revisado por otra persona.

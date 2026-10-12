@@ -2,6 +2,7 @@ import { forwardRef, type SelectHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 import { Field } from './Field';
 import { controlClasses } from './field-styles';
+import { Icon } from './Icon';
 
 export interface SelectOption {
   value: string;
@@ -23,25 +24,28 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
   return (
     <Field label={label} hint={hint} error={error} required={required} className={className}>
       {(a11y) => (
-        <select
-          ref={ref}
-          required={required}
-          className={cn(controlClasses(error), 'h-touch appearance-none bg-no-repeat pr-10')}
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%235A6B7D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
-            backgroundPosition: 'right 12px center',
-          }}
-          {...a11y}
-          {...rest}
-        >
-          {placeholder && <option value="">{placeholder}</option>}
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            ref={ref}
+            required={required}
+            className={cn(controlClasses(error), 'h-touch appearance-none pr-10')}
+            {...a11y}
+            {...rest}
+          >
+            {placeholder && <option value="">{placeholder}</option>}
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {/* Flecha con el token text-ink-muted (antes era un SVG con el color escrito a mano) */}
+          <Icon
+            name="chevronDown"
+            size={20}
+            className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-ink-muted"
+          />
+        </div>
       )}
     </Field>
   );
