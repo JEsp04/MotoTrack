@@ -66,7 +66,7 @@ Node **22** y npm 10. Las versiones exactas están en cada `package.json`.
 | Estado de la app | Zustand 5, solo sesión e interfaz |
 | Estilos | Tailwind CSS 4 con tokens en `@theme` (`src/styles/index.css`) |
 | Fuentes | Montserrat e Inter locales con `@fontsource` (sin Google Fonts) |
-| Formularios | Propuesto para E4: React Hook Form + Zod |
+| Formularios | React Hook Form + Zod 4 (`@hookform/resolvers`) |
 | Calidad | ESLint 10, Prettier, Vitest 5, Testing Library |
 
 ### Backend (`backend/`)
@@ -117,8 +117,8 @@ MotoTrack/
     └── src/
         ├── main.tsx · app/App.tsx     # QueryClientProvider + RouterProvider + Toaster
         ├── router/                    # index.tsx (rutas lazy), guards.tsx, nav.ts, RoleLayout.tsx
-        ├── pages/                     # auth/, admin/, mecanico/, cliente/, dev/, 404, error
-        ├── features/auth/             # store de sesión (Zustand) + demo temporal
+        ├── pages/                     # auth/ (login y registro), admin/, mecanico/, cliente/, dev/, 404, error
+        ├── features/auth/             # api, hooks, schemas, formularios, sesión (Zustand + session-bootstrap)
         ├── components/ui/             # 16 componentes base
         ├── components/layout/         # AppLayout, AuthLayout, Logo
         ├── lib/                       # http, api-error, query-client, toast, format, estados-orden, cn
@@ -154,7 +154,7 @@ MotoTrack/
 - **Token de renovación:** valor aleatorio de 7 días en una cookie `httpOnly`, `SameSite=Strict`, con ruta `/api/auth` y `Secure` en producción.
   - En la base se guarda su HMAC-SHA256 con `JWT_REFRESH_SECRET`.
   - Se **rota** en cada uso. Si alguien reutiliza uno ya usado, se cierran todas las sesiones del usuario.
-- **Al recargar la página**, el frontend llama a `/refresh`. Ante un 401, Axios renueva una sola vez y repite la petición (pendiente de conectar en HU-21).
+- **Al abrir o recargar la página**, el frontend llama a `/refresh` (`features/auth/session-bootstrap.ts`), que devuelve el token y el usuario. Ante un 401, Axios renueva una sola vez y repite la petición; si falla, la sesión se cierra con un aviso.
 
 | Endpoint | Uso | Estado |
 |---|---|---|

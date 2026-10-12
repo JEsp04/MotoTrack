@@ -6,7 +6,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`.
 
-Última actualización: lunes 12 de octubre de 2026.
+Última actualización: lunes 12 de octubre de 2026 (tarde).
 
 ---
 
@@ -23,22 +23,31 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
   - Menú por rol, rutas con `lazy` y páginas 404 y de error.
   - Cliente HTTP con renovación única.
   - 26 pruebas.
-- **Provisional en el frontend (se quita en E4):**
-  - El ingreso usa botones «entrar como…» de `features/auth/demo.ts`.
-  - La sesión se pierde al recargar.
-  - Las pantallas de admin, mecánico y cliente dicen «En construcción».
+- **E4 terminada en la rama `feature/auth-frontend`** (falta revisión y PR a `develop`):
+  - Ingreso y registro reales, conectados al backend.
+  - La sesión sobrevive a recargar la página.
+  - «Cerrar sesión» invalida la cookie en el backend.
+  - Ya no existen los botones «entrar como…».
+- **Todavía provisional:** las pantallas de admin, mecánico y cliente dicen «En construcción» hasta E5 y E6.
 - **Base de datos:** 10 tablas, migración `20261010150000_inicial` y seed con un taller de ejemplo (Moto Express Laureles).
 - **Aún no desplegado** (Vercel + Aiven, E7).
 
 ## Sesión activa
 
-**Ninguna en curso.** Lo siguiente es **E4 · Autenticación en frontend (HU-19 a HU-22)**:
-- `LoginPage` real con React Hook Form + Zod, que llame a `POST /auth/login`.
-- `RegisterPage` para taller (2 pasos) y cliente, con la lista de `GET /talleres/publicos`.
-- Arranque de la app: llamar a `/auth/refresh` y luego `/auth/me`, y conectar `configureHttpAuth` en `lib/http.ts`.
-- Cerrar sesión con `POST /auth/logout`, y borrar `demo.ts` y los botones provisionales.
+**E4 lista para revisión** en `feature/auth-frontend`:
+- **Frontend:** 43 pruebas.
+- **Prueba de punta a punta contra la API y MySQL:**
+  - Ingreso con clave mala y con clave buena.
+  - Recarga sin perder la sesión.
+  - Cierre de sesión, y botón «atrás» sin volver a datos privados.
+  - Registro de cliente que se vincula a su ficha existente.
+  - Registro de taller.
 
-Antes de empezar: confirmar con el equipo quién la toma y crear la rama `feature/auth-frontend` desde `develop` actualizado.
+**Siguiente: E5 · Usuarios, clientes y motos (HU-23 a HU-27).** Se puede trabajar el backend sin chocar con la landing.
+
+**Para probar E4 en tu PC:**
+1. Corre el backend con `npm run dev` y el frontend con `npm run dev`.
+2. Entra a `http://localhost:5173/login` con `admin@mototrack.co` y la clave `MotoTrack2026`.
 
 ## Decisiones vigentes
 
@@ -54,11 +63,14 @@ Antes de empezar: confirmar con el equipo quién la toma y crear la rama `featur
 | 10-oct | Los mecánicos no se registran solos: el admin les crea la cuenta (HU-23) |
 | 10-oct | Commits a nombre del integrante (JEsp04), **sin** `Co-Authored-By` |
 | 12-oct | Se crean `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md` en la raíz para no perder el hilo entre sesiones |
+| 12-oct | Frontend: formularios con React Hook Form + Zod 4. Al abrir la app se recupera la sesión con `/auth/refresh`, que ya devuelve el usuario (no hace falta `/me`) |
+| 12-oct | Los mecánicos no tienen opción de registro: la pantalla de registro les dice que se lo pidan al admin |
 
 ## Cosas a tener en cuenta
 
 - **La migración inicial se escribió a mano** porque el entorno de Claude no puede descargar el motor de Prisma. Se probó en MariaDB y Paula la aplicó en MySQL 8 con `prisma migrate reset` el 10-oct. Si algún compañero ve *drift* en una base sin datos: `npx prisma migrate reset`.
 - **Bases viejas de Sequelize:** quien tenga tablas antiguas en `mototrack` debe hacer `npx prisma migrate reset`.
+- **`.env.example` borrados:** en `develop` ya no existen `backend/.env.example` ni `frontend/.env.example` (commit `8470ec2`). Hay que restaurarlos para que los compañeros configuren su entorno.
 - **Landing page de un compañero:** se hizo sobre la plantilla JSX anterior. Al hacer `pull` habrá conflictos. Plan: moverla a `pages/LandingPage.tsx` en una rama nueva.
 - **GitHub abre los PR hacia `main` por defecto.** Ya pasó una vez (PR cerrado y rehecho). Siempre revisar que la base sea `develop`.
 - **Windows y saltos de línea:** el repositorio guarda LF (`.gitattributes`). Si `package-lock.json` aparece modificado solo por `npm install`, se descarta.
@@ -71,4 +83,4 @@ Antes de empezar: confirmar con el equipo quién la toma y crear la rama `featur
 | 27-sep | Diseño: prototipo navegable, sistema de diseño, landing con membresías, registro por roles con OTP, pagos, citas, alertas IA (solo diseño) |
 | 9-oct | Contexto y stack definidos (`docs/CONTEXTO.md`), auditoría del repositorio, despliegue elegido, 40 historias de usuario (`docs/HISTORIAS.md`) |
 | 10-oct | E0 a E3 desarrolladas, revisadas y unidas en `develop` (PR #4 a #8). Base local reseteada con Prisma. Autores de commits corregidos |
-| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md` |
+| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md`. E4 completa (HU-19 a HU-22) en `feature/auth-frontend`. La landing se retrasa porque un compañero está sin conexión |
