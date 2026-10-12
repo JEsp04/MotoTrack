@@ -82,7 +82,7 @@ describe('HU-25 · Buscar y ver clientes', () => {
     abrirApp(`/admin/clientes/${detalle.publicId}`);
     expect(await screen.findByRole('heading', { name: 'Laura Martínez' })).toBeInTheDocument();
     expect(screen.getAllByLabelText('Placa A B C 1 2 D').length).toBeGreaterThan(0);
-    expect(screen.getByText('#7')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Orden #7' })).toBeInTheDocument();
     expect(screen.getByText('En reparación')).toBeInTheDocument();
   });
 

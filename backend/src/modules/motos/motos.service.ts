@@ -1,17 +1,15 @@
 import { prisma } from '../../config/prisma.js';
-import type { EstadoOrden, Prisma } from '../../generated/prisma/client.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 import type { UsuarioAutenticado } from '../../types/express.js';
 import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
+import { ESTADOS_CERRADOS } from '../ordenes/estados.js';
 import type { ActualizarMotoInput, CrearMotoInput, ListarMotosQuery } from './motos.schemas.js';
 
 const PLACA_REPETIDA = 'Esta placa ya está registrada';
 const MOTO_NO_ENCONTRADA = 'No encontramos esa moto';
 const CLIENTE_NO_ENCONTRADO = 'No encontramos ese cliente';
-
-/** Una orden está "abierta" mientras la moto sigue en el taller */
-export const ESTADOS_CERRADOS: EstadoOrden[] = ['entregada', 'cerrada', 'cancelada'];
 
 /** Lo que se muestra de una moto, con su orden abierta si la tiene (HU-27). */
 export const motoSelect = {

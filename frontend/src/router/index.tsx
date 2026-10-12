@@ -16,6 +16,7 @@ function page(loader: () => Promise<{ default: ComponentType }>) {
 }
 
 const perfil = page(() => import('@/pages/PerfilPage'));
+const ordenDetalle = page(() => import('@/pages/OrdenDetallePage'));
 
 export const routes: RouteObject[] = [
   {
@@ -50,6 +51,8 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: page(() => import('@/pages/admin/InicioPage')) },
           { path: 'ordenes', element: page(() => import('@/pages/admin/OrdenesPage')) },
+          { path: 'ordenes/nueva', element: page(() => import('@/pages/admin/NuevaOrdenPage')) },
+          { path: 'ordenes/:id', element: ordenDetalle },
           { path: 'clientes', element: page(() => import('@/pages/admin/ClientesPage')) },
           {
             path: 'clientes/:id',
@@ -65,6 +68,7 @@ export const routes: RouteObject[] = [
         element: <RoleLayout rol="mecanico" />,
         children: [
           { index: true, element: page(() => import('@/pages/mecanico/OrdenesPage')) },
+          { path: 'ordenes/:id', element: ordenDetalle },
           { path: 'perfil', element: perfil },
         ],
       },
@@ -75,6 +79,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: page(() => import('@/pages/cliente/MotosPage')) },
           { path: 'ordenes', element: page(() => import('@/pages/cliente/OrdenesPage')) },
+          { path: 'ordenes/:id', element: ordenDetalle },
           { path: 'perfil', element: perfil },
         ],
       },

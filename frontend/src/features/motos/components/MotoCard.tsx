@@ -1,10 +1,20 @@
+import { Link } from 'react-router';
 import { Button, Card, Plate, StatusBadge } from '@/components/ui';
 import type { Moto } from '@/types';
 
 const km = new Intl.NumberFormat('es-CO');
 
 /** Tarjeta de una moto: placa, marca, referencia y, si está en el taller, su estado (HU-27). */
-export function MotoCard({ moto, onEditar }: { moto: Moto; onEditar?: (moto: Moto) => void }) {
+export function MotoCard({
+  moto,
+  onEditar,
+  enlaceOrden,
+}: {
+  moto: Moto;
+  onEditar?: (moto: Moto) => void;
+  /** Ruta al detalle de la orden abierta, si se puede abrir */
+  enlaceOrden?: (ordenPublicId: string) => string;
+}) {
   const detalles = [
     String(moto.modelo),
     moto.cilindraje ? `${moto.cilindraje} cc` : null,
@@ -35,7 +45,16 @@ export function MotoCard({ moto, onEditar }: { moto: Moto; onEditar?: (moto: Mot
       </div>
       {moto.ordenActiva ? (
         <div className="flex flex-wrap items-center gap-2 rounded-sm bg-neutral-soft px-3 py-2 text-sm">
-          <span className="font-semibold">En el taller · Orden #{moto.ordenActiva.numero}</span>
+          {enlaceOrden ? (
+            <Link
+              to={enlaceOrden(moto.ordenActiva.publicId)}
+              className="font-semibold text-primary-text underline"
+            >
+              En el taller · Orden #{moto.ordenActiva.numero}
+            </Link>
+          ) : (
+            <span className="font-semibold">En el taller · Orden #{moto.ordenActiva.numero}</span>
+          )}
           <StatusBadge estado={moto.ordenActiva.estado} />
         </div>
       ) : (

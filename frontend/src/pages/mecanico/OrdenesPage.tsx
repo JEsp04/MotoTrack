@@ -1,13 +1,14 @@
-import { Proximamente } from '../Proximamente';
+import { AppBar } from '@/components/ui';
+import { OrdenesLista } from '@/features/ordenes';
 
+/** HU-30 · Órdenes asignadas al mecánico */
 export default function OrdenesMecanicoPage() {
   return (
-    <Proximamente
-      title="Mis órdenes"
-      subtitle="Motos asignadas a ti"
-      hu="HU-30, HU-32 y HU-35"
-      icon="wrench"
-      text="Aquí vas a ver tus órdenes, diagnosticar y avanzar cada reparación"
-    />
+    <>
+      <AppBar title="Mis órdenes" subtitle="Motos asignadas a ti" />
+      <div className="p-4 lg:px-0">
+        <OrdenesLista rol="mecanico" />
+      </div>
+    </>
   );
 }

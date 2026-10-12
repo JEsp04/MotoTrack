@@ -248,6 +248,8 @@ model Diagnostico {
 
 model Servicio {
   servicioId        Int            @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId          String         @unique @default(uuid(7)) @db.Char(36)
   tallerId          Int
   nombre            String         @db.VarChar(120)
   descripcion       String?        @db.Text
@@ -267,6 +269,8 @@ model Servicio {
 
 model DetalleServicio {
   detalleServicioId Int      @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId          String   @unique @default(uuid(7)) @db.Char(36)
   ordenServicioId   Int
   servicioId        Int
   cantidad          Int      @default(1)

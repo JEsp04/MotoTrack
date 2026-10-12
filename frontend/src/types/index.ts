@@ -93,6 +93,77 @@ export interface ClienteDetalle extends Omit<ClienteResumen, 'motos'> {
   ordenes: OrdenDeCliente[];
 }
 
+export type Prioridad = 'normal' | 'urgente';
+
+/** Orden en la lista (HU-30) */
+export interface OrdenResumen {
+  publicId: string;
+  numero: number;
+  estado: EstadoOrden;
+  motivoIngreso: string;
+  /** Pesos enteros */
+  costoTotal: number;
+  fechaIngreso: string;
+  moto: {
+    publicId: string;
+    placa: string;
+    marca: string;
+    referencia: string;
+    cliente: { publicId: string; nombre: string };
+  };
+  mecanico: { publicId: string; nombre: string };
+}
+
+export interface ServicioDeOrden {
+  publicId: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+  servicio: { publicId: string; nombre: string };
+}
+
+export interface EventoHistorial {
+  estadoAnterior: EstadoOrden | null;
+  estadoNuevo: EstadoOrden;
+  observacion: string | null;
+  creadoEn: string;
+  usuario: { publicId: string; nombre: string; rol: Rol };
+}
+
+/** Detalle de una orden (HU-31) */
+export interface OrdenDetalle extends Omit<OrdenResumen, 'moto'> {
+  kilometrajeIngreso: number;
+  observaciones: string | null;
+  fechaEntrega: string | null;
+  fechaCierre: string | null;
+  moto: OrdenResumen['moto'] & {
+    modelo: number;
+    color: string | null;
+    cliente: { publicId: string; nombre: string; telefono: string };
+  };
+  creadoPor: { publicId: string; nombre: string };
+  diagnostico: {
+    hallazgos: string;
+    trabajoRecomendado: string;
+    prioridad: Prioridad;
+    creadoEn: string;
+    actualizadoEn: string;
+    mecanico: { publicId: string; nombre: string };
+  } | null;
+  servicios: ServicioDeOrden[];
+  /** Del más reciente al más antiguo */
+  historial: EventoHistorial[];
+}
+
+/** Servicio del catálogo del taller (HU-33) */
+export interface ServicioCatalogo {
+  publicId: string;
+  nombre: string;
+  descripcion: string | null;
+  precioBase: number;
+  tiempoEstimadoMin: number | null;
+}
+
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────
 
 export interface ApiResponse<T> {
