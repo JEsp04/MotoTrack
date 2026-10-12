@@ -129,7 +129,11 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 ### Pruebas
 
 - Cada historia lleva al menos una prueba que cubra sus criterios de aceptación principales.
-- **Backend:** Supertest contra la app y base MySQL real de pruebas (`tests/helpers/db.ts` para limpiar y crear datos).
+- **Backend: siempre contra MySQL real, sin mocks de Prisma.**
+  - Cada prueba prepara sus datos insertándolos en la base de pruebas (`*_test`) con `tests/helpers/db.ts` (`limpiarBase`, `escenario`, `crearUsuario`, `auth`) o con `prisma` directamente, y prueba la API con Supertest (`request(app)`).
+  - **Prohibido** `vi.mock`, `vi.spyOn(prisma…)` y librerías que simulan Prisma (`vitest-mock-extended`, `prismock`…). ESLint lo bloquea en `tests/` y en `*.test.ts`.
+  - Se verifican el código HTTP, el cuerpo de la respuesta y, cuando importa, lo que quedó guardado en la base.
+  - No se copian ejemplos de otros proyectos: los campos y helpers son los de este repositorio (`docs/HISTORIAS.md` y `contexto.md`, sección 7). Como referencia real están `backend/tests/*.test.ts`.
 - **Frontend:** Testing Library; buscar por rol y texto visible (`getByRole('button', { name: 'Guardar' })`), no por clases.
 
 ## 4. Base de datos con Prisma
