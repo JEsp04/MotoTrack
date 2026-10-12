@@ -1,0 +1,46 @@
+import { Button, Card, Plate, StatusBadge } from '@/components/ui';
+import type { Moto } from '@/types';
+
+const km = new Intl.NumberFormat('es-CO');
+
+/** Tarjeta de una moto: placa, marca, referencia y, si está en el taller, su estado (HU-27). */
+export function MotoCard({ moto, onEditar }: { moto: Moto; onEditar?: (moto: Moto) => void }) {
+  const detalles = [
+    String(moto.modelo),
+    moto.cilindraje ? `${moto.cilindraje} cc` : null,
+    moto.color,
+    `${km.format(moto.kilometraje)} km`,
+  ].filter(Boolean);
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Plate placa={moto.placa} />
+          <p className="mt-2 truncate font-semibold">
+            {moto.marca} {moto.referencia}
+          </p>
+          <p className="text-sm text-ink-muted">{detalles.join(' · ')}</p>
+        </div>
+        {onEditar && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEditar(moto)}
+            aria-label={`Editar la moto ${moto.placa}`}
+          >
+            Editar
+          </Button>
+        )}
+      </div>
+      {moto.ordenActiva ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-neutral-soft px-3 py-2 text-sm">
+          <span className="font-semibold">En el taller · Orden #{moto.ordenActiva.numero}</span>
+          <StatusBadge estado={moto.ordenActiva.estado} />
+        </div>
+      ) : (
+        <p className="text-sm text-ink-muted">Sin órdenes abiertas</p>
+      )}
+    </Card>
+  );
+}

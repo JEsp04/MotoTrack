@@ -51,6 +51,10 @@ export const routes: RouteObject[] = [
           { index: true, element: page(() => import('@/pages/admin/InicioPage')) },
           { path: 'ordenes', element: page(() => import('@/pages/admin/OrdenesPage')) },
           { path: 'clientes', element: page(() => import('@/pages/admin/ClientesPage')) },
+          {
+            path: 'clientes/:id',
+            element: page(() => import('@/pages/admin/ClienteDetallePage')),
+          },
           { path: 'equipo', element: page(() => import('@/pages/admin/EquipoPage')) },
           { path: 'perfil', element: perfil },
         ],
