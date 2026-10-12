@@ -52,7 +52,7 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 | `npm run build` | Revisa tipos + empaqueta en `dist/` |
 | `npm run preview` | Sirve el build para verlo como en producción |
 
-**Rutas solo de desarrollo:** `/dev/ui` (catálogo de componentes) y los botones «entrar como…» en `/login` (se borran con HU-19 y HU-21).
+**Ruta solo de desarrollo:** `/dev/ui` (catálogo de componentes).
 
 **Cuentas de prueba (después de `npm run seed`):** clave `MotoTrack2026` para `admin@mototrack.co`, `andres@mototrack.co`, `felipe@mototrack.co`, `laura@correo.co` y `juan@correo.co`.
 
@@ -104,6 +104,7 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
   `components`, `lib` y `types` no importan de `features`, `pages` ni `router`.
 - **Alias `@/`** para todo lo que está en `src/` (`import { Button } from '@/components/ui'`).
 - **Una funcionalidad = una carpeta en `features/<nombre>/`** con `api/`, `hooks/`, `components/`, `store/`, `schemas/` e `index.ts`. Lo que se usa afuera se exporta desde `index.ts`.
+- **Formularios:** React Hook Form + `zodResolver` con esquemas en `features/<f>/schemas/`, con las mismas reglas del backend. Los errores de la API se ponen con `aplicarErroresDeCampo` (`@/lib/form-errors`).
 - **Datos del servidor:** TanStack Query (`useQuery` y `useMutation`) sobre `http` de `@/lib/http`. **Zustand** solo para la sesión y el estado de interfaz.
 - **Errores de la API:** `parseApiError(error)` → `{ message, fields }` para poner cada mensaje bajo su campo.
 - **Tokens:** el token de acceso vive solo en memoria (Zustand). **Nunca** en `localStorage` ni `sessionStorage`.

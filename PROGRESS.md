@@ -3,7 +3,9 @@
 Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: 12 de octubre de 2026.
+Última actualización: 12 de octubre de 2026 (tarde).
+
+Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
 ## Resumen
 
@@ -13,8 +15,8 @@ Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUD
 | E1 · Base de datos | HU-06 a HU-07 | ✅ En `develop` (10-oct) |
 | E2 · Base del frontend | HU-08 a HU-12 | ✅ En `develop` (10-oct) |
 | E3 · Autenticación en backend | HU-13 a HU-18 | ✅ En `develop` (10-oct) |
-| E4 · Autenticación en frontend | HU-19 a HU-22 | ⏳ Siguiente |
-| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | ⬜ Pendiente |
+| E4 · Autenticación en frontend | HU-19 a HU-22 | 🔎 En revisión: rama `feature/auth-frontend` (12-oct) |
+| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | ⏳ Siguiente |
 | E6 · Órdenes de servicio | HU-28 a HU-37 | ⬜ Pendiente |
 | E7 · Despliegue y entrega | HU-38 a HU-40 | ⬜ Pendiente |
 
@@ -70,12 +72,12 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 - [x] HU-17 · Cerrar sesión
 - [x] HU-18 · Ver mi perfil y proteger por rol
 
-## E4 · Autenticación en frontend ⏳
+## E4 · Autenticación en frontend 🔎 (hecha, falta PR a `develop`)
 
-- [ ] HU-19 · Pantalla de inicio de sesión (reemplaza los botones «entrar como…»)
-- [ ] HU-20 · Pantallas de registro (taller en 2 pasos y cliente)
-- [ ] HU-21 · Sesión que sobrevive a recargar la página (`/refresh` al abrir + `configureHttpAuth`)
-- [ ] HU-22 · Acceso según mi rol y botón de salir (llama a `/auth/logout`; borrar `features/auth/demo.ts`)
+- [~] HU-19 · Pantalla de inicio de sesión
+- [~] HU-20 · Pantallas de registro (taller en 2 pasos y cliente)
+- [~] HU-21 · Sesión que sobrevive a recargar la página
+- [~] HU-22 · Acceso según mi rol y botón de salir
 
 ## E5 · Usuarios, clientes y motos
 
@@ -109,6 +111,7 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 ## Tareas del equipo (fuera de las historias)
 
 - [ ] Cada integrante configura su entorno: `git pull`, `npm install`, `.env`, `CREATE DATABASE mototrack`, `npm run db:deploy` y `npm run seed`
+- [ ] Restaurar `backend/.env.example` y `frontend/.env.example` (se borraron sin querer en el commit `8470ec2`)
 - [ ] Integrar la landing page de un compañero (moverla a `frontend/src/pages/LandingPage.tsx` en una rama nueva desde `develop`)
 - [ ] Poner `develop` como rama por defecto en GitHub (Settings → General), para no abrir PRs hacia `main` por error
 - [ ] Proteger `develop`: exigir 1 revisión y la revisión automática en verde

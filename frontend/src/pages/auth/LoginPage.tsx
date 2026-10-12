@@ -1,48 +1,27 @@
-import { useLocation, useNavigate } from 'react-router';
-import { Button, Card } from '@/components/ui';
-import { entrarComoDemo, HOME_POR_ROL } from '@/features/auth';
-import type { Rol } from '@/types';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { destinoTrasIngreso, LoginForm } from '@/features/auth';
 
-/**
- * PROVISIONAL. El formulario real de ingreso llega con HU-19.
- * Por ahora, en desarrollo, permite entrar con un rol de prueba para revisar
- * la navegación de cada uno.
- */
+/** HU-19 · Ingreso. Si venía de una ruta privada, vuelve a ella al entrar. */
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const desde = (location.state as { from?: string } | null)?.from;
 
-  function entrar(rol: Rol) {
-    entrarComoDemo(rol);
-    const destino = desde?.startsWith(HOME_POR_ROL[rol]) ? desde : HOME_POR_ROL[rol];
-    navigate(destino, { replace: true });
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl">Ingresa a tu cuenta</h1>
-        <p className="mt-1 text-ink-muted">El formulario con correo y contraseña llega en HU-19.</p>
+        <p className="mt-1 text-ink-muted">Sigue tus órdenes y el estado de cada moto.</p>
       </div>
-      {import.meta.env.DEV ? (
-        <Card className="flex flex-col gap-3">
-          <p className="text-sm font-semibold text-ink-muted">Modo desarrollo: entrar como…</p>
-          <Button fullWidth onClick={() => entrar('admin')}>
-            Administrador
-          </Button>
-          <Button variant="secondary" fullWidth onClick={() => entrar('mecanico')}>
-            Mecánico
-          </Button>
-          <Button variant="secondary" fullWidth onClick={() => entrar('cliente')}>
-            Cliente
-          </Button>
-        </Card>
-      ) : (
-        <Card>
-          <p className="text-ink-muted">El ingreso estará disponible muy pronto.</p>
-        </Card>
-      )}
+      <LoginForm
+        onIngreso={(usuario) => navigate(destinoTrasIngreso(usuario.rol, desde), { replace: true })}
+      />
+      <p className="text-center text-ink-muted">
+        ¿No tienes cuenta?{' '}
+        <Link to="/registro" className="font-semibold text-primary-text hover:underline">
+          Regístrate
+        </Link>
+      </p>
     </div>
   );
 }
