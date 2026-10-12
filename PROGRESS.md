@@ -79,6 +79,11 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 - [~] HU-21 · Sesión que sobrevive a recargar la página
 - [~] HU-22 · Acceso según mi rol y botón de salir
 
+### Mejora transversal (12-oct) 🔎 rama `feature/validaciones-publicid`
+
+- [~] `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (se conservan los `Int`)
+- [~] Largo máximo en todos los campos y `maxLength` en los inputs
+
 ## E5 · Usuarios, clientes y motos
 
 - [ ] HU-23 · Crear cuentas de mecánico
@@ -111,7 +116,6 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 ## Tareas del equipo (fuera de las historias)
 
 - [ ] Cada integrante configura su entorno: `git pull`, `npm install`, `.env`, `CREATE DATABASE mototrack`, `npm run db:deploy` y `npm run seed`
-- [ ] Restaurar `backend/.env.example` y `frontend/.env.example` (se borraron sin querer en el commit `8470ec2`)
 - [ ] Integrar la landing page de un compañero (moverla a `frontend/src/pages/LandingPage.tsx` en una rama nueva desde `develop`)
 - [ ] Poner `develop` como rama por defecto en GitHub (Settings → General), para no abrir PRs hacia `main` por error
 - [ ] Proteger `develop`: exigir 1 revisión y la revisión automática en verde

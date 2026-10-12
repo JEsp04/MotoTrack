@@ -145,12 +145,14 @@ MotoTrack/
 
 **Reglas:**
 - Toda tabla de negocio tiene `tallerId`.
+- Las llaves son `Int` autoincrementales. `talleres`, `usuarios`, `clientes`, `motocicletas` y `ordenes_servicio` tienen además `publicId` (UUIDv7, `CHAR(36)`, único), que es lo único que sale en URLs y respuestas.
+- Los textos tienen largo máximo en la base, y el mismo límite se valida con Zod en el backend y en el frontend.
 - El dinero se guarda en pesos enteros.
 - Las fechas van en UTC.
 
 ## 7. Autenticación y sesión
 
-- **Token de acceso:** JWT HS256 de 15 minutos con `{ usuarioId, rol, tallerId }`. El frontend lo guarda **solo en memoria** y lo envía como `Authorization: Bearer`.
+- **Token de acceso:** JWT HS256 de 15 minutos con `{ usuarioId, rol, tallerId }` (los `Int` internos; el token está firmado y el frontend no los usa). Las respuestas devuelven el usuario con `publicId` y `taller: { publicId, nombre }`. El frontend lo guarda **solo en memoria** y lo envía como `Authorization: Bearer`.
 - **Token de renovación:** valor aleatorio de 7 días en una cookie `httpOnly`, `SameSite=Strict`, con ruta `/api/auth` y `Secure` en producción.
   - En la base se guarda su HMAC-SHA256 con `JWT_REFRESH_SECRET`.
   - Se **rota** en cada uso. Si alguien reutiliza uno ya usado, se cierran todas las sesiones del usuario.
@@ -159,12 +161,12 @@ MotoTrack/
 | Endpoint | Uso | Estado |
 |---|---|---|
 | `POST /api/auth/register-taller` | Crea el taller y su admin | ✅ |
-| `POST /api/auth/register` | Registro de cliente (se vincula si el taller ya lo tenía) | ✅ |
+| `POST /api/auth/register` | Registro de cliente con `tallerPublicId` (se vincula si el taller ya lo tenía) | ✅ |
 | `POST /api/auth/login` | Inicio de sesión | ✅ |
 | `POST /api/auth/refresh` | Renovar la sesión con la cookie | ✅ |
 | `POST /api/auth/logout` | Cerrar sesión | ✅ |
 | `GET /api/auth/me` | Perfil + taller | ✅ |
-| `GET /api/talleres/publicos` | Lista de talleres para el registro | ✅ |
+| `GET /api/talleres/publicos` | Lista de talleres para el registro (`publicId`, nombre, dirección) | ✅ |
 
 ## 8. Máquina de estados de la orden
 
@@ -212,7 +214,7 @@ registrada → diagnosticada → esperando_aprobacion → aprobada → en_repara
 
 ## 10. Variables de entorno
 
-Cada carpeta tiene su `.env.example`. El `.env` nunca se sube.
+El `.env` nunca se sube. Los valores se comparten con el equipo por fuera del repositorio.
 
 **`backend/.env`:**
 - `PORT`, `NODE_ENV`.

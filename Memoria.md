@@ -17,7 +17,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
   - API en TypeScript con Prisma 7 y MySQL.
   - Endpoints de auth completos: `register-taller`, `register`, `login`, `refresh`, `logout` y `me`.
   - `GET /talleres/publicos`.
-  - 28 pruebas.
+  - 27 pruebas (antes se anotó «28» por error: eran 23; con `publicId` suman 4).
 - **Frontend funcionando:**
   - Sistema de diseño en Tailwind y 16 componentes `ui`.
   - Menú por rol, rutas con `lazy` y páginas 404 y de error.
@@ -43,6 +43,13 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
   - Registro de cliente que se vincula a su ficha existente.
   - Registro de taller.
 
+**Rama `feature/validaciones-publicid`** (sale de `feature/auth-frontend`, se une después de ella):
+- `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (migración `20261012210000_public_id`, rellena las filas existentes). Los `Int` se conservan.
+- La API ya no responde `usuarioId` ni `tallerId`; el registro de cliente envía `tallerPublicId`.
+- Largo máximo en todos los campos (Zod en backend y frontend) y `maxLength` en los inputs.
+- Pruebas: backend 27, frontend 45.
+- Hay que aplicar la migración: `npm run db:deploy` en `backend`.
+
 **Siguiente: E5 · Usuarios, clientes y motos (HU-23 a HU-27).** Se puede trabajar el backend sin chocar con la landing.
 
 **Para probar E4 en tu PC:**
@@ -65,12 +72,14 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 12-oct | Se crean `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md` en la raíz para no perder el hilo entre sesiones |
 | 12-oct | Frontend: formularios con React Hook Form + Zod 4. Al abrir la app se recupera la sesión con `/auth/refresh`, que ya devuelve el usuario (no hace falta `/me`) |
 | 12-oct | Los mecánicos no tienen opción de registro: la pantalla de registro les dice que se lo pidan al admin |
+| 12-oct | Se conservan los `Int` como llaves y se agrega `publicId` (UUIDv7) en las 5 tablas que salen a la API. Hacia afuera solo `publicId`; el JWT sigue llevando los `Int` |
+| 12-oct | Largo máximo en todos los campos y `maxLength` en los inputs. **No** se usan `helmet` ni `express-rate-limit` por ahora |
+| 12-oct | No se versionan `.env.example`: los valores se comparten con el equipo por fuera |
 
 ## Cosas a tener en cuenta
 
 - **La migración inicial se escribió a mano** porque el entorno de Claude no puede descargar el motor de Prisma. Se probó en MariaDB y Paula la aplicó en MySQL 8 con `prisma migrate reset` el 10-oct. Si algún compañero ve *drift* en una base sin datos: `npx prisma migrate reset`.
 - **Bases viejas de Sequelize:** quien tenga tablas antiguas en `mototrack` debe hacer `npx prisma migrate reset`.
-- **`.env.example` borrados:** en `develop` ya no existen `backend/.env.example` ni `frontend/.env.example` (commit `8470ec2`). Hay que restaurarlos para que los compañeros configuren su entorno.
 - **Landing page de un compañero:** se hizo sobre la plantilla JSX anterior. Al hacer `pull` habrá conflictos. Plan: moverla a `pages/LandingPage.tsx` en una rama nueva.
 - **GitHub abre los PR hacia `main` por defecto.** Ya pasó una vez (PR cerrado y rehecho). Siempre revisar que la base sea `develop`.
 - **Windows y saltos de línea:** el repositorio guarda LF (`.gitattributes`). Si `package-lock.json` aparece modificado solo por `npm install`, se descarta.
@@ -83,4 +92,4 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 27-sep | Diseño: prototipo navegable, sistema de diseño, landing con membresías, registro por roles con OTP, pagos, citas, alertas IA (solo diseño) |
 | 9-oct | Contexto y stack definidos (`docs/CONTEXTO.md`), auditoría del repositorio, despliegue elegido, 40 historias de usuario (`docs/HISTORIAS.md`) |
 | 10-oct | E0 a E3 desarrolladas, revisadas y unidas en `develop` (PR #4 a #8). Base local reseteada con Prisma. Autores de commits corregidos |
-| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md`. E4 completa (HU-19 a HU-22) en `feature/auth-frontend`. La landing se retrasa porque un compañero está sin conexión |
+| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md`. E4 completa (HU-19 a HU-22) en `feature/auth-frontend`. La landing se retrasa porque un compañero está sin conexión. Rama `feature/validaciones-publicid`: `publicId` UUIDv7 y largo máximo en formularios |

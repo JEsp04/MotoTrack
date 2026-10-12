@@ -78,9 +78,11 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 - **Errores:** lanzar `HttpError` (`HttpError.notFound()`, `HttpError.conflict('…')`). El manejador central arma la respuesta. Express 5 captura los errores de funciones `async`; no hace falta `try/catch` para eso.
 - **Multi-taller:** toda consulta de negocio filtra por `req.user.tallerId`. Un recurso de otro taller responde **404**, no 403.
 - **Permisos:** `requireAuth` y luego `requireRole('admin', ...)`. La seguridad vive en el backend; el frontend solo esconde botones.
+- **`publicId` hacia afuera, `Int` por dentro:** talleres, usuarios, clientes, motocicletas y órdenes tienen `publicId` (UUIDv7). URLs, respuestas y cuerpos de la API usan el `publicId`; los `Int` solo viven en relaciones, consultas internas y el JWT. Nunca responder `usuarioId`, `tallerId`, etc.
+- **Largo máximo:** todo campo de texto lleva `.max()` en Zod igual al largo de la columna, en el backend y en el frontend; en el frontend los límites están en `LIMITES` y se usan como `maxLength` en los inputs.
 - **Nunca devolver `passwordHash`.** Usar `select` explícito en Prisma.
 - **Prisma:** usar una sola instancia, `prisma` de `src/config/prisma.ts`.
-- **Variables de entorno:** solo a través de `env` (`src/config/env.ts`, validado con Zod). Cada variable nueva va también en `.env.example`.
+- **Variables de entorno:** solo a través de `env` (`src/config/env.ts`, validado con Zod). Cada variable nueva se avisa al equipo (los `.env` se comparten por fuera del repositorio).
 
 ### Formato de la API
 
