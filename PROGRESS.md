@@ -3,7 +3,7 @@
 Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: 12 de octubre de 2026 (tarde).
+Última actualización: 12 de octubre de 2026 (noche).
 
 Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
@@ -15,12 +15,12 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E1 · Base de datos | HU-06 a HU-07 | ✅ En `develop` (10-oct) |
 | E2 · Base del frontend | HU-08 a HU-12 | ✅ En `develop` (10-oct) |
 | E3 · Autenticación en backend | HU-13 a HU-18 | ✅ En `develop` (10-oct) |
-| E4 · Autenticación en frontend | HU-19 a HU-22 | 🔎 En revisión: rama `feature/auth-frontend` (12-oct) |
-| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | ⏳ Siguiente |
-| E6 · Órdenes de servicio | HU-28 a HU-37 | ⬜ Pendiente |
+| E4 · Autenticación en frontend | HU-19 a HU-22 | ✅ En `develop` (12-oct, PR #10) |
+| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | 🔎 En revisión: rama `feature/clientes-motos` (12-oct) |
+| E6 · Órdenes de servicio | HU-28 a HU-37 | ⏳ Siguiente |
 | E7 · Despliegue y entrega | HU-38 a HU-40 | ⬜ Pendiente |
 
-**Avance:** 18 de 40 historias · 42 de 88 puntos (≈ 48 %).
+**Avance:** 22 de 40 historias unidas · 51 de 88 puntos (≈ 58 %). Con E5 en revisión: 27 historias · 61 puntos (≈ 69 %).
 
 ---
 
@@ -31,8 +31,8 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 | Fecha | Plan |
 |---|---|
 | ~~10–13 oct~~ | ~~E0, E1, E2, E3~~ ✅ terminadas el 10-oct |
-| Lun 12 – mar 13 | E4: ingreso, registro, sesión al recargar y acceso por rol |
-| Mar 13 – mié 14 | E5: mecánicos, clientes y motos (API + pantallas) |
+| ~~Lun 12 – mar 13~~ | ~~E4~~ ✅ terminada el 12-oct |
+| ~~Mar 13 – mié 14~~ | ~~E5~~ 🔎 hecha el 12-oct, en revisión |
 | Mié 14 – jue 16 | E6: órdenes, estados, diagnóstico e historial |
 | Mié 15 | HU-38: base en Aiven (temprano, para probar con datos reales) |
 | Jue 16 | HU-39 despliegue en Vercel + HU-40 prueba de punta a punta y `v0.1` |
@@ -72,25 +72,25 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 - [x] HU-17 · Cerrar sesión
 - [x] HU-18 · Ver mi perfil y proteger por rol
 
-## E4 · Autenticación en frontend 🔎 (hecha, falta PR a `develop`)
+## E4 · Autenticación en frontend ✅
 
-- [~] HU-19 · Pantalla de inicio de sesión
-- [~] HU-20 · Pantallas de registro (taller en 2 pasos y cliente)
-- [~] HU-21 · Sesión que sobrevive a recargar la página
-- [~] HU-22 · Acceso según mi rol y botón de salir
+- [x] HU-19 · Pantalla de inicio de sesión
+- [x] HU-20 · Pantallas de registro (taller en 2 pasos y cliente)
+- [x] HU-21 · Sesión que sobrevive a recargar la página
+- [x] HU-22 · Acceso según mi rol y botón de salir
 
-### Mejora transversal (12-oct) 🔎 rama `feature/validaciones-publicid`
+### Mejora transversal (12-oct) ✅ PR #11
 
-- [~] `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (se conservan los `Int`)
-- [~] Largo máximo en todos los campos y `maxLength` en los inputs
+- [x] `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (se conservan los `Int`)
+- [x] Largo máximo en todos los campos y `maxLength` en los inputs
 
-## E5 · Usuarios, clientes y motos
+## E5 · Usuarios, clientes y motos 🔎 (hecha, falta PR a `develop`)
 
-- [ ] HU-23 · Crear cuentas de mecánico
-- [ ] HU-24 · Registrar un cliente en el taller
-- [ ] HU-25 · Buscar y ver clientes
-- [ ] HU-26 · Registrar una moto
-- [ ] HU-27 · Ver mis motos como cliente
+- [~] HU-23 · Crear cuentas de mecánico
+- [~] HU-24 · Registrar un cliente en el taller
+- [~] HU-25 · Buscar y ver clientes
+- [~] HU-26 · Registrar una moto (el alterno B, desde el formulario de la orden, se completa con HU-29)
+- [~] HU-27 · Ver mis motos como cliente
 
 ## E6 · Órdenes de servicio
 

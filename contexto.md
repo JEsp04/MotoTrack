@@ -103,14 +103,17 @@ MotoTrack/
 │   │   └── seed.ts                    # datos de ejemplo
 │   ├── src/
 │   │   ├── app.ts                     # express, cors, json, cookies, rutas, errores
-│   │   ├── routes.ts                  # monta /health, /auth, /talleres...
+│   │   ├── routes.ts                  # monta /health, /auth, /talleres, /usuarios, /clientes, /motos
 │   │   ├── config/                    # env.ts, prisma.ts
 │   │   ├── middlewares/               # auth.ts (requireAuth, requireRole), error-handler.ts
 │   │   ├── modules/
 │   │   │   ├── auth/                  # routes, controller, service, schemas, tokens
-│   │   │   └── talleres/              # GET /talleres/publicos
-│   │   ├── utils/http-error.ts
-│   │   ├── types/express.d.ts         # req.user
+│   │   │   ├── talleres/              # GET /talleres/publicos
+│   │   │   ├── usuarios/              # equipo del taller (HU-23)
+│   │   │   ├── clientes/              # HU-24, HU-25
+│   │   │   └── motos/                 # HU-26, HU-27
+│   │   ├── utils/                     # http-error, schemas (validaciones compartidas), prisma-errors
+│   │   ├── types/express.d.ts         # req.user (UsuarioAutenticado)
 │   │   └── generated/                 # cliente de Prisma (no va a git)
 │   └── tests/                         # setup (crea la base _test), helpers, *.test.ts
 └── frontend/
@@ -119,10 +122,13 @@ MotoTrack/
         ├── router/                    # index.tsx (rutas lazy), guards.tsx, nav.ts, RoleLayout.tsx
         ├── pages/                     # auth/ (login y registro), admin/, mecanico/, cliente/, dev/, 404, error
         ├── features/auth/             # api, hooks, schemas, formularios, sesión (Zustand + session-bootstrap)
+        ├── features/equipo/           # mecánicos del taller
+        ├── features/clientes/         # buscador, formulario y detalle
+        ├── features/motos/            # formulario de moto y tarjeta con su orden abierta
         ├── components/ui/             # 16 componentes base
         ├── components/layout/         # AppLayout, AuthLayout, Logo
-        ├── lib/                       # http, api-error, query-client, toast, format, estados-orden, cn
-        ├── types/                     # Rol, EstadoOrden, Usuario, formato de la API
+        ├── lib/                       # http, api-error, query-client, toast, format, estados-orden, cn, validaciones, use-debounce
+        ├── types/                     # Rol, EstadoOrden, Usuario, Integrante, Moto, Cliente..., formato de la API
         └── styles/index.css           # tokens de Tailwind
 ```
 
@@ -167,6 +173,21 @@ MotoTrack/
 | `POST /api/auth/logout` | Cerrar sesión | ✅ |
 | `GET /api/auth/me` | Perfil + taller | ✅ |
 | `GET /api/talleres/publicos` | Lista de talleres para el registro (`publicId`, nombre, dirección) | ✅ |
+
+**Usuarios, clientes y motos (E5).** `:id` es siempre el `publicId`; otro taller o un id inválido → 404.
+
+| Endpoint | Quién | Uso |
+|---|---|---|
+| `GET /api/usuarios?rol=` | admin | Equipo del taller (admins y mecánicos) |
+| `POST /api/usuarios` | admin | Crear mecánico (rol y taller los pone el backend) |
+| `PATCH /api/usuarios/:id` | admin | Nombre, teléfono o `estado` (activo / inactivo) de un mecánico |
+| `GET /api/clientes?q=&page=&limit=` | admin, mecánico | Buscar por nombre, documento, teléfono o placa. `meta: { page, limit, total }` |
+| `GET /api/clientes/:id` | admin, mecánico | Datos, motos y últimas 20 órdenes |
+| `POST /api/clientes` | admin | Registrar cliente (409 si el documento ya existe en el taller) |
+| `PATCH /api/clientes/:id` | admin | Nombre, teléfono, correo y dirección (el documento no cambia) |
+| `GET /api/motos?cliente=&q=&page=` | todos | Cliente: solo las suyas. Cada moto trae `ordenActiva` o `null` |
+| `POST /api/motos` | admin, cliente | El admin envía `clientePublicId`; el cliente no (queda a su nombre). 409 si la placa ya existe |
+| `PATCH /api/motos/:id` | admin, cliente dueño | Editar datos de la moto |
 
 ## 8. Máquina de estados de la orden
 

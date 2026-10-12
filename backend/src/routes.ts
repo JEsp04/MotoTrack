@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import authRoutes from './modules/auth/auth.routes.js';
+import clientesRoutes from './modules/clientes/clientes.routes.js';
+import motosRoutes from './modules/motos/motos.routes.js';
 import talleresRoutes from './modules/talleres/talleres.routes.js';
+import usuariosRoutes from './modules/usuarios/usuarios.routes.js';
 
 const router = Router();
 
@@ -10,8 +13,9 @@ router.get('/health', (_req, res) => {
 
 router.use('/auth', authRoutes);
 router.use('/talleres', talleresRoutes);
-
-// Los módulos siguientes se montan con requireAuth y requireRole, por ejemplo:
-// router.use('/clientes', requireAuth, clientesRoutes);
+// Cada módulo aplica requireAuth y requireRole en su propio archivo de rutas
+router.use('/usuarios', usuariosRoutes);
+router.use('/clientes', clientesRoutes);
+router.use('/motos', motosRoutes);
 
 export default router;

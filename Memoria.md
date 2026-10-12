@@ -6,55 +6,50 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`.
 
-Última actualización: lunes 12 de octubre de 2026 (tarde).
+Última actualización: lunes 12 de octubre de 2026 (noche).
 
 ---
 
 ## Estado actual
 
-- **Rama `develop`:** E0, E1, E2 y E3 unidas (HU-01 a HU-18), PR #4 a #8. Último commit: `e6ae0f3 Merge pull request #8 from JEsp04/feature/auth-sesion`.
+- **Rama `develop`:** E0 a E4 unidas (HU-01 a HU-22) y la mejora de `publicId` y largo máximo. PR #4 a #11. Último commit: `663b676 Merge pull request #11 from JEsp04/feature/validaciones-publicid`.
 - **Backend funcionando:**
   - API en TypeScript con Prisma 7 y MySQL.
-  - Endpoints de auth completos: `register-taller`, `register`, `login`, `refresh`, `logout` y `me`.
+  - Auth completa: `register-taller`, `register`, `login`, `refresh`, `logout` y `me`.
   - `GET /talleres/publicos`.
-  - 27 pruebas (antes se anotó «28» por error: eran 23; con `publicId` suman 4).
+  - Hacia afuera solo `publicId` (UUIDv7); los `Int` son internos.
 - **Frontend funcionando:**
-  - Sistema de diseño en Tailwind y 16 componentes `ui`.
-  - Menú por rol, rutas con `lazy` y páginas 404 y de error.
-  - Cliente HTTP con renovación única.
-  - 26 pruebas.
-- **E4 terminada en la rama `feature/auth-frontend`** (falta revisión y PR a `develop`):
-  - Ingreso y registro reales, conectados al backend.
-  - La sesión sobrevive a recargar la página.
-  - «Cerrar sesión» invalida la cookie en el backend.
-  - Ya no existen los botones «entrar como…».
-- **Todavía provisional:** las pantallas de admin, mecánico y cliente dicen «En construcción» hasta E5 y E6.
-- **Base de datos:** 10 tablas, migración `20261010150000_inicial` y seed con un taller de ejemplo (Moto Express Laureles).
+  - Sistema de diseño en Tailwind y 16 componentes `ui`; menú por rol, rutas con `lazy`, 404 y error.
+  - Ingreso, registro (taller y cliente), sesión que sobrevive a recargar y cierre de sesión.
+- **E5 terminada en la rama `feature/clientes-motos`** (falta revisión y PR a `develop`).
+- **Todavía provisional:** las pantallas de órdenes (admin, mecánico y cliente) dicen «En construcción» hasta E6.
+- **Base de datos:** 10 tablas; migraciones `20261010150000_inicial` y `20261012210000_public_id`; seed con el taller Moto Express Laureles.
 - **Aún no desplegado** (Vercel + Aiven, E7).
 
 ## Sesión activa
 
-**E4 lista para revisión** en `feature/auth-frontend`:
-- **Frontend:** 43 pruebas.
-- **Prueba de punta a punta contra la API y MySQL:**
-  - Ingreso con clave mala y con clave buena.
-  - Recarga sin perder la sesión.
-  - Cierre de sesión, y botón «atrás» sin volver a datos privados.
-  - Registro de cliente que se vincula a su ficha existente.
-  - Registro de taller.
+**E5 lista para revisión** en `feature/clientes-motos` (sale de `develop` después del PR #11):
+- **Backend:**
+  - `/api/usuarios`: el admin crea mecánicos con contraseña temporal y los activa o desactiva. Al desactivar se cierran sus sesiones.
+  - `/api/clientes`: crear, buscar (nombre, documento, teléfono o placa) con páginas de 20, ver detalle con motos y últimas órdenes, y editar.
+  - `/api/motos`: crear y editar con placa colombiana normalizada (`ABC12D` o `ABC12`); el cliente solo ve y edita las suyas. Cada moto trae `ordenActiva`.
+  - Validaciones compartidas en `src/utils/schemas.ts`.
+  - **59 pruebas** (27 anteriores + 32 nuevas).
+- **Frontend:**
+  - Pantallas Equipo, Clientes (buscador con pausa de 300 ms, «Ver más» y esqueletos), detalle del cliente y Mis motos.
+  - Formularios en hoja inferior (`BottomSheet`) con `maxLength`. Validaciones compartidas en `lib/validaciones.ts`.
+  - **67 pruebas** (45 anteriores + 22 nuevas).
+- **Prueba de punta a punta contra la API y MySQL** (celular y computador): crear y desactivar mecánico, mecánico desactivado no entra, buscar «xyz12», crear cliente y su moto, placa y documento repetidos, «Mis motos» del cliente con el estado de su orden.
+- No hay migración nueva: basta con `npm install` y `npm run dev`.
 
-**Rama `feature/validaciones-publicid`** (sale de `feature/auth-frontend`, se une después de ella):
-- `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (migración `20261012210000_public_id`, rellena las filas existentes). Los `Int` se conservan.
-- La API ya no responde `usuarioId` ni `tallerId`; el registro de cliente envía `tallerPublicId`.
-- Largo máximo en todos los campos (Zod en backend y frontend) y `maxLength` en los inputs.
-- Pruebas: backend 27, frontend 45.
-- Hay que aplicar la migración: `npm run db:deploy` en `backend`.
+**Pendiente de E5 para E6:** HU-26 alterno B (agregar una moto sin salir del formulario de la orden) se hace con HU-29.
 
-**Siguiente: E5 · Usuarios, clientes y motos (HU-23 a HU-27).** Se puede trabajar el backend sin chocar con la landing.
+**Siguiente: E6 · Órdenes de servicio (HU-28 a HU-37).**
 
-**Para probar E4 en tu PC:**
-1. Corre el backend con `npm run dev` y el frontend con `npm run dev`.
-2. Entra a `http://localhost:5173/login` con `admin@mototrack.co` y la clave `MotoTrack2026`.
+**Para probar E5 en tu PC:**
+1. `git checkout feature/clientes-motos`, luego `npm install` en `backend` y en `frontend`.
+2. Si quieres datos limpios: `npm run seed` en `backend`.
+3. Corre `npm run dev` en las dos carpetas y entra a `http://localhost:5173/login` con `admin@mototrack.co` / `MotoTrack2026` (o `juan@correo.co` para ver «Mis motos»).
 
 ## Decisiones vigentes
 
@@ -75,6 +70,10 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 12-oct | Se conservan los `Int` como llaves y se agrega `publicId` (UUIDv7) en las 5 tablas que salen a la API. Hacia afuera solo `publicId`; el JWT sigue llevando los `Int` |
 | 12-oct | Largo máximo en todos los campos y `maxLength` en los inputs. **No** se usan `helmet` ni `express-rate-limit` por ahora |
 | 12-oct | No se versionan `.env.example`: los valores se comparten con el equipo por fuera |
+| 12-oct | Las rutas usan el `publicId` en `:id` (`/clientes/:id`, `/motos/:id`, `/usuarios/:id`). Un id que no es UUID o es de otro taller responde 404. Las motos de un cliente se filtran con `?cliente=<publicId>` |
+| 12-oct | Permisos E5: clientes los ve admin y mecánico, pero solo el admin los crea y edita; motos las crean y editan el admin y el cliente dueño, el mecánico solo consulta; el equipo es solo del admin |
+| 12-oct | Al desactivar un mecánico se revocan sus tokens de renovación; su token de acceso vence solo (máximo 15 min) |
+| 12-oct | En la API, `modelo` de la moto es el año (como se dice en Colombia) y `referencia` es el nombre comercial (NMAX 155) |
 
 ## Cosas a tener en cuenta
 
@@ -92,4 +91,4 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 27-sep | Diseño: prototipo navegable, sistema de diseño, landing con membresías, registro por roles con OTP, pagos, citas, alertas IA (solo diseño) |
 | 9-oct | Contexto y stack definidos (`docs/CONTEXTO.md`), auditoría del repositorio, despliegue elegido, 40 historias de usuario (`docs/HISTORIAS.md`) |
 | 10-oct | E0 a E3 desarrolladas, revisadas y unidas en `develop` (PR #4 a #8). Base local reseteada con Prisma. Autores de commits corregidos |
-| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md`. E4 completa (HU-19 a HU-22) en `feature/auth-frontend`. La landing se retrasa porque un compañero está sin conexión. Rama `feature/validaciones-publicid`: `publicId` UUIDv7 y largo máximo en formularios |
+| 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md`. E4 completa (HU-19 a HU-22) en `feature/auth-frontend`. La landing se retrasa porque un compañero está sin conexión. Rama `feature/validaciones-publicid`: `publicId` UUIDv7 y largo máximo en formularios. PR #10 y #11 unidos. E5 completa (HU-23 a HU-27) en `feature/clientes-motos` |
