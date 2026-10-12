@@ -43,7 +43,11 @@ export default function MotosPage() {
           <ul className="grid gap-3 md:grid-cols-2" aria-label="Mis motos">
             {lista.map((m) => (
               <li key={m.publicId}>
-                <MotoCard moto={m} onEditar={(moto) => setSheet({ open: true, moto })} />
+                <MotoCard
+                  moto={m}
+                  onEditar={(moto) => setSheet({ open: true, moto })}
+                  enlaceOrden={(id) => `/cliente/ordenes/${id}`}
+                />
               </li>
             ))}
           </ul>

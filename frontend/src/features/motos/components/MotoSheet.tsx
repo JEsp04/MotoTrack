@@ -24,6 +24,8 @@ export interface MotoSheetProps {
   moto?: Moto | null;
   /** Admin: cliente al que se le registra la moto. El cliente no lo envía. */
   clientePublicId?: string;
+  /** Tras guardar (por ejemplo, para elegirla en una orden nueva) */
+  onGuardada?: (moto: Moto) => void;
 }
 
 /** HU-26 · Agregar o editar una moto (admin desde el cliente; cliente desde "Mis motos"). */
@@ -32,7 +34,7 @@ export function MotoSheet(props: MotoSheetProps) {
   return props.open ? <FormularioMoto {...props} /> : null;
 }
 
-function FormularioMoto({ onClose, moto, clientePublicId }: MotoSheetProps) {
+function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoSheetProps) {
   const crear = useCrearMoto();
   const actualizar = useActualizarMoto();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -52,14 +54,12 @@ function FormularioMoto({ onClose, moto, clientePublicId }: MotoSheetProps) {
   const onSubmit = handleSubmit(async (datos) => {
     setErrorGeneral(null);
     try {
-      if (moto) {
-        await actualizar.mutateAsync({ publicId: moto.publicId, body: datos });
-        toast('Moto actualizada', 'success');
-      } else {
-        await crear.mutateAsync({ ...datos, clientePublicId });
-        toast('Moto registrada', 'success');
-      }
+      const guardada = moto
+        ? await actualizar.mutateAsync({ publicId: moto.publicId, body: datos })
+        : await crear.mutateAsync({ ...datos, clientePublicId });
+      toast(moto ? 'Moto actualizada' : 'Moto registrada', 'success');
       onClose();
+      onGuardada?.(guardada);
     } catch (error) {
       const e = parseApiError(error);
       if (aplicarErroresDeCampo(setError, e).length === 0) setErrorGeneral(e.message);

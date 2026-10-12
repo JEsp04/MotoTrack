@@ -76,6 +76,7 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
   - **Servicio:** la lógica y Prisma. Nunca usa `req` ni `res`.
 - **Imports con extensión `.js`** aunque el archivo sea `.ts`, porque el proyecto usa NodeNext: `import { env } from '../config/env.js'`.
 - **Errores:** lanzar `HttpError` (`HttpError.notFound()`, `HttpError.conflict('…')`). El manejador central arma la respuesta. Express 5 captura los errores de funciones `async`; no hace falta `try/catch` para eso.
+- **Órdenes:** el estado de una orden solo cambia con `cambiarEstado()` (`modules/ordenes/ordenes.service.ts`), que valida con `estados.ts` y escribe el historial en la misma transacción. Si se cambia una transición, se cambia también `frontend/src/features/ordenes/estados.ts`.
 - **Multi-taller:** toda consulta de negocio filtra por `req.user.tallerId`. Un recurso de otro taller responde **404**, no 403.
 - **Permisos:** `requireAuth` y luego `requireRole('admin', ...)`. La seguridad vive en el backend; el frontend solo esconde botones.
 - **`publicId` hacia afuera, `Int` por dentro:** talleres, usuarios, clientes, motocicletas y órdenes tienen `publicId` (UUIDv7). URLs, respuestas y cuerpos de la API usan el `publicId`; los `Int` solo viven en relaciones, consultas internas y el JWT. Nunca responder `usuarioId`, `tallerId`, etc.

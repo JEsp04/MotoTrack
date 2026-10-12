@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import {
   Alert,
   AppBar,
@@ -124,7 +124,11 @@ export default function ClienteDetallePage() {
             <ul className="grid gap-3 md:grid-cols-2">
               {c.motos.map((m) => (
                 <li key={m.publicId}>
-                  <MotoCard moto={m} onEditar={(moto) => setMotoSheet({ open: true, moto })} />
+                  <MotoCard
+                    moto={m}
+                    onEditar={(moto) => setMotoSheet({ open: true, moto })}
+                    enlaceOrden={(id) => `/admin/ordenes/${id}`}
+                  />
                 </li>
               ))}
             </ul>
@@ -132,9 +136,21 @@ export default function ClienteDetallePage() {
         </section>
 
         <section aria-labelledby="titulo-ordenes" className="flex flex-col gap-3">
-          <h2 id="titulo-ordenes" className="text-lg">
-            Órdenes
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 id="titulo-ordenes" className="text-lg">
+              Órdenes
+            </h2>
+            {c.motos.length > 0 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                icon="plus"
+                onClick={() => navigate(`/admin/ordenes/nueva?cliente=${c.publicId}`)}
+              >
+                Nueva orden
+              </Button>
+            )}
+          </div>
           {c.ordenes.length === 0 ? (
             <p className="text-ink-muted">Todavía no tiene órdenes de servicio.</p>
           ) : (
@@ -142,7 +158,12 @@ export default function ClienteDetallePage() {
               <ul className="divide-y divide-border">
                 {c.ordenes.map((o) => (
                   <li key={o.publicId} className="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
-                    <span className="font-semibold">#{o.numero}</span>
+                    <Link
+                      to={`/admin/ordenes/${o.publicId}`}
+                      className="font-semibold text-primary-text underline"
+                    >
+                      Orden #{o.numero}
+                    </Link>
                     <Plate placa={o.moto.placa} size="sm" />
                     <StatusBadge estado={o.estado} />
                     <span className="ml-auto text-sm text-ink-muted">
