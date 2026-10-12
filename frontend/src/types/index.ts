@@ -20,6 +20,7 @@ export interface Usuario {
   tallerId: number;
   nombre: string;
   email: string;
+  telefono?: string | null;
   rol: Rol;
 }
 

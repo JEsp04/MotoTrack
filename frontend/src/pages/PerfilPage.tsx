@@ -1,13 +1,10 @@
-import { useNavigate } from 'react-router';
 import { AppBar, Button, Card } from '@/components/ui';
-import { ROL_LABEL, useSession } from '@/features/auth';
-import { toast } from '@/lib/toast';
+import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
 
 /** Perfil compartido por los 3 roles. En celular aquí está "Cerrar sesión" (HU-22). */
 export default function PerfilPage() {
   const usuario = useSession((s) => s.usuario);
-  const clearSession = useSession((s) => s.clearSession);
-  const navigate = useNavigate();
+  const { salir, saliendo } = useSalir();
   if (!usuario) return null;
 
   const iniciales = usuario.nombre
@@ -35,11 +32,8 @@ export default function PerfilPage() {
           icon="logout"
           fullWidth
           className="lg:w-auto lg:self-start"
-          onClick={() => {
-            clearSession();
-            navigate('/login', { replace: true });
-            toast('Cerraste sesión');
-          }}
+          loading={saliendo}
+          onClick={salir}
         >
           Cerrar sesión
         </Button>

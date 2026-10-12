@@ -2,9 +2,13 @@ import { create } from 'zustand';
 import type { Rol, Usuario } from '@/types';
 
 /**
- * Sesión del usuario (docs/CONTEXTO.md, sección 6).
+ * Sesión del usuario (contexto.md, sección 7).
  * El token de acceso vive SOLO en memoria: nunca en localStorage ni sessionStorage.
- * Al recargar la página se recupera con POST /auth/refresh (HU-21).
+ * Al abrir la app se recupera con POST /auth/refresh (HU-21, ver session-bootstrap.ts).
+ *
+ * - checking: la app acaba de abrir y está preguntando al backend si hay sesión.
+ * - authenticated: hay usuario y token.
+ * - anonymous: no hay sesión.
  */
 export type SessionStatus = 'checking' | 'authenticated' | 'anonymous';
 
@@ -18,8 +22,7 @@ interface SessionState {
 }
 
 export const useSession = create<SessionState>((set) => ({
-  // Mientras no exista HU-21, la app arranca sin sesión
-  status: 'anonymous',
+  status: 'checking',
   accessToken: null,
   usuario: null,
   setSession: (accessToken, usuario) => set({ status: 'authenticated', accessToken, usuario }),
@@ -39,3 +42,9 @@ export const HOME_POR_ROL: Record<Rol, string> = {
   mecanico: '/mecanico',
   cliente: '/cliente',
 };
+
+/** A dónde ir después de ingresar: la ruta pedida si es del rol, si no su inicio. */
+export function destinoTrasIngreso(rol: Rol, desde?: string | null): string {
+  const home = HOME_POR_ROL[rol];
+  return desde && (desde === home || desde.startsWith(`${home}/`)) ? desde : home;
+}

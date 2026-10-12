@@ -2,7 +2,7 @@ import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 're
 import { createBrowserRouter, type RouteObject } from 'react-router';
 import { AuthLayout } from '@/components/layout';
 import RouteErrorPage from '@/pages/RouteErrorPage';
-import { FullPageLoader, HomeRedirect } from './guards';
+import { FullPageLoader, GuestOnly, HomeRedirect } from './guards';
 import { RoleLayout } from './RoleLayout';
 
 /** Cada página se carga en su propio archivo, solo cuando se visita (HU-11). */
@@ -25,7 +25,23 @@ export const routes: RouteObject[] = [
 
       {
         element: <AuthLayout />,
-        children: [{ path: '/login', element: page(() => import('@/pages/auth/LoginPage')) }],
+        children: [
+          {
+            element: <GuestOnly />,
+            children: [
+              { path: '/login', element: page(() => import('@/pages/auth/LoginPage')) },
+              { path: '/registro', element: page(() => import('@/pages/auth/RegistroPage')) },
+              {
+                path: '/registro/taller',
+                element: page(() => import('@/pages/auth/RegistroTallerPage')),
+              },
+              {
+                path: '/registro/cliente',
+                element: page(() => import('@/pages/auth/RegistroClientePage')),
+              },
+            ],
+          },
+        ],
       },
 
       {

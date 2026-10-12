@@ -1,3 +1,4 @@
+export { Alert } from './Alert';
 export { AppBar } from './AppBar';
 export { Badge, StatusBadge } from './Badge';
 export { BottomSheet } from './BottomSheet';
