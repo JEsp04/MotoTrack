@@ -16,11 +16,11 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E2 · Base del frontend | HU-08 a HU-12 | ✅ En `develop` (10-oct) |
 | E3 · Autenticación en backend | HU-13 a HU-18 | ✅ En `develop` (10-oct) |
 | E4 · Autenticación en frontend | HU-19 a HU-22 | ✅ En `develop` (12-oct, PR #10) |
-| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | 🔎 En revisión: rama `feature/clientes-motos` (12-oct) |
-| E6 · Órdenes de servicio | HU-28 a HU-37 | ⏳ Siguiente |
-| E7 · Despliegue y entrega | HU-38 a HU-40 | ⬜ Pendiente |
+| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | ✅ En `develop` (12-oct, PR #12) |
+| E6 · Órdenes de servicio | HU-28 a HU-37 | 🔎 En revisión: rama `feature/ordenes` (12-oct) |
+| E7 · Despliegue y entrega | HU-38 a HU-40 | ⏳ Siguiente |
 
-**Avance:** 22 de 40 historias unidas · 51 de 88 puntos (≈ 58 %). Con E5 en revisión: 27 historias · 61 puntos (≈ 69 %).
+**Avance:** 27 de 40 historias unidas · 61 de 88 puntos (≈ 69 %). Con E6 en revisión: 37 historias · 82 puntos (≈ 93 %).
 
 ---
 
@@ -32,8 +32,8 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 |---|---|
 | ~~10–13 oct~~ | ~~E0, E1, E2, E3~~ ✅ terminadas el 10-oct |
 | ~~Lun 12 – mar 13~~ | ~~E4~~ ✅ terminada el 12-oct |
-| ~~Mar 13 – mié 14~~ | ~~E5~~ 🔎 hecha el 12-oct, en revisión |
-| Mié 14 – jue 16 | E6: órdenes, estados, diagnóstico e historial |
+| ~~Mar 13 – mié 14~~ | ~~E5~~ ✅ terminada el 12-oct |
+| ~~Mié 14 – jue 16~~ | ~~E6~~ 🔎 hecha el 12-oct, en revisión |
 | Mié 15 | HU-38: base en Aiven (temprano, para probar con datos reales) |
 | Jue 16 | HU-39 despliegue en Vercel + HU-40 prueba de punta a punta y `v0.1` |
 | Vie 17 | **Primera entrega** |
@@ -84,26 +84,26 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 - [x] `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (se conservan los `Int`)
 - [x] Largo máximo en todos los campos y `maxLength` en los inputs
 
-## E5 · Usuarios, clientes y motos 🔎 (hecha, falta PR a `develop`)
+## E5 · Usuarios, clientes y motos ✅
 
-- [~] HU-23 · Crear cuentas de mecánico
-- [~] HU-24 · Registrar un cliente en el taller
-- [~] HU-25 · Buscar y ver clientes
-- [~] HU-26 · Registrar una moto (el alterno B, desde el formulario de la orden, se completa con HU-29)
-- [~] HU-27 · Ver mis motos como cliente
+- [x] HU-23 · Crear cuentas de mecánico
+- [x] HU-24 · Registrar un cliente en el taller
+- [x] HU-25 · Buscar y ver clientes
+- [x] HU-26 · Registrar una moto (el alterno B, desde el formulario de la orden, queda en `feature/ordenes`)
+- [x] HU-27 · Ver mis motos como cliente
 
-## E6 · Órdenes de servicio
+## E6 · Órdenes de servicio 🔎 (hecha, falta PR a `develop`)
 
-- [ ] HU-28 · Motor de estados e historial (backend)
-- [ ] HU-29 · Crear una orden de servicio
-- [ ] HU-30 · Ver la lista de órdenes
-- [ ] HU-31 · Ver el detalle y el historial de una orden
-- [ ] HU-32 · Registrar el diagnóstico
-- [ ] HU-33 · Agregar servicios y calcular el costo *(deseable)*
-- [ ] HU-34 · Aprobar o rechazar el diagnóstico
-- [ ] HU-35 · Avanzar la reparación
-- [ ] HU-36 · Entregar y cerrar la orden
-- [ ] HU-37 · Cancelar una orden con motivo
+- [~] HU-28 · Motor de estados e historial (backend)
+- [~] HU-29 · Crear una orden de servicio
+- [~] HU-30 · Ver la lista de órdenes
+- [~] HU-31 · Ver el detalle y el historial de una orden
+- [~] HU-32 · Registrar el diagnóstico
+- [~] HU-33 · Agregar servicios y calcular el costo *(deseable)*
+- [~] HU-34 · Aprobar o rechazar el diagnóstico
+- [~] HU-35 · Avanzar la reparación
+- [~] HU-36 · Entregar y cerrar la orden
+- [~] HU-37 · Cancelar una orden con motivo
 
 ## E7 · Despliegue y entrega
 

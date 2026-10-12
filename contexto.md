@@ -111,7 +111,9 @@ MotoTrack/
 │   │   │   ├── talleres/              # GET /talleres/publicos
 │   │   │   ├── usuarios/              # equipo del taller (HU-23)
 │   │   │   ├── clientes/              # HU-24, HU-25
-│   │   │   └── motos/                 # HU-26, HU-27
+│   │   │   ├── motos/                 # HU-26, HU-27
+│   │   │   ├── ordenes/               # estados.ts (máquina de estados) + órdenes, diagnóstico y servicios
+│   │   │   └── servicios/             # GET /servicios (catálogo)
 │   │   ├── utils/                     # http-error, schemas (validaciones compartidas), prisma-errors
 │   │   ├── types/express.d.ts         # req.user (UsuarioAutenticado)
 │   │   └── generated/                 # cliente de Prisma (no va a git)
@@ -125,6 +127,7 @@ MotoTrack/
         ├── features/equipo/           # mecánicos del taller
         ├── features/clientes/         # buscador, formulario y detalle
         ├── features/motos/            # formulario de moto y tarjeta con su orden abierta
+        ├── features/ordenes/          # estados.ts, lista, crear orden, detalle y hojas de confirmación
         ├── components/ui/             # 16 componentes base
         ├── components/layout/         # AppLayout, AuthLayout, Logo
         ├── lib/                       # http, api-error, query-client, toast, format, estados-orden, cn, validaciones, use-debounce
@@ -151,7 +154,7 @@ MotoTrack/
 
 **Reglas:**
 - Toda tabla de negocio tiene `tallerId`.
-- Las llaves son `Int` autoincrementales. `talleres`, `usuarios`, `clientes`, `motocicletas` y `ordenes_servicio` tienen además `publicId` (UUIDv7, `CHAR(36)`, único), que es lo único que sale en URLs y respuestas.
+- Las llaves son `Int` autoincrementales. `talleres`, `usuarios`, `clientes`, `motocicletas`, `ordenes_servicio`, `servicios` y `detalle_servicios` tienen además `publicId` (UUIDv7, `CHAR(36)`, único), que es lo único que sale en URLs y respuestas.
 - Los textos tienen largo máximo en la base, y el mismo límite se valida con Zod en el backend y en el frontend.
 - El dinero se guarda en pesos enteros.
 - Las fechas van en UTC.
@@ -189,6 +192,19 @@ MotoTrack/
 | `POST /api/motos` | admin, cliente | El admin envía `clientePublicId`; el cliente no (queda a su nombre). 409 si la placa ya existe |
 | `PATCH /api/motos/:id` | admin, cliente dueño | Editar datos de la moto |
 
+**Órdenes (E6).** Quién puede cada cambio de estado lo decide `ordenes/estados.ts` (sección 8).
+
+| Endpoint | Quién | Uso |
+|---|---|---|
+| `GET /api/ordenes?grupo=&estado=&q=&page=` | todos | Admin: todas; mecánico: las asignadas; cliente: las de sus motos. `grupo`: `en_proceso`, `por_aprobar`, `listas`, `cerradas`. `q`: placa, número o cliente |
+| `GET /api/ordenes/:id` | con acceso | Moto, cliente, mecánico, diagnóstico, servicios e historial (reciente primero) |
+| `POST /api/ordenes` | admin | `motoPublicId`, `mecanicoPublicId`, `motivoIngreso`, `kilometrajeIngreso`, `observaciones?`. 409 si la moto tiene una orden abierta |
+| `PATCH /api/ordenes/:id/estado` | según `estados.ts` | `{ estado, observacion? }`. 409 transición inválida, 403 sin permiso, 400 sin motivo |
+| `POST /api/ordenes/:id/diagnostico` | mecánico asignado | Crea (registrada → diagnosticada, 201) o corrige (diagnosticada, 200) |
+| `POST /api/ordenes/:id/servicios` | admin, mecánico asignado | `{ servicioPublicId, cantidad, precioUnitario? }`. Recalcula `costoTotal` |
+| `DELETE /api/ordenes/:id/servicios/:detalleId` | admin, mecánico asignado | Quita un servicio y recalcula |
+| `GET /api/servicios` | admin, mecánico | Catálogo de servicios activos del taller |
+
 ## 8. Máquina de estados de la orden
 
 ```
@@ -211,7 +227,9 @@ registrada → diagnosticada → esperando_aprobacion → aprobada → en_repara
 - Una transición inválida responde **409**.
 - Cada cambio escribe en `historial_orden` dentro de la misma transacción.
 - Los textos y colores de cada estado están en `frontend/src/lib/estados-orden.ts`.
-- Las transiciones irán en `backend/src/modules/ordenes/estados.ts` (HU-28).
+- Las transiciones están en `backend/src/modules/ordenes/estados.ts` y en `frontend/src/features/ordenes/estados.ts` (deben coincidir; hay una prueba en cada lado).
+- Pedir repuesto exige decir cuál; rechazar y cancelar exigen motivo.
+- `registrada → diagnosticada` solo ocurre al guardar el diagnóstico.
 
 ## 9. Sistema de diseño
 
