@@ -145,12 +145,19 @@ describe('HU-20 · Registro', () => {
 
   it('cliente: elige su taller, se registra y queda con sesión', async () => {
     api.talleresPublicos.mockResolvedValue([
-      { tallerId: 7, nombre: 'Moto Express', direccion: 'Laureles' },
+      {
+        publicId: '0192f0a0-0000-7000-8000-000000000007',
+        nombre: 'Moto Express',
+        direccion: 'Laureles',
+      },
     ]);
     api.registrarCliente.mockResolvedValue({ accessToken: 't', usuario: USUARIOS_PRUEBA.cliente });
     const router = abrirApp('/registro/cliente');
     await screen.findByRole('option', { name: 'Moto Express · Laureles' });
-    await userEvent.selectOptions(screen.getByLabelText(/Tu taller/), '7');
+    await userEvent.selectOptions(
+      screen.getByLabelText(/Tu taller/),
+      '0192f0a0-0000-7000-8000-000000000007',
+    );
     await userEvent.type(screen.getByLabelText(/Nombre completo/), 'Laura Martínez');
     await userEvent.type(screen.getByLabelText(/Documento/), '1036123456');
     await userEvent.type(screen.getByLabelText(/Celular/), '3104445566');
@@ -160,9 +167,27 @@ describe('HU-20 · Registro', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/cliente'));
     expect(api.registrarCliente).toHaveBeenCalledWith(
-      expect.objectContaining({ tallerId: 7, email: 'laura@correo.co' }),
+      expect.objectContaining({
+        tallerPublicId: '0192f0a0-0000-7000-8000-000000000007',
+        email: 'laura@correo.co',
+      }),
     );
     expect(api.registrarCliente.mock.calls[0]![0]).not.toHaveProperty('confirmar');
+  });
+});
+
+describe('Largo máximo de los campos', () => {
+  it('los inputs no dejan escribir más de lo que acepta la base de datos', async () => {
+    abrirApp('/login');
+    expect(await screen.findByLabelText(/Correo/)).toHaveAttribute('maxlength', '150');
+    expect(screen.getByLabelText(/^Contraseña/)).toHaveAttribute('maxlength', '72');
+  });
+
+  it('el registro del cliente limita documento y celular', async () => {
+    api.talleresPublicos.mockResolvedValue([]);
+    abrirApp('/registro/cliente');
+    expect(await screen.findByLabelText(/Documento/)).toHaveAttribute('maxlength', '30');
+    expect(screen.getByLabelText(/Celular/)).toHaveAttribute('maxlength', '20');
   });
 });
 

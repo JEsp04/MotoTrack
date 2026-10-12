@@ -8,7 +8,7 @@ export interface SesionResponse {
 }
 
 export interface TallerPublico {
-  tallerId: number;
+  publicId: string;
   nombre: string;
   direccion: string | null;
 }
@@ -24,7 +24,8 @@ export interface RegistroTallerBody {
 }
 
 export interface RegistroClienteBody {
-  tallerId: number;
+  /** publicId del taller elegido */
+  tallerPublicId: string;
   nombre: string;
   documentoIdentidad: string;
   telefono: string;

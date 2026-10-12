@@ -5,27 +5,29 @@ import { useSession } from '@/features/auth';
 import { routes } from '@/router';
 import type { Rol, Usuario } from '@/types';
 
+const TALLER_PRUEBA = { publicId: '0192f0a0-0000-7000-8000-000000000001', nombre: 'Moto Express' };
+
 export const USUARIOS_PRUEBA: Record<Rol, Usuario> = {
   admin: {
-    usuarioId: 1,
-    tallerId: 1,
+    publicId: '0192f0a0-0000-7000-8000-0000000000a1',
     nombre: 'Carolina Restrepo',
     email: 'admin@mototrack.co',
     rol: 'admin',
+    taller: TALLER_PRUEBA,
   },
   mecanico: {
-    usuarioId: 2,
-    tallerId: 1,
+    publicId: '0192f0a0-0000-7000-8000-0000000000a2',
     nombre: 'Andrés Gómez',
     email: 'andres@mototrack.co',
     rol: 'mecanico',
+    taller: TALLER_PRUEBA,
   },
   cliente: {
-    usuarioId: 4,
-    tallerId: 1,
+    publicId: '0192f0a0-0000-7000-8000-0000000000a4',
     nombre: 'Laura Martínez',
     email: 'laura@correo.co',
     rol: 'cliente',
+    taller: TALLER_PRUEBA,
   },
 };
 

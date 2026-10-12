@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
@@ -21,6 +22,8 @@ function cookieRefresh(res: request.Response): string {
   return c;
 }
 const valorCookie = (c: string) => c.split(';')[0]!;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 beforeEach(limpiarBase);
 afterAll(() => prisma.$disconnect());
@@ -71,7 +74,7 @@ describe('HU-14 · POST /api/auth/register', () => {
   it('registra un cliente; el rol siempre es cliente aunque se envíe otro', async () => {
     const taller = await crearTaller();
     const res = await request(app).post('/api/auth/register').send({
-      tallerId: taller.tallerId,
+      tallerPublicId: taller.publicId,
       nombre: 'Laura Martínez',
       documentoIdentidad: '1.036.123.456',
       telefono: '310 444 5566',
@@ -108,7 +111,7 @@ describe('HU-14 · POST /api/auth/register', () => {
     });
 
     const res = await request(app).post('/api/auth/register').send({
-      tallerId: taller.tallerId,
+      tallerPublicId: taller.publicId,
       nombre: 'Sofía Cardona',
       documentoIdentidad: '43987654',
       telefono: '3126667788',
@@ -120,12 +123,15 @@ describe('HU-14 · POST /api/auth/register', () => {
     const vinculado = await prisma.cliente.findUniqueOrThrow({
       where: { clienteId: previo.clienteId },
     });
-    expect(vinculado.usuarioId).toBe(res.body.data.usuario.usuarioId);
+    const nuevo = await prisma.usuario.findUniqueOrThrow({
+      where: { publicId: res.body.data.usuario.publicId },
+    });
+    expect(vinculado.usuarioId).toBe(nuevo.usuarioId);
   });
 
   it('con un taller inexistente responde 404', async () => {
     const res = await request(app).post('/api/auth/register').send({
-      tallerId: 999,
+      tallerPublicId: randomUUID(),
       nombre: 'X',
       documentoIdentidad: '123456',
       telefono: '3000000000',
@@ -296,5 +302,50 @@ describe('GET /api/talleres/publicos', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([expect.objectContaining({ nombre: 'Activo' })]);
     expect(res.body.data[0]).not.toHaveProperty('telefono');
+    expect(res.body.data[0]).not.toHaveProperty('tallerId');
+    expect(res.body.data[0].publicId).toMatch(UUID);
+  });
+});
+
+describe('publicId: la API no expone los Int', () => {
+  it('login devuelve publicId del usuario y del taller, sin usuarioId ni tallerId', async () => {
+    const taller = await crearTaller('Moto Express');
+    await crearUsuario(taller.tallerId, 'admin', 'admin@mototrack.co');
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'admin@mototrack.co', password: CLAVE });
+    const { usuario } = res.body.data;
+    expect(usuario.publicId).toMatch(UUID);
+    expect(usuario.taller).toEqual({ publicId: taller.publicId, nombre: 'Moto Express' });
+    expect(usuario).not.toHaveProperty('usuarioId');
+    expect(usuario).not.toHaveProperty('tallerId');
+  });
+
+  it('los publicId nuevos son UUIDv7 (ordenados por fecha)', async () => {
+    const taller = await crearTaller();
+    expect(taller.publicId).toMatch(UUID);
+    expect(taller.publicId[14]).toBe('7');
+  });
+
+  it('registrarse con un taller que no es un publicId válido responde 400', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      tallerPublicId: '1',
+      nombre: 'X',
+      documentoIdentidad: '123456',
+      telefono: '3000000000',
+      email: 'x@correo.co',
+      password: 'Clave1234',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.errors).toEqual(
+      expect.arrayContaining([expect.objectContaining({ field: 'tallerPublicId' })]),
+    );
+  });
+
+  it('textos más largos que el máximo se rechazan', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'admin@mototrack.co', password: 'x'.repeat(73) });
+    expect(res.status).toBe(400);
   });
 });

@@ -7,6 +7,7 @@ import { aplicarErroresDeCampo } from '@/lib/form-errors';
 import type { Usuario } from '@/types';
 import { useRegistroCliente, useTalleresPublicos } from '../hooks/use-auth';
 import {
+  LIMITES,
   registroClienteSchema,
   type RegistroClienteForm as Valores,
 } from '../schemas/auth-schemas';
@@ -26,7 +27,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
     resolver: zodResolver(registroClienteSchema),
     mode: 'onTouched',
     defaultValues: {
-      tallerId: '',
+      tallerPublicId: '',
       nombre: '',
       documentoIdentidad: '',
       telefono: '',
@@ -36,10 +37,10 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
     },
   });
 
-  const onSubmit = handleSubmit(async ({ confirmar: _confirmar, tallerId, ...datos }) => {
+  const onSubmit = handleSubmit(async ({ confirmar: _confirmar, ...datos }) => {
     setErrorGeneral(null);
     try {
-      const { usuario } = await registro.mutateAsync({ ...datos, tallerId: Number(tallerId) });
+      const { usuario } = await registro.mutateAsync(datos);
       onRegistro(usuario);
     } catch (error) {
       const e = parseApiError(error);
@@ -49,7 +50,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
   });
 
   const opciones = (talleres.data ?? []).map((t) => ({
-    value: String(t.tallerId),
+    value: t.publicId,
     label: t.direccion ? `${t.nombre} · ${t.direccion}` : t.nombre,
   }));
 
@@ -72,14 +73,15 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         disabled={talleres.isLoading}
         options={opciones}
         hint="El taller donde llevas tu moto"
-        error={errors.tallerId?.message}
-        {...register('tallerId')}
+        error={errors.tallerPublicId?.message}
+        {...register('tallerPublicId')}
       />
       <Input
         label="Nombre completo"
         required
         autoComplete="name"
         error={errors.nombre?.message}
+        maxLength={LIMITES.nombre}
         {...register('nombre')}
       />
       <Input
@@ -88,6 +90,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         inputMode="numeric"
         hint="Sin puntos. Si el taller ya te registró, verás tus motos al entrar."
         error={errors.documentoIdentidad?.message}
+        maxLength={LIMITES.documento}
         {...register('documentoIdentidad')}
       />
       <Input
@@ -98,6 +101,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         autoComplete="tel"
         placeholder="300 123 4567"
         error={errors.telefono?.message}
+        maxLength={LIMITES.telefono}
         {...register('telefono')}
       />
       <Input
@@ -107,6 +111,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         autoComplete="email"
         required
         error={errors.email?.message}
+        maxLength={LIMITES.email}
         {...register('email')}
       />
       <Input
@@ -116,6 +121,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         required
         hint="Mínimo 8 caracteres, con letras y números"
         error={errors.password?.message}
+        maxLength={LIMITES.password}
         {...register('password')}
       />
       <Input
@@ -124,6 +130,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         autoComplete="new-password"
         required
         error={errors.confirmar?.message}
+        maxLength={LIMITES.password}
         {...register('confirmar')}
       />
 

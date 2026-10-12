@@ -19,17 +19,29 @@ let hashFicticio: Promise<string> | null = null;
 const obtenerHashFicticio = () =>
   (hashFicticio ??= bcrypt.hash('usuario-inexistente', BCRYPT_COSTO));
 
-/** Lo que se devuelve del usuario. Nunca incluye passwordHash. */
-const usuarioPublico = {
+/**
+ * Datos del usuario que necesita la sesión. Los Int (usuarioId, tallerId) se usan
+ * solo adentro (token y llaves); hacia afuera se devuelve publicId. Nunca passwordHash.
+ */
+const usuarioSesion = {
   usuarioId: true,
   tallerId: true,
+  publicId: true,
   nombre: true,
   email: true,
   telefono: true,
   rol: true,
+  taller: { select: { publicId: true, nombre: true } },
 } satisfies Prisma.UsuarioSelect;
 
-export type UsuarioPublico = Prisma.UsuarioGetPayload<{ select: typeof usuarioPublico }>;
+type UsuarioSesion = Prisma.UsuarioGetPayload<{ select: typeof usuarioSesion }>;
+
+/** Lo que ve el frontend: { publicId, nombre, email, telefono, rol, taller: { publicId, nombre } } */
+export type UsuarioPublico = Omit<UsuarioSesion, 'usuarioId' | 'tallerId'>;
+
+function aPublico({ usuarioId: _u, tallerId: _t, ...publico }: UsuarioSesion): UsuarioPublico {
+  return publico;
+}
 
 export interface Sesion {
   accessToken: string;
@@ -52,7 +64,7 @@ async function correoDisponible(email: string) {
 }
 
 /** Crea el token de acceso y un token de renovación nuevo (se guarda solo su hash). */
-async function abrirSesion(usuario: UsuarioPublico): Promise<Sesion> {
+async function abrirSesion(usuario: UsuarioSesion): Promise<Sesion> {
   const refreshToken = generarRefreshToken();
   await prisma.refreshToken.create({
     data: {
@@ -66,7 +78,7 @@ async function abrirSesion(usuario: UsuarioPublico): Promise<Sesion> {
     rol: usuario.rol,
     tallerId: usuario.tallerId,
   });
-  return { accessToken, refreshToken, usuario };
+  return { accessToken, refreshToken, usuario: aPublico(usuario) };
 }
 
 // ─── HU-13 · Registrar un taller con su administrador ─────────────────────
@@ -104,7 +116,7 @@ export async function registrarTaller(input: RegisterTallerInput): Promise<Sesio
           rol: 'admin',
           ultimoAcceso: new Date(),
         },
-        select: usuarioPublico,
+        select: usuarioSesion,
       });
     });
     return abrirSesion(usuario);
@@ -119,7 +131,7 @@ export async function registrarTaller(input: RegisterTallerInput): Promise<Sesio
 
 export async function registrarCliente(input: RegisterClienteInput): Promise<Sesion> {
   const taller = await prisma.taller.findFirst({
-    where: { tallerId: input.tallerId, estado: 'activo' },
+    where: { publicId: input.tallerPublicId, estado: 'activo' },
     select: { tallerId: true },
   });
   if (!taller) throw HttpError.notFound('No encontramos ese taller');
@@ -155,7 +167,7 @@ export async function registrarCliente(input: RegisterClienteInput): Promise<Ses
           rol: 'cliente', // siempre cliente, sin importar lo que se envíe
           ultimoAcceso: new Date(),
         },
-        select: usuarioPublico,
+        select: usuarioSesion,
       });
       if (porVincular) {
         // Se vincula al cliente existente: conserva sus motos y órdenes
@@ -190,7 +202,7 @@ export async function registrarCliente(input: RegisterClienteInput): Promise<Ses
 export async function iniciarSesion(input: LoginInput): Promise<Sesion> {
   const usuario = await prisma.usuario.findUnique({
     where: { email: input.email },
-    select: { ...usuarioPublico, passwordHash: true, estado: true },
+    select: { ...usuarioSesion, passwordHash: true, estado: true },
   });
   const ok = await bcrypt.compare(
     input.password,
@@ -216,7 +228,7 @@ export async function renovarSesion(refreshToken: string | undefined): Promise<S
 
   const guardado = await prisma.refreshToken.findUnique({
     where: { tokenHash: hashRefreshToken(refreshToken) },
-    include: { usuario: { select: { ...usuarioPublico, estado: true } } },
+    include: { usuario: { select: { ...usuarioSesion, estado: true } } },
   });
   if (!guardado) throw HttpError.unauthorized('Tu sesión terminó. Ingresa de nuevo.');
 
@@ -259,8 +271,8 @@ export async function cerrarSesion(refreshToken: string | undefined): Promise<vo
 export async function obtenerPerfil(usuarioId: number, tallerId: number) {
   const usuario = await prisma.usuario.findFirst({
     where: { usuarioId, tallerId, estado: 'activo' },
-    select: { ...usuarioPublico, taller: { select: { tallerId: true, nombre: true } } },
+    select: usuarioSesion,
   });
   if (!usuario) throw HttpError.unauthorized('Tu sesión terminó. Ingresa de nuevo.');
-  return usuario;
+  return aPublico(usuario);
 }
