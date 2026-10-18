@@ -110,9 +110,9 @@
    * de mantener presionado, la cinta lenta) sigue funcionando.
    */
   @media (prefers-reduced-motion: reduce) {
-    *:not([data-movimiento='esencial']),
-    *:not([data-movimiento='esencial'])::before,
-    *:not([data-movimiento='esencial'])::after {
+    *:not([data-movimiento='esencial'], [data-movimiento='esencial'] *),
+    *:not([data-movimiento='esencial'], [data-movimiento='esencial'] *)::before,
+    *:not([data-movimiento='esencial'], [data-movimiento='esencial'] *)::after {
       animation-duration: 1ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0s !important;
@@ -438,13 +438,14 @@
     flex: 1;
     height: 44px;
   }
-  .lp-isla .txt > span {
+  .lp-isla .txt span {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    white-space: nowrap;
+    opacity: 0;
+    animation: lp-cycle 12s ease 2.3s infinite;
   }
   .lp-isla .txt b {
     font-weight: 600;
@@ -454,6 +455,34 @@
     font-style: normal;
     color: #a9b1ba;
     font-size: 13px;
+  }
+  .lp-isla .txt span:nth-child(2) {
+    animation-delay: 5.3s;
+  }
+  .lp-isla .txt span:nth-child(3) {
+    animation-delay: 8.3s;
+  }
+  .lp-isla .txt span:nth-child(4) {
+    animation-delay: 11.3s;
+  }
+  @keyframes lp-cycle {
+    0% {
+      opacity: 0;
+      filter: blur(4px);
+      transform: translateY(6px);
+    }
+    4%,
+    22% {
+      opacity: 1;
+      filter: blur(0);
+      transform: none;
+    }
+    26%,
+    100% {
+      opacity: 0;
+      filter: blur(4px);
+      transform: translateY(-6px);
+    }
   }
   .lp-isla .live {
     flex: none;
@@ -1209,16 +1238,8 @@
       padding-top: 64px;
     }
   }
+  /* La moto y la isla se animan siempre, igual que en el prototipo (data-movimiento="esencial") */
   @media (prefers-reduced-motion: reduce) {
-    .lp-moto path,
-    .lp-moto circle {
-      animation: none;
-      stroke-dashoffset: 0;
-    }
-    .lp-isla {
-      animation: none;
-      clip-path: none;
-    }
     .lp-tape-in {
       animation-duration: 120s;
     }

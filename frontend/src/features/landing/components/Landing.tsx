@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { HoldButton, Icon, IconButton, Plate } from '@/components/ui';
 import { LogoMark } from '@/components/layout';
 import { cn } from '@/lib/cn';
-import { FitText, SplitText, TextoRotativo } from './efectos';
+import { FitText, SplitText } from './efectos';
 import { reducirMovimiento } from './movimiento';
 
 /** Adónde llevan los botones de la landing (los paneles de ingreso y registro) */
@@ -521,14 +521,23 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
                 Ver el recorrido de una moto
               </button>
             </div>
+            {/* Animaciones iguales al prototipo; se ven aunque el sistema pida reducir movimiento */}
             <div
               className="lp-stage"
+              data-movimiento="esencial"
               role="img"
               aria-label="Una moto dibujada con su estado en vivo"
             >
               <div className="lp-isla" aria-hidden="true">
                 <span className="p">KTR</span>
-                <TextoRotativo mensajes={ISLA} />
+                <div className="txt">
+                  {ISLA.map((m) => (
+                    <span key={m.titulo}>
+                      <b>{m.titulo}</b>
+                      <em>{m.detalle}</em>
+                    </span>
+                  ))}
+                </div>
                 <span className="live" />
               </div>
               <div className="lp-moto" aria-hidden="true">

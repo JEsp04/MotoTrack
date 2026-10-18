@@ -1,5 +1,5 @@
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react';
-import { useEffect, useLayoutEffect, useRef, useState, type ElementType } from 'react';
+import { motion, useInView, useReducedMotion } from 'motion/react';
+import { useLayoutEffect, useRef, type ElementType } from 'react';
 import { cn } from '@/lib/cn';
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
@@ -109,67 +109,6 @@ export function FitText({
   return (
     <div ref={ref} className={cn('lp-giant', className)}>
       <SplitText as="span" text={text} hidden={hidden} />
-    </div>
-  );
-}
-
-/**
- * Mensajes que se turnan con un desenfoque, letra por letra (RotatingText de React Bits,
- * hecho con Motion). Con movimiento reducido se cambian con un fundido simple.
- */
-export function TextoRotativo({
-  mensajes,
-  cada = 3000,
-  inicio = 1800,
-}: {
-  mensajes: Array<{ titulo: string; detalle: string }>;
-  /** Milisegundos que se ve cada mensaje */
-  cada?: number;
-  /** Espera antes del primer cambio (mientras se abre la isla) */
-  inicio?: number;
-}) {
-  const [n, setN] = useState(0);
-  const reducir = useReducedMotion();
-
-  useEffect(() => {
-    let intervalo: ReturnType<typeof setInterval>;
-    const t = setTimeout(() => {
-      setN((x) => (x + 1) % mensajes.length);
-      intervalo = setInterval(() => setN((x) => (x + 1) % mensajes.length), cada);
-    }, inicio + cada);
-    return () => {
-      clearTimeout(t);
-      clearInterval(intervalo);
-    };
-  }, [cada, inicio, mensajes.length]);
-
-  const m = mensajes[n]!;
-  return (
-    <div className="txt">
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.span
-          key={n}
-          initial={reducir ? { opacity: 0 } : { opacity: 0, y: 12, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          exit={reducir ? { opacity: 0 } : { opacity: 0, y: -12, filter: 'blur(4px)' }}
-          transition={{ duration: reducir ? 0.4 : 0.55, ease: EASE_OUT }}
-        >
-          <b>
-            {Array.from(m.titulo).map((c, i) => (
-              <motion.span
-                key={i}
-                className="inline-block whitespace-pre"
-                initial={reducir ? false : { opacity: 0, y: '0.3em' }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: EASE_OUT, delay: i * 0.018 }}
-              >
-                {c}
-              </motion.span>
-            ))}
-          </b>
-          <em>{m.detalle}</em>
-        </motion.span>
-      </AnimatePresence>
     </div>
   );
 }
