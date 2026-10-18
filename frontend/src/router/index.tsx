@@ -18,6 +18,9 @@ function page(loader: () => Promise<{ default: ComponentType }>) {
 const perfil = page(() => import('@/pages/PerfilPage'));
 const ordenDetalle = page(() => import('@/pages/OrdenDetallePage'));
 
+/** Pantallas sin barra inferior en celular (como en el prototipo): tienen su propia barra de acciones */
+const SIN_NAV = { sinNav: true };
+
 export const routes: RouteObject[] = [
   {
     errorElement: <RouteErrorPage />,
@@ -51,8 +54,12 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: page(() => import('@/pages/admin/InicioPage')) },
           { path: 'ordenes', element: page(() => import('@/pages/admin/OrdenesPage')) },
-          { path: 'ordenes/nueva', element: page(() => import('@/pages/admin/NuevaOrdenPage')) },
-          { path: 'ordenes/:id', element: ordenDetalle },
+          {
+            path: 'ordenes/nueva',
+            element: page(() => import('@/pages/admin/NuevaOrdenPage')),
+            handle: SIN_NAV,
+          },
+          { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'clientes', element: page(() => import('@/pages/admin/ClientesPage')) },
           {
             path: 'clientes/:id',
@@ -68,7 +75,7 @@ export const routes: RouteObject[] = [
         element: <RoleLayout rol="mecanico" />,
         children: [
           { index: true, element: page(() => import('@/pages/mecanico/OrdenesPage')) },
-          { path: 'ordenes/:id', element: ordenDetalle },
+          { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'perfil', element: perfil },
         ],
       },
@@ -79,7 +86,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: page(() => import('@/pages/cliente/MotosPage')) },
           { path: 'ordenes', element: page(() => import('@/pages/cliente/OrdenesPage')) },
-          { path: 'ordenes/:id', element: ordenDetalle },
+          { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'perfil', element: perfil },
         ],
       },

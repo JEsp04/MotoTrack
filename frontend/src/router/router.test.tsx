@@ -49,16 +49,20 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
     actuales.forEach((link) => expect(link).toHaveTextContent('Clientes'));
   });
 
-  it('en computador, "Cerrar sesión" y "Perfil" están en el menú del avatar (HU-44)', async () => {
-    sesionDePrueba('cliente');
-    abrirApp('/cliente');
-    await screen.findByRole('heading', { name: 'Mis motos' });
+  it('en computador, «Mi cuenta» y «Cerrar sesión» están en el menú del avatar; en celular, en «Más» (HU-44)', async () => {
+    sesionDePrueba('admin');
+    abrirApp('/admin/ordenes');
+    await screen.findByRole('heading', { name: 'Órdenes' });
     const avatar = screen.getByRole('button', { name: /Cuenta de/ });
     expect(avatar).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(avatar);
     expect(avatar).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: /Perfil/ }).length).toBe(2);
+    expect(screen.getByRole('link', { name: /Mi cuenta/ })).toHaveAttribute(
+      'href',
+      '/admin/perfil',
+    );
+    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/admin/perfil');
   });
 
   it('el admin tiene el botón «Recibir moto» en la barra superior (HU-44)', async () => {
