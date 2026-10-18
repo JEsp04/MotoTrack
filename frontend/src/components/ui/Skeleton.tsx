@@ -3,7 +3,10 @@ import { cn } from '@/lib/cn';
 /** Bloque gris que se muestra mientras cargan los datos. */
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('animate-pulse rounded-sm bg-neutral-soft', className)} aria-hidden="true" />
+    <div
+      className={cn('animate-pulse rounded-sm bg-surface-sunken', className)}
+      aria-hidden="true"
+    />
   );
 }
 

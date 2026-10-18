@@ -160,7 +160,7 @@ export default function ClienteDetallePage() {
                   <li key={o.publicId} className="flex flex-wrap items-center gap-x-3 gap-y-1 p-4">
                     <Link
                       to={`/admin/ordenes/${o.publicId}`}
-                      className="font-semibold text-primary-text underline"
+                      className="font-semibold text-ink underline"
                     >
                       Orden #{o.numero}
                     </Link>

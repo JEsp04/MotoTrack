@@ -131,7 +131,7 @@ function FormularioCliente({ onClose, cliente, onCreado, onVerExistente }: Clien
         {documentoRepetido && onVerExistente && (
           <button
             type="button"
-            className="-mt-2 self-start text-sm font-semibold text-primary-text underline"
+            className="-mt-2 self-start text-sm font-semibold text-ink underline"
             onClick={() => {
               onClose();
               onVerExistente(documentoRepetido);

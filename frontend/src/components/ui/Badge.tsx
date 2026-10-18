@@ -4,8 +4,8 @@ import { ESTADOS_ORDEN, type Tono } from '@/lib/estados-orden';
 import type { EstadoOrden } from '@/types';
 
 const TONOS: Record<Tono, string> = {
-  neutral: 'bg-neutral-soft text-ink',
-  primary: 'bg-primary-soft text-primary-text',
+  neutral: 'bg-surface-sunken text-ink',
+  primary: 'bg-surface-sunken text-ink',
   accent: 'bg-accent-soft text-accent-text',
   success: 'bg-success-soft text-success-text',
   danger: 'bg-danger-soft text-danger',

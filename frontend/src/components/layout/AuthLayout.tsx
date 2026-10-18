@@ -5,11 +5,11 @@ import { Logo } from './Logo';
 export function AuthLayout() {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_minmax(480px,560px)]">
-      <section className="relative hidden overflow-hidden bg-brand-navy p-12 text-white lg:flex lg:flex-col lg:justify-between">
+      <section className="relative hidden overflow-hidden bg-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
         <Logo tone="light" />
         <div className="max-w-md">
           <h2 className="text-4xl leading-tight text-white">
-            Tu taller en orden, <span className="text-primary">tus clientes tranquilos.</span>
+            Tu taller en orden, <span className="text-accent">tus clientes tranquilos.</span>
           </h2>
           <p className="mt-4 text-lg text-white/75">
             Órdenes, diagnósticos y aprobaciones en un solo lugar, desde el celular.

@@ -84,7 +84,7 @@ function Paso({
   return (
     <section aria-labelledby={`paso-${numero}`} className="flex flex-col gap-3">
       <h2 id={`paso-${numero}`} className="flex items-center gap-2 text-lg">
-        <span className="flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-brand-navy">
+        <span className="flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-ink">
           {numero}
         </span>
         {titulo}

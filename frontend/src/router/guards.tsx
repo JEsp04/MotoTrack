@@ -6,7 +6,7 @@ import type { Rol } from '@/types';
 
 export function FullPageLoader() {
   return (
-    <div className="flex min-h-dvh items-center justify-center text-primary-text">
+    <div className="flex min-h-dvh items-center justify-center text-ink">
       <Spinner className="size-8" label="Cargando" />
     </div>
   );

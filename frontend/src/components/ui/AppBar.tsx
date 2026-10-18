@@ -17,7 +17,7 @@ export function AppBar({ title, subtitle, onBack, actions }: AppBarProps) {
         <button
           type="button"
           onClick={onBack}
-          className="-ml-2 flex size-touch items-center justify-center rounded-full text-ink hover:bg-neutral-soft"
+          className="-ml-2 flex size-touch items-center justify-center rounded-full text-ink hover:bg-surface-2"
           aria-label="Volver"
         >
           <Icon name="back" />

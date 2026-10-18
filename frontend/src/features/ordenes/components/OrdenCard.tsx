@@ -13,7 +13,7 @@ export function OrdenCard({ orden, rol }: { orden: OrdenResumen; rol: Rol }) {
     >
       <Card className="flex flex-col gap-2 transition-colors group-hover:border-primary">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-display font-bold">#{orden.numero}</span>
+          <span className="font-num">#{orden.numero}</span>
           <Plate placa={orden.moto.placa} size="sm" />
           <StatusBadge estado={orden.estado} className="ml-auto" />
         </div>

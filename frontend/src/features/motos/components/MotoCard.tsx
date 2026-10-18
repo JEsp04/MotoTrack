@@ -44,11 +44,11 @@ export function MotoCard({
         )}
       </div>
       {moto.ordenActiva ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-neutral-soft px-3 py-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-sm bg-surface-sunken px-3 py-2 text-sm">
           {enlaceOrden ? (
             <Link
               to={enlaceOrden(moto.ordenActiva.publicId)}
-              className="font-semibold text-primary-text underline"
+              className="font-semibold text-ink underline"
             >
               En el taller · Orden #{moto.ordenActiva.numero}
             </Link>

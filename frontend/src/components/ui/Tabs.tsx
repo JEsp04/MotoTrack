@@ -59,7 +59,7 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
               <span
                 className={cn(
                   'rounded-full px-2 py-0.5 text-xs',
-                  activa ? 'bg-primary text-brand-navy' : 'bg-neutral-soft text-ink-muted',
+                  activa ? 'bg-primary text-on-primary' : 'bg-surface-sunken text-ink-muted',
                 )}
               >
                 {tab.count}

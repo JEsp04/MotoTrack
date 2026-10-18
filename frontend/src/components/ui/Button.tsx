@@ -8,10 +8,10 @@ export type ButtonSize = 'md' | 'sm';
 
 const VARIANTES: Record<ButtonVariant, string> = {
   // Texto navy sobre cian: contraste 7,6:1
-  primary: 'bg-primary text-brand-navy hover:bg-primary-hover',
-  secondary: 'border border-border-strong bg-surface text-ink hover:bg-neutral-soft',
-  danger: 'bg-danger text-white hover:bg-danger-hover',
-  ghost: 'text-primary-text hover:bg-primary-soft',
+  primary: 'bg-primary text-on-primary hover:bg-primary/90',
+  secondary: 'border border-border-strong bg-surface text-ink hover:bg-surface-2',
+  danger: 'bg-danger text-white hover:bg-danger/90',
+  ghost: 'text-ink hover:bg-surface-sunken',
 };
 
 const TAMANOS: Record<ButtonSize, string> = {

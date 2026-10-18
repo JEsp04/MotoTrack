@@ -6,7 +6,7 @@ type TonoAlerta = 'danger' | 'info' | 'success';
 
 const ESTILOS: Record<TonoAlerta, { clase: string; icono: IconName }> = {
   danger: { clase: 'border-danger/30 bg-danger-soft text-danger', icono: 'alert' },
-  info: { clase: 'border-primary/30 bg-primary-soft text-primary-text', icono: 'info' },
+  info: { clase: 'border-primary/30 bg-surface-sunken text-ink', icono: 'info' },
   success: { clase: 'border-success/30 bg-success-soft text-success-text', icono: 'check' },
 };
 

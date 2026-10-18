@@ -68,7 +68,7 @@ export function BottomSheet({ open, title, onClose, children, footer }: BottomSh
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
       <div
-        className="absolute inset-0 animate-fade-in bg-brand-navy/50"
+        className="absolute inset-0 animate-fade-in bg-ink/30"
         onClick={onClose}
         data-testid="sheet-backdrop"
         aria-hidden="true"
@@ -92,7 +92,7 @@ export function BottomSheet({ open, title, onClose, children, footer }: BottomSh
           <button
             type="button"
             onClick={onClose}
-            className="-mr-2 flex size-touch items-center justify-center rounded-full text-ink-muted hover:bg-neutral-soft hover:text-ink"
+            className="-mr-2 flex size-touch items-center justify-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
             aria-label="Cerrar"
           >
             <Icon name="close" />

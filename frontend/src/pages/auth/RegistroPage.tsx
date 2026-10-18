@@ -31,7 +31,7 @@ export default function RegistroPage() {
               to={o.to}
               className="flex items-center gap-4 rounded-md border border-border bg-surface p-4 shadow-card transition-colors hover:border-primary"
             >
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink">
                 <Icon name={o.icon} />
               </span>
               <span className="min-w-0 flex-1">
@@ -48,7 +48,7 @@ export default function RegistroPage() {
       </p>
       <p className="text-center text-ink-muted">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="font-semibold text-primary-text hover:underline">
+        <Link to="/login" className="font-semibold text-ink hover:underline">
           Ingresa
         </Link>
       </p>

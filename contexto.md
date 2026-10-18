@@ -18,8 +18,9 @@ Aplicación web para **talleres de motos en Medellín**. Centraliza órdenes de 
 - **Modelo de negocio:** SaaS por suscripción mensual por taller (Básico $ 80.000 · Inteligente $ 130.000). Para el cliente final es gratis.
 - **Principio de diseño:** *mobile first*. Cada pantalla se diseña primero a 390 px y luego se adapta a escritorio (≥ 1024 px).
 - **Referencia visual y funcional:** el prototipo y el sistema de diseño mandan sobre colores, tipografía, pantallas y flujos.
-  - Prototipo navegable: https://claude.ai/artifact/2BVQyEDGXhNiZg4QE7xyRh
-  - Sistema de diseño: https://claude.ai/artifact/7varWM3SpNNuTbUuC5cnqn
+  - Prototipo navegable (diseño aprobado el 17-oct): https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w. Copia en `docs/prototipo/mototrack-prototipo.html`.
+  - Guía de diseño: `docs/diseno.md`.
+  - El prototipo anterior (https://claude.ai/artifact/2BVQyEDGXhNiZg4QE7xyRh) queda solo como historial: sus colores y fuentes ya no se usan.
 - **Equipo:** 3 integrantes, repositorio `github.com/JEsp04/MotoTrack`.
 - **Primera entrega:** viernes 17 de octubre de 2026.
 
@@ -65,7 +66,7 @@ Node **22** y npm 10. Las versiones exactas están en cada `package.json`.
 | Datos del servidor | TanStack Query 5 sobre Axios (`src/lib/http.ts`) |
 | Estado de la app | Zustand 5, solo sesión e interfaz |
 | Estilos | Tailwind CSS 4 con tokens en `@theme` (`src/styles/index.css`) |
-| Fuentes | Montserrat e Inter locales con `@fontsource` (sin Google Fonts) |
+| Fuentes | Geist y Michroma locales con `@fontsource` (sin Google Fonts) |
 | Formularios | React Hook Form + Zod 4 (`@hookform/resolvers`) |
 | Calidad | ESLint 10, Prettier, Vitest 5, Testing Library |
 
@@ -233,23 +234,25 @@ registrada → diagnosticada → esperando_aprobacion → aprobada → en_repara
 
 ## 9. Sistema de diseño
 
+El detalle completo está en **`docs/diseno.md`**. Resumen:
+
 | Token | Valor | Uso |
 |---|---|---|
-| `brand-navy` / `ink` | `#0B1F33` | Navegación, texto principal |
-| `primary` | `#00B8D9` | Acción principal (texto encima en navy) |
-| `primary-text` | `#007A91` | Texto cian sobre blanco |
-| `accent` / `accent-text` | `#FF7A00` / `#B24F00` | Atención (máximo uno por pantalla) |
-| `success` / `success-text` | `#1E9E67` / `#13744A` | Hecho, listo |
-| `danger` | `#C0362F` | Errores, cancelar |
-| `bg` / `surface` | `#F4F6F8` / `#FFFFFF` | Fondos |
-| `ink-muted` | `#5A6B7D` | Texto secundario |
-| `border` / `border-strong` | `#DDE3E9` / `#748391` | Bordes (el fuerte en campos) |
-| `plate` | `#F7C600` | Solo la placa |
+| `bg` / `surface` | `#FFFFFF` | Fondo único de la app |
+| `surface-sunken` / `surface-2` | `#F5F5F7` / `#ECEDF0` | Bloques grises suaves |
+| `ink` / `primary` | `#16191D` | Texto principal y botón principal (texto encima en blanco) |
+| `ink-muted` | `#6B7280` | Texto secundario |
+| `accent` / `plate` | `#F5C400` | El único acento: placa y lo que necesita atención (texto encima en tinta) |
+| `accent-text` | `#7A5900` | Texto amarillo sobre blanco |
+| `danger` | `#D94A3D` | Solo peligro: cancelar, rechazar, errores |
+| `success` | `#2F8F5B` | Solo el chip de «hecho» |
+| `border` / `border-strong` | `#E3E5E8` / `#8E959E` | Bordes (el fuerte en campos) |
 
-- **Tipografía:** Montserrat 600/700 para títulos; Inter 400/500/600 para la interfaz. Base de 16 px.
-- **Radios:** 8 (`rounded-sm`), 12 (`rounded-md`), 20 (`rounded-lg`) y píldora.
+- **Tipografía:** Geist 400/500/600 para todo el texto; Michroma para marca, placas, números y montos. Base de 16 px.
+- **Radios:** 12 (`rounded-sm`), 22 (`rounded-md`), 28 (`rounded-lg`) y píldora.
 - **Toque mínimo:** 48 px (`min-h-touch`, `size-touch`).
-- **Navegación:** barra inferior en celular; menú lateral de 240 px desde 1024 px, con «Cerrar sesión» siempre visible.
+- **Navegación:** barra inferior en celular; barra superior con menú del avatar (perfil y «Cerrar sesión») en computador.
+- **Cambios de estado:** con el botón de mantener presionado (`HoldButton`).
 
 ## 10. Variables de entorno
 

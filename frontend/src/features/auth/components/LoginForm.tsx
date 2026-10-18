@@ -64,7 +64,7 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
       <div className="-mt-1 flex justify-end">
         <button
           type="button"
-          className="min-h-touch px-1 text-sm font-semibold text-primary-text hover:underline"
+          className="min-h-touch px-1 text-sm font-semibold text-ink hover:underline"
           onClick={() => setVerAyuda((v) => !v)}
           aria-expanded={verAyuda}
         >

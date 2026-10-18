@@ -8,7 +8,7 @@ export default function RegistroClientePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link to="/registro" className="text-sm font-semibold text-primary-text hover:underline">
+        <Link to="/registro" className="text-sm font-semibold text-ink hover:underline">
           ← Tipo de cuenta
         </Link>
         <h1 className="mt-2 text-2xl">Crea tu cuenta de cliente</h1>
@@ -21,7 +21,7 @@ export default function RegistroClientePage() {
       />
       <p className="text-center text-ink-muted">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="font-semibold text-primary-text hover:underline">
+        <Link to="/login" className="font-semibold text-ink hover:underline">
           Ingresa
         </Link>
       </p>
