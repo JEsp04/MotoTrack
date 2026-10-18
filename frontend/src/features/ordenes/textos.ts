@@ -6,28 +6,23 @@ export const ETIQUETA_ESTADO = Object.fromEntries(
   Object.entries(ESTADOS_ORDEN).map(([estado, { label }]) => [estado, label]),
 ) as Record<EstadoOrden, string>;
 
-/** Mensaje para el cliente según el estado de su orden (HU-34, HU-35) */
+/** Mensaje para el cliente según el estado de su orden (HU-34, HU-35), igual al prototipo */
 export const MENSAJE_CLIENTE: Partial<
   Record<EstadoOrden, { texto: string; tono: 'info' | 'success' }>
 > = {
-  registrada: { texto: 'Recibimos tu moto. El mecánico la va a revisar.', tono: 'info' },
-  diagnosticada: {
-    texto: 'El mecánico ya revisó tu moto. Pronto te enviamos el costo.',
-    tono: 'info',
-  },
+  registrada: { texto: 'Recibimos tu moto.', tono: 'info' },
+  diagnosticada: { texto: 'Estamos preparando tu cotización.', tono: 'info' },
   esperando_aprobacion: {
-    texto: 'Revisa el diagnóstico y el costo, y dinos si apruebas la reparación.',
+    texto: 'Revisa la cotización y apruébala para que empecemos.',
     tono: 'info',
   },
-  aprobada: { texto: 'Aprobaste la reparación. Pronto empezamos.', tono: 'info' },
-  en_reparacion: { texto: 'Estamos reparando tu moto.', tono: 'info' },
-  pendiente_repuesto: {
-    texto: 'Estamos esperando un repuesto para seguir con la reparación.',
-    tono: 'info',
-  },
-  lista_entrega: { texto: 'Tu moto está lista. Puedes recogerla.', tono: 'success' },
-  entregada: { texto: 'Ya recogiste tu moto. ¡Gracias por confiar en el taller!', tono: 'success' },
-  cancelada: { texto: 'Esta orden se canceló. Puedes recoger tu moto en el taller.', tono: 'info' },
+  aprobada: { texto: 'Aprobaste la cotización. El mecánico empieza pronto.', tono: 'info' },
+  en_reparacion: { texto: 'Tu moto está en reparación.', tono: 'info' },
+  pendiente_repuesto: { texto: 'Estamos esperando un repuesto.', tono: 'info' },
+  lista_entrega: { texto: '¡Tu moto está lista! Puedes recogerla.', tono: 'success' },
+  entregada: { texto: 'Entregada. Gracias por confiar en nosotros.', tono: 'success' },
+  cerrada: { texto: 'Orden finalizada.', tono: 'info' },
+  cancelada: { texto: 'La orden se canceló. Puedes recoger tu moto sin reparación.', tono: 'info' },
 };
 
 /**
@@ -61,3 +56,11 @@ export const textoHold = (label: string) =>
     mantener: `Mantén para ${label.toLowerCase()}`,
     soltar: 'Suelta para confirmar',
   };
+
+/** Motivos para rechazar la cotización, como en el prototipo (HU-49) */
+export const MOTIVOS_RECHAZO = [
+  'El precio es muy alto',
+  'Quiero otra opinión',
+  'Lo haré más adelante',
+  'Otro motivo',
+];

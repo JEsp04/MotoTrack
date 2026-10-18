@@ -1,51 +1,50 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession } from '@/features/auth';
-import { lista, moto } from '@/test/fixtures';
+import { ordenesApi } from '@/features/ordenes/api/ordenes-api';
+import { lista, moto, ordenResumen } from '@/test/fixtures';
 import { abrirApp, sesionDePrueba } from '@/test/utils';
 import { motosApi } from './api/motos-api';
 
 vi.mock('./api/motos-api', () => ({
   motosApi: { listar: vi.fn(), crear: vi.fn(), actualizar: vi.fn() },
 }));
+vi.mock('@/features/ordenes/api/ordenes-api', () => ({
+  ordenesApi: { listar: vi.fn() },
+}));
 const api = vi.mocked(motosApi);
+const ordenes = vi.mocked(ordenesApi);
 
 beforeEach(() => {
   vi.clearAllMocks();
   useSession.getState().clearSession();
   sesionDePrueba('cliente');
+  ordenes.listar.mockResolvedValue(lista([]));
 });
 
 describe('HU-27 · Mis motos', () => {
   it('un cliente nuevo ve el estado vacío con el botón para agregar', async () => {
     api.listar.mockResolvedValue(lista([]));
     abrirApp('/cliente');
-    expect(await screen.findByText('Aún no tienes motos registradas')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Agregar moto' })).toBeInTheDocument();
+    expect(await screen.findByText('Aún no tienes motos registradas.')).toBeInTheDocument();
+    expect(screen.getByText('Sin órdenes activas')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Agregar mi moto' })).toBeInTheDocument();
   });
 
-  it('ve sus motos y en qué va la que está en el taller', async () => {
+  it('ve sus motos y resalta la orden que espera su respuesta', async () => {
     api.listar.mockResolvedValue(
-      lista([
-        moto({
-          placa: 'KLM45F',
-          ordenActiva: {
-            publicId: 'o1',
-            numero: 12,
-            estado: 'en_reparacion',
-            fechaIngreso: '2026-10-10T15:00:00.000Z',
-          },
-        }),
-        moto({ placa: 'XYZ12D', marca: 'Bajaj', referencia: 'Pulsar NS 200' }),
-      ]),
+      lista([moto(), moto({ placa: 'XYZ12D', marca: 'Bajaj', referencia: 'Pulsar NS 200' })]),
+    );
+    ordenes.listar.mockImplementation(async ({ grupo }) =>
+      lista(grupo === 'por_aprobar' ? [ordenResumen({ estado: 'esperando_aprobacion' })] : []),
     );
     abrirApp('/cliente');
-    const ul = await screen.findByRole('list', { name: 'Mis motos' });
-    const tarjetas = within(ul).getAllByRole('listitem');
-    expect(tarjetas).toHaveLength(2);
-    expect(within(tarjetas[0]!).getByText(/Orden #12/)).toBeInTheDocument();
-    expect(within(tarjetas[0]!).getByText('En reparación')).toBeInTheDocument();
-    expect(within(tarjetas[1]!).getByText('Sin órdenes abiertas')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /^Hola,/ })).toBeInTheDocument();
+    const orden = await screen.findByRole('link', { name: /^Orden #12/ });
+    expect(within(orden).getByText(/Revisar cotización/)).toBeInTheDocument();
+    const ul = screen.getByRole('list', { name: 'Mis motos' });
+    expect(within(ul).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(ul).getByRole('button', { name: /Pulsar NS 200/ })).toBeInTheDocument();
   });
 });
 
@@ -54,7 +53,7 @@ describe('HU-26 · El cliente agrega su moto', () => {
     api.listar.mockResolvedValue(lista([]));
     api.crear.mockResolvedValue(moto());
     abrirApp('/cliente');
-    await userEvent.click(await screen.findByRole('button', { name: 'Agregar moto' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar mi moto' }));
     const d = within(await screen.findByRole('dialog', { name: 'Agregar moto' }));
     await userEvent.type(d.getByLabelText(/Placa/), 'klm-45f');
     await userEvent.type(d.getByLabelText(/Marca/), 'Yamaha');
@@ -73,7 +72,7 @@ describe('HU-26 · El cliente agrega su moto', () => {
     api.listar.mockResolvedValue(lista([nmax]));
     api.actualizar.mockResolvedValue({ ...nmax, kilometraje: 13000 });
     abrirApp('/cliente');
-    await userEvent.click(await screen.findByRole('button', { name: 'Editar la moto KLM45F' }));
+    await userEvent.click(await screen.findByRole('button', { name: /NMAX 155/ }));
     const d = within(await screen.findByRole('dialog', { name: 'Editar moto' }));
     expect(d.getByLabelText(/Placa/)).toHaveValue('KLM45F');
     const km = d.getByLabelText(/Kilometraje/);

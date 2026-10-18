@@ -187,7 +187,7 @@ describe('HU-31 · Detalle', () => {
     const orden = ordenDetalle({ estado: 'en_reparacion' });
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
-    expect(await screen.findByText('Estamos reparando tu moto.')).toBeInTheDocument();
+    expect(await screen.findByText('Tu moto está en reparación.')).toBeInTheDocument();
     expect(botones()).toEqual([]);
   });
 
@@ -221,20 +221,29 @@ describe('HU-34 · Aprobar o rechazar', () => {
       expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'aprobada', undefined),
     );
     expect(
-      await screen.findByText('Aprobaste la reparación. Pronto empezamos.'),
+      await screen.findByText('Aprobaste la cotización. El mecánico empieza pronto.'),
     ).toBeInTheDocument();
   });
 
-  it('rechazar sin motivo no se envía', async () => {
+  it('rechazar pide elegir un motivo', async () => {
     sesionDePrueba('cliente');
     const orden = ordenDetalle({ estado: 'esperando_aprobacion' });
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Rechazar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
-    expect(hoja.getByText('$ 65.000')).toBeInTheDocument();
-    expect(hoja.getByRole('button', { name: /Mantén para confirmar/ })).toBeDisabled();
+    await mantener(await screen.findByRole('button', { name: /Mantén para rechazar/ }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Rechazar la cotización' }));
+    expect(hoja.getByRole('button', { name: /Mantén para rechazar/ })).toBeDisabled();
     expect(api.cambiarEstado).not.toHaveBeenCalled();
+    await userEvent.click(hoja.getByRole('radio', { name: 'Lo haré más adelante' }));
+    await userEvent.type(hoja.getByLabelText(/Comentario/), 'Vuelvo en enero');
+    await mantener(hoja.getByRole('button', { name: /Mantén para rechazar/ }));
+    await waitFor(() =>
+      expect(api.cambiarEstado).toHaveBeenCalledWith(
+        orden.publicId,
+        'cancelada',
+        'Lo haré más adelante. Vuelvo en enero',
+      ),
+    );
   });
 });
 
