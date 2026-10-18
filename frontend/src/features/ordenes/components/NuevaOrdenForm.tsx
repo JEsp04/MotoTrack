@@ -1,13 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState, type ReactNode } from 'react';
+import { useIsMutating } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 import {
+  ActionBar,
   Alert,
+  AppBar,
   Button,
-  Card,
+  Initials,
   Input,
+  Note,
+  Page,
   Plate,
+  SelectCard,
   Select,
   SkeletonList,
   StatusBadge,
@@ -17,7 +23,6 @@ import { ClienteSheet, useCliente, useClientes } from '@/features/clientes';
 import { useEquipo } from '@/features/equipo';
 import { MotoSheet } from '@/features/motos';
 import { parseApiError } from '@/lib/api-error';
-import { cn } from '@/lib/cn';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
 import { toast } from '@/lib/toast';
 import { useDebounce } from '@/lib/use-debounce';
@@ -32,81 +37,95 @@ import {
 } from '../schemas/orden-schemas';
 
 const km = new Intl.NumberFormat('es-CO');
+const TITULOS = ['Cliente', 'Motocicleta', 'Ingreso'];
+const FORM_ID = 'nueva-orden';
 
 /**
- * HU-29 · Crear una orden: 1) cliente, 2) moto, 3) datos de la orden.
+ * HU-29, HU-47 · Recibir una moto (NewOrderScreen del prototipo): asistente de 3 pasos
+ * 1) cliente, 2) moto, 3) datos de ingreso, con la barra de pasos y «Continuar» abajo.
  * Si el cliente o la moto son nuevos, se registran sin salir de aquí (HU-29 alterno A, HU-26 alterno B).
  */
 export function NuevaOrdenForm({ clienteInicial }: { clienteInicial?: string }) {
+  const navigate = useNavigate();
+  const [paso, setPaso] = useState(clienteInicial ? 1 : 0);
   const [clienteId, setClienteId] = useState<string | null>(clienteInicial ?? null);
   const [moto, setMoto] = useState<Moto | null>(null);
+  const guardando = useIsMutating() > 0;
+
+  const puedeSeguir = paso === 0 ? Boolean(clienteId) : Boolean(moto && !moto.ordenActiva);
 
   return (
-    <div className="flex flex-col gap-5">
-      <Paso numero={1} titulo="Cliente">
-        {clienteId ? (
-          <ClienteElegido
-            publicId={clienteId}
-            onCambiar={() => {
-              setClienteId(null);
-              setMoto(null);
+    <>
+      <AppBar
+        title="Nueva orden"
+        subtitle={`Paso ${paso + 1} de 3 · ${TITULOS[paso]}`}
+        onBack={() => (paso > 0 ? setPaso(paso - 1) : navigate(-1))}
+      />
+      <div className="border-b border-border bg-surface px-4 pt-3 pb-3 lg:px-6" aria-hidden="true">
+        <div className="flex gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <i
+              key={i}
+              className={`h-1 flex-1 rounded-full ${i <= paso ? 'bg-ink' : 'bg-border'}`}
+            />
+          ))}
+        </div>
+      </div>
+      <Page narrow pb="actionbar">
+        {paso === 0 && (
+          <ElegirCliente
+            elegido={clienteId}
+            onElegir={(id) => {
+              if (id !== clienteId) setMoto(null);
+              setClienteId(id);
             }}
           />
-        ) : (
-          <BuscarCliente onElegir={setClienteId} />
         )}
-      </Paso>
-
-      {clienteId && (
-        <Paso numero={2} titulo="Moto">
+        {paso === 1 && clienteId && (
           <ElegirMoto clientePublicId={clienteId} elegida={moto} onElegir={setMoto} />
-        </Paso>
-      )}
-
-      {moto && !moto.ordenActiva && (
-        <Paso numero={3} titulo="Datos de la orden">
-          <DatosOrden key={moto.publicId} moto={moto} />
-        </Paso>
-      )}
-    </div>
+        )}
+        {paso === 2 && moto && <DatosOrden key={moto.publicId} moto={moto} />}
+      </Page>
+      <ActionBar>
+        {paso < 2 ? (
+          <Button
+            fullWidth
+            iconRight="chevronRight"
+            disabled={!puedeSeguir}
+            onClick={() => setPaso(paso + 1)}
+          >
+            Continuar
+          </Button>
+        ) : (
+          <Button type="submit" form={FORM_ID} fullWidth icon="check" loading={guardando}>
+            Crear orden
+          </Button>
+        )}
+      </ActionBar>
+    </>
   );
 }
 
-function Paso({
-  numero,
-  titulo,
-  children,
+function ElegirCliente({
+  elegido,
+  onElegir,
 }: {
-  numero: number;
-  titulo: string;
-  children: ReactNode;
+  elegido: string | null;
+  onElegir: (publicId: string) => void;
 }) {
-  return (
-    <section aria-labelledby={`paso-${numero}`} className="flex flex-col gap-3">
-      <h2 id={`paso-${numero}`} className="flex items-center gap-2 text-lg">
-        <span className="flex size-7 items-center justify-center rounded-full bg-ink pt-0.5 font-num text-xs text-on-primary">
-          {numero}
-        </span>
-        {titulo}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function BuscarCliente({ onElegir }: { onElegir: (publicId: string) => void }) {
   const [texto, setTexto] = useState('');
   const q = useDebounce(texto.trim(), 300);
   const clientes = useClientes(q);
   const [creando, setCreando] = useState(false);
-  const lista = clientes.data?.pages[0]?.data.slice(0, 6) ?? [];
+  const lista = clientes.data?.pages[0]?.data.slice(0, 5) ?? [];
 
   return (
-    <Card className="flex flex-col gap-3">
+    <>
       <Input
         label="Buscar cliente"
+        hideLabel
         type="search"
-        placeholder="Nombre, documento, celular o placa"
+        placeholder="Nombre, celular o placa"
         autoComplete="off"
         maxLength={LIMITES.busqueda}
         value={texto}
@@ -114,55 +133,36 @@ function BuscarCliente({ onElegir }: { onElegir: (publicId: string) => void }) {
       />
       {clientes.isPending && <SkeletonList rows={2} />}
       {lista.length > 0 && (
-        <ul className="flex flex-col gap-2" aria-label="Resultados">
+        <div role="radiogroup" aria-label="Cliente" className="flex flex-col gap-2">
           {lista.map((c) => (
-            <li key={c.publicId}>
-              <button
-                type="button"
-                onClick={() => onElegir(c.publicId)}
-                className="flex min-h-touch w-full flex-wrap items-center gap-2 rounded-sm bg-surface px-3.5 py-2 text-left ring-1 ring-border transition-shadow hover:ring-ink"
-              >
-                <span className="font-semibold">{c.nombre}</span>
-                <span className="text-sm text-ink-muted">CC {c.documentoIdentidad}</span>
-                {c.motos.map((m) => (
-                  <Plate key={m.publicId} placa={m.placa} size="sm" />
-                ))}
-              </button>
-            </li>
+            <SelectCard
+              key={c.publicId}
+              checked={c.publicId === elegido}
+              onSelect={() => onElegir(c.publicId)}
+            >
+              <Initials nombre={c.nombre} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold">{c.nombre}</span>
+                <span className="block truncate text-sm leading-5 text-ink-muted">
+                  {c.telefono}
+                </span>
+              </span>
+            </SelectCard>
           ))}
-        </ul>
+        </div>
       )}
       {clientes.isSuccess && lista.length === 0 && (
         <p className="text-sm text-ink-muted">No encontramos clientes con «{q}».</p>
       )}
-      <Button variant="secondary" icon="plus" onClick={() => setCreando(true)}>
-        Cliente nuevo
+      <Button variant="ghost" icon="plus" fullWidth onClick={() => setCreando(true)}>
+        Registrar cliente nuevo
       </Button>
       <ClienteSheet
         open={creando}
         onClose={() => setCreando(false)}
         onCreado={(c) => onElegir(c.publicId)}
       />
-    </Card>
-  );
-}
-
-function ClienteElegido({ publicId, onCambiar }: { publicId: string; onCambiar: () => void }) {
-  const cliente = useCliente(publicId);
-  return (
-    <Card className="flex items-center gap-3">
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">{cliente.data?.nombre ?? 'Cargando…'}</p>
-        {cliente.data && (
-          <p className="text-sm text-ink-muted">
-            CC {cliente.data.documentoIdentidad} · {cliente.data.telefono}
-          </p>
-        )}
-      </div>
-      <Button variant="ghost" size="sm" onClick={onCambiar}>
-        Cambiar
-      </Button>
-    </Card>
+    </>
   );
 }
 
@@ -178,65 +178,53 @@ function ElegirMoto({
   const cliente = useCliente(clientePublicId);
   const [agregando, setAgregando] = useState(false);
   const motos = cliente.data?.motos ?? [];
+  const nombre = cliente.data?.nombre ?? '';
+  const primer = nombre.split(' ')[0];
 
   return (
-    <div className="flex flex-col gap-3">
+    <>
       {cliente.isPending && <SkeletonList rows={1} />}
-      {cliente.isSuccess && motos.length === 0 && (
-        <p className="text-ink-muted">Este cliente aún no tiene motos. Agrégala aquí mismo.</p>
-      )}
+      {cliente.isSuccess && <p className="text-sm leading-5 text-ink-muted">Motos de {nombre}</p>}
       {motos.length > 0 && (
-        <div role="radiogroup" aria-label="Moto" className="grid gap-2 sm:grid-cols-2">
-          {motos.map((m) => {
-            const activa = elegida?.publicId === m.publicId;
-            return (
-              <button
-                key={m.publicId}
-                type="button"
-                role="radio"
-                aria-checked={activa}
-                onClick={() => onElegir(m)}
-                className={cn(
-                  'relative flex min-h-touch flex-col items-start gap-1 rounded-[18px] bg-surface p-3.5 text-left',
-                  'transition-[box-shadow,transform] duration-150 ease-out active:scale-[0.98]',
-                  activa ? 'ring-2 ring-ink' : 'ring-1 ring-border hover:ring-ink',
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute top-3.5 right-3.5 flex size-5 items-center justify-center rounded-full ring-2',
-                    activa ? 'bg-accent ring-ink' : 'ring-border-strong',
-                  )}
-                  aria-hidden="true"
-                >
-                  {activa && <span className="size-2 rounded-full bg-ink" />}
-                </span>
-                <Plate placa={m.placa} size="sm" />
-                <span className="font-semibold">
+        <div role="radiogroup" aria-label="Moto" className="flex flex-col gap-2">
+          {motos.map((m) => (
+            <SelectCard
+              key={m.publicId}
+              checked={elegida?.publicId === m.publicId}
+              onSelect={() => onElegir(m)}
+            >
+              <Plate placa={m.placa} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold">
                   {m.marca} {m.referencia}
                 </span>
-                <span className="text-xs text-ink-muted">{km.format(m.kilometraje)} km</span>
-                {m.ordenActiva && <StatusBadge estado={m.ordenActiva.estado} />}
-              </button>
-            );
-          })}
+                <span className="block truncate text-sm leading-5 text-ink-muted">
+                  {m.modelo} · {km.format(m.kilometraje)} km
+                </span>
+              </span>
+              {m.ordenActiva && <StatusBadge estado={m.ordenActiva.estado} />}
+            </SelectCard>
+          ))}
         </div>
       )}
+      {cliente.isSuccess && motos.length === 0 && (
+        <Note icon="moto" tono="accent">
+          {primer} no tiene motos registradas. Agrega la que trae hoy.
+        </Note>
+      )}
       {elegida?.ordenActiva && (
-        <Alert tono="info">
+        <Note icon="alert" tono="accent">
           Esta moto ya tiene la orden #{elegida.ordenActiva.numero} abierta.{' '}
-          <Link className="underline" to={rutaOrden('admin', elegida.ordenActiva.publicId)}>
+          <Link
+            className="font-semibold underline underline-offset-4"
+            to={rutaOrden('admin', elegida.ordenActiva.publicId)}
+          >
             Ver la orden
           </Link>
-        </Alert>
+        </Note>
       )}
-      <Button
-        variant="secondary"
-        icon="plus"
-        className="self-start"
-        onClick={() => setAgregando(true)}
-      >
-        Agregar moto
+      <Button variant="ghost" icon="plus" fullWidth onClick={() => setAgregando(true)}>
+        {motos.length ? `Agregar otra moto a ${primer}` : 'Agregar moto'}
       </Button>
       <MotoSheet
         open={agregando}
@@ -244,7 +232,7 @@ function ElegirMoto({
         onClose={() => setAgregando(false)}
         onGuardada={onElegir}
       />
-    </div>
+    </>
   );
 }
 
@@ -300,55 +288,49 @@ function DatosOrden({ moto }: { moto: Moto }) {
       <Alert tono="info">
         No tienes mecánicos activos para asignar la orden.{' '}
         <Link className="underline" to="/admin/equipo">
-          Crea uno en Equipo
+          Crea uno en Usuarios
         </Link>
       </Alert>
     );
   }
 
   return (
-    <Card>
-      <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-        {errorGeneral && <Alert>{errorGeneral}</Alert>}
-        <Select
-          label="Mecánico"
-          required
-          placeholder={equipo.isPending ? 'Cargando mecánicos…' : 'Elige el mecánico'}
-          disabled={equipo.isPending}
-          options={mecanicos.map((m) => ({ value: m.publicId, label: m.nombre }))}
-          error={errors.mecanicoPublicId?.message}
-          {...register('mecanicoPublicId')}
-        />
-        <Textarea
-          label="Motivo de ingreso"
-          required
-          rows={3}
-          maxLength={2000}
-          hint="Lo que reporta el cliente"
-          error={errors.motivoIngreso?.message}
-          {...register('motivoIngreso')}
-        />
-        <Input
-          label="Kilometraje al ingresar"
-          required
-          inputMode="numeric"
-          maxLength={9}
-          hint={`Último registrado: ${km.format(moto.kilometraje)} km`}
-          error={errors.kilometrajeIngreso?.message}
-          {...register('kilometrajeIngreso')}
-        />
-        <Textarea
-          label="Observaciones"
-          hint="Opcional: estado en que llega, objetos que deja…"
-          rows={2}
-          maxLength={2000}
-          error={errors.observaciones?.message}
-          {...register('observaciones')}
-        />
-        <Button type="submit" fullWidth loading={crear.isPending}>
-          Crear orden
-        </Button>
-      </form>
-    </Card>
+    <form id={FORM_ID} onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+      {errorGeneral && <Alert>{errorGeneral}</Alert>}
+      <Textarea
+        label="Motivo de ingreso"
+        required
+        rows={3}
+        maxLength={2000}
+        error={errors.motivoIngreso?.message}
+        {...register('motivoIngreso')}
+      />
+      <Input
+        label="Kilometraje actual"
+        required
+        inputMode="numeric"
+        maxLength={9}
+        hint={`Último registrado: ${km.format(moto.kilometraje)} km`}
+        error={errors.kilometrajeIngreso?.message}
+        {...register('kilometrajeIngreso')}
+      />
+      <Select
+        label="Mecánico asignado"
+        required
+        placeholder={equipo.isPending ? 'Cargando mecánicos…' : 'Elige el mecánico'}
+        disabled={equipo.isPending}
+        options={mecanicos.map((m) => ({ value: m.publicId, label: m.nombre }))}
+        error={errors.mecanicoPublicId?.message}
+        {...register('mecanicoPublicId')}
+      />
+      <Textarea
+        label="Observaciones"
+        hint="Opcional: estado en que llega, objetos que deja…"
+        rows={2}
+        maxLength={2000}
+        error={errors.observaciones?.message}
+        {...register('observaciones')}
+      />
+    </form>
   );
 }

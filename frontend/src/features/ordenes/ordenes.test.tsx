@@ -106,9 +106,9 @@ describe('HU-30 · Lista de órdenes', () => {
     const ul = await screen.findByRole('list', { name: 'Órdenes' });
     expect(within(ul).getByText('#12')).toBeInTheDocument();
     expect(within(ul).getByLabelText('Placa K L M 4 5 F')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('tab', { name: 'Por aprobar' }));
+    await userEvent.click(screen.getByRole('tab', { name: /^Por aprobar/ }));
     await waitFor(() =>
-      expect(api.listar).toHaveBeenLastCalledWith({ grupo: 'por_aprobar', q: '', page: 1 }),
+      expect(api.listar).toHaveBeenCalledWith({ grupo: 'por_aprobar', q: '', page: 1 }),
     );
   });
 
@@ -116,7 +116,7 @@ describe('HU-30 · Lista de órdenes', () => {
     sesionDePrueba('cliente');
     api.listar.mockResolvedValue(lista([]));
     abrirApp('/cliente/ordenes');
-    expect(await screen.findByText('No tienes órdenes aquí')).toBeInTheDocument();
+    expect(await screen.findByText('Sin órdenes aquí')).toBeInTheDocument();
   });
 });
 
@@ -362,19 +362,22 @@ describe('HU-29 · Crear una orden', () => {
     api.obtener.mockResolvedValue(creada);
 
     const router = abrirApp('/admin/ordenes/nueva');
-    await userEvent.click(await screen.findByRole('button', { name: /Laura Martínez/ }));
+    expect(await screen.findByRole('button', { name: /Continuar/ })).toBeDisabled();
+    await userEvent.click(await screen.findByRole('radio', { name: /Laura Martínez/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Continuar/ }));
     await userEvent.click(await screen.findByRole('radio', { name: /K L M 4 5 F/ }));
     expect(screen.getByText(/ya tiene la orden #3 abierta/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Crear orden' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continuar/ })).toBeDisabled();
 
     await userEvent.click(screen.getByRole('radio', { name: /X Y Z 1 2 D/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Continuar/ }));
     const mecanicoSelect = await screen.findByLabelText(/Mecánico/);
     expect(
       within(mecanicoSelect).queryByRole('option', { name: 'Inactivo' }),
     ).not.toBeInTheDocument();
     await userEvent.selectOptions(mecanicoSelect, andres.publicId);
     await userEvent.type(screen.getByLabelText(/Motivo de ingreso/), 'Frenos suenan');
-    const kmInput = screen.getByLabelText(/Kilometraje al ingresar/);
+    const kmInput = screen.getByLabelText(/Kilometraje actual/);
     expect(kmInput).toHaveValue('34200');
     await userEvent.clear(kmInput);
     await userEvent.type(kmInput, '30000');
