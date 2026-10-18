@@ -7,11 +7,15 @@ export default function NuevaOrdenPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   return (
-    <>
-      <AppBar title="Nueva orden" subtitle="Cliente, moto y mecánico" onBack={() => navigate(-1)} />
+    <div className="mx-auto w-full max-w-form">
+      <AppBar
+        title="Recibir moto"
+        subtitle="Cliente, moto y mecánico"
+        onBack={() => navigate(-1)}
+      />
       <div className="p-4 lg:px-0">
         <NuevaOrdenForm clienteInicial={params.get('cliente') ?? undefined} />
       </div>
-    </>
+    </div>
   );
 }

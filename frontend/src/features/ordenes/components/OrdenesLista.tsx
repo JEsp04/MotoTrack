@@ -52,16 +52,11 @@ export function OrdenesLista({ rol, accionVacia }: { rol: Rol; accionVacia?: Rea
 
   return (
     <div className="flex flex-col gap-4">
-      <Tabs
-        label="Filtrar órdenes"
-        tabs={GRUPOS.map((g) => ({ id: g.id, label: g.label }))}
-        value={grupo}
-        onChange={(g) => actualizar({ grupo: g })}
-      />
       {rol !== 'cliente' && (
         <div role="search">
           <Input
             label="Buscar orden"
+            hideLabel
             type="search"
             placeholder={rol === 'admin' ? 'Placa, número o cliente' : 'Placa o número'}
             autoComplete="off"
@@ -74,6 +69,12 @@ export function OrdenesLista({ rol, accionVacia }: { rol: Rol; accionVacia?: Rea
           />
         </div>
       )}
+      <Tabs
+        label="Filtrar órdenes"
+        tabs={GRUPOS.map((g) => ({ id: g.id, label: g.label }))}
+        value={grupo}
+        onChange={(g) => actualizar({ grupo: g })}
+      />
 
       {ordenes.isPending && <SkeletonList rows={4} />}
       {ordenes.isError && (
@@ -97,7 +98,10 @@ export function OrdenesLista({ rol, accionVacia }: { rol: Rol; accionVacia?: Rea
           <p className="text-sm text-ink-muted" aria-live="polite">
             {total === 1 ? '1 orden' : `${total} órdenes`}
           </p>
-          <ul className="grid gap-3 lg:grid-cols-2" aria-label="Órdenes">
+          <ul
+            className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-3"
+            aria-label="Órdenes"
+          >
             {lista.map((o) => (
               <li key={o.publicId}>
                 <OrdenCard orden={o} rol={rol} />

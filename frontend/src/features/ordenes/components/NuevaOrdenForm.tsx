@@ -84,7 +84,7 @@ function Paso({
   return (
     <section aria-labelledby={`paso-${numero}`} className="flex flex-col gap-3">
       <h2 id={`paso-${numero}`} className="flex items-center gap-2 text-lg">
-        <span className="flex size-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-ink">
+        <span className="flex size-7 items-center justify-center rounded-full bg-ink pt-0.5 font-num text-xs text-on-primary">
           {numero}
         </span>
         {titulo}
@@ -120,7 +120,7 @@ function BuscarCliente({ onElegir }: { onElegir: (publicId: string) => void }) {
               <button
                 type="button"
                 onClick={() => onElegir(c.publicId)}
-                className="flex min-h-touch w-full flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2 text-left hover:border-primary"
+                className="flex min-h-touch w-full flex-wrap items-center gap-2 rounded-sm bg-surface px-3.5 py-2 text-left ring-1 ring-border transition-shadow hover:ring-ink"
               >
                 <span className="font-semibold">{c.nombre}</span>
                 <span className="text-sm text-ink-muted">CC {c.documentoIdentidad}</span>
@@ -197,12 +197,20 @@ function ElegirMoto({
                 aria-checked={activa}
                 onClick={() => onElegir(m)}
                 className={cn(
-                  'flex min-h-touch flex-col items-start gap-1 rounded-md border bg-surface p-3 text-left',
-                  activa
-                    ? 'border-primary ring-2 ring-primary/40'
-                    : 'border-border hover:border-primary',
+                  'relative flex min-h-touch flex-col items-start gap-1 rounded-[18px] bg-surface p-3.5 text-left',
+                  'transition-[box-shadow,transform] duration-150 ease-out active:scale-[0.98]',
+                  activa ? 'ring-2 ring-ink' : 'ring-1 ring-border hover:ring-ink',
                 )}
               >
+                <span
+                  className={cn(
+                    'absolute top-3.5 right-3.5 flex size-5 items-center justify-center rounded-full ring-2',
+                    activa ? 'bg-accent ring-ink' : 'ring-border-strong',
+                  )}
+                  aria-hidden="true"
+                >
+                  {activa && <span className="size-2 rounded-full bg-ink" />}
+                </span>
                 <Plate placa={m.placa} size="sm" />
                 <span className="font-semibold">
                   {m.marca} {m.referencia}
@@ -337,7 +345,7 @@ function DatosOrden({ moto }: { moto: Moto }) {
           error={errors.observaciones?.message}
           {...register('observaciones')}
         />
-        <Button type="submit" fullWidth className="sm:w-auto sm:self-end" loading={crear.isPending}>
+        <Button type="submit" fullWidth loading={crear.isPending}>
           Crear orden
         </Button>
       </form>
