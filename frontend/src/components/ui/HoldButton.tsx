@@ -24,6 +24,8 @@ export interface HoldButtonProps {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  /** Se llena solo cada pocos segundos para mostrar cómo funciona (landing) */
+  demo?: boolean;
   className?: string;
 }
 
@@ -40,6 +42,7 @@ export function HoldButton({
   disabled = false,
   loading = false,
   fullWidth = false,
+  demo = false,
   className,
 }: HoldButtonProps) {
   const [holding, setHolding] = useState(false);
@@ -131,6 +134,7 @@ export function HoldButton({
           holding &&
             'motion-safe:duration-[1200ms] motion-safe:ease-linear motion-safe:[clip-path:inset(0)]',
           ready && '[clip-path:inset(0)]',
+          demo && !holding && 'hold-demo',
           relleno,
         )}
       >

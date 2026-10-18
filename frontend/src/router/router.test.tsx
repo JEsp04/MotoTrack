@@ -8,7 +8,7 @@ beforeEach(() => useSession.getState().clearSession());
 describe('Rutas y guardas (HU-11, HU-22)', () => {
   it('sin sesión, una ruta privada lleva al ingreso', async () => {
     const router = abrirApp('/admin/ordenes');
-    expect(await screen.findByRole('heading', { name: 'Ingresa a tu cuenta' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Ingresa a tu taller' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
     expect(router.state.location.state).toEqual({ from: '/admin/ordenes' });
   });
@@ -73,6 +73,17 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
       'href',
       '/admin/ordenes/nueva',
     );
+  });
+
+  it('sin sesión, / muestra la landing y el panel de ingreso se cierra con la X (HU-45)', async () => {
+    const router = abrirApp('/');
+    expect(await screen.findByRole('heading', { name: 'El taller, en vivo.' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await userEvent.click(screen.getAllByRole('button', { name: 'Iniciar sesión' })[0]!);
+    expect(await screen.findByRole('dialog', { name: 'Iniciar sesión' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(router.state.location.pathname).toBe('/');
   });
 
   it('una dirección inexistente muestra la página 404', async () => {

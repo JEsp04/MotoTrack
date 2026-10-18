@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert, Button, Input } from '@/components/ui';
+import { Alert, Button, IconButton, Input, Note } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
 import type { Usuario } from '@/types';
@@ -20,7 +20,14 @@ const CAMPOS_PASO_1 = [
 ] as const;
 
 /** HU-20 · Registro del taller y su administrador en 2 pasos. */
-export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuario) => void }) {
+export function RegistroTallerForm({
+  onRegistro,
+  onVolver,
+}: {
+  onRegistro: (usuario: Usuario) => void;
+  /** Volver desde el paso 1 (al tipo de cuenta) */
+  onVolver: () => void;
+}) {
   const registro = useRegistroTaller();
   const [paso, setPaso] = useState<1 | 2>(1);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -78,130 +85,143 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
     },
   );
 
+  const titulos = ['Tu taller', 'Tu cuenta de administrador'];
+
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
-      <ol className="flex gap-2" aria-label="Pasos del registro">
-        {[
-          { n: 1, label: 'Tu taller' },
-          { n: 2, label: 'Tu cuenta' },
-        ].map(({ n, label }) => (
-          <li
-            key={n}
-            aria-current={paso === n ? 'step' : undefined}
-            className="flex flex-1 flex-col gap-1.5"
-          >
-            <span
-              className={`h-1.5 rounded-full transition-colors duration-300 ${
-                paso > n ? 'bg-ink' : paso === n ? 'bg-accent' : 'bg-surface-2'
-              }`}
-              aria-hidden="true"
+    <form onSubmit={onSubmit} noValidate className="flex min-h-full flex-1 flex-col">
+      {/* Encabezado y barra de pasos, como RegisterWorkshopScreen del prototipo */}
+      <div className="flex min-h-[60px] items-center gap-1 border-b border-border py-1 pr-1 pl-2">
+        <IconButton
+          icon="back"
+          label="Volver"
+          onClick={() => (paso === 2 ? setPaso(1) : onVolver())}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg leading-6 font-semibold tracking-[-0.02em]">
+            Registrar taller
+          </p>
+          <p className="truncate text-sm leading-5 text-ink-muted">
+            Paso {paso} de 2 · {titulos[paso - 1]}
+          </p>
+        </div>
+      </div>
+      <div className="border-b border-border px-4 py-3" aria-hidden="true">
+        <div className="flex gap-1.5">
+          {[1, 2].map((n) => (
+            <i
+              key={n}
+              className={`h-1 flex-1 rounded-full ${n <= paso ? 'bg-ink' : 'bg-border'}`}
             />
-            <span className={`text-xs font-semibold ${paso === n ? 'text-ink' : 'text-ink-muted'}`}>
-              Paso {n} de 2 · {label}
-            </span>
-          </li>
-        ))}
-      </ol>
-
-      {errorGeneral && <Alert>{errorGeneral}</Alert>}
-
-      <div className={paso === 1 ? 'flex flex-col gap-4' : 'hidden'}>
-        <Input
-          label="Nombre del taller"
-          required
-          autoComplete="organization"
-          error={errors.taller?.nombre?.message}
-          maxLength={LIMITES.nombre}
-          {...register('taller.nombre')}
-        />
-        <Input
-          label="Teléfono del taller"
-          type="tel"
-          inputMode="tel"
-          required
-          placeholder="604 444 1234"
-          error={errors.taller?.telefono?.message}
-          maxLength={LIMITES.telefono}
-          {...register('taller.telefono')}
-        />
-        <Input
-          label="NIT"
-          hint="Opcional"
-          inputMode="numeric"
-          placeholder="901234567-8"
-          error={errors.taller?.nit?.message}
-          maxLength={LIMITES.nit}
-          {...register('taller.nit')}
-        />
-        <Input
-          label="Dirección"
-          hint="Opcional"
-          autoComplete="street-address"
-          error={errors.taller?.direccion?.message}
-          maxLength={LIMITES.direccion}
-          {...register('taller.direccion')}
-        />
-        <Button fullWidth onClick={siguiente}>
-          Siguiente
-        </Button>
+          ))}
+        </div>
       </div>
 
-      <div className={paso === 2 ? 'flex flex-col gap-4' : 'hidden'}>
-        <Input
-          label="Tu nombre"
-          required
-          autoComplete="name"
-          error={errors.admin?.nombre?.message}
-          maxLength={LIMITES.nombre}
-          {...register('admin.nombre')}
-        />
-        <Input
-          label="Correo"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
-          required
-          error={errors.admin?.email?.message}
-          maxLength={LIMITES.email}
-          {...register('admin.email')}
-        />
-        <Input
-          label="Celular"
-          type="tel"
-          inputMode="tel"
-          hint="Opcional"
-          autoComplete="tel"
-          error={errors.admin?.telefono?.message}
-          maxLength={LIMITES.telefono}
-          {...register('admin.telefono')}
-        />
-        <Input
-          label="Contraseña"
-          type="password"
-          autoComplete="new-password"
-          required
-          hint="Mínimo 8 caracteres, con letras y números"
-          error={errors.admin?.password?.message}
-          maxLength={LIMITES.password}
-          {...register('admin.password')}
-        />
-        <Input
-          label="Confirma la contraseña"
-          type="password"
-          autoComplete="new-password"
-          required
-          error={errors.admin?.confirmar?.message}
-          maxLength={LIMITES.password}
-          {...register('admin.confirmar')}
-        />
-        <div className="flex gap-3">
-          <Button variant="secondary" icon="back" onClick={() => setPaso(1)}>
-            Atrás
-          </Button>
-          <Button type="submit" className="flex-1" loading={registro.isPending}>
-            Crear mi taller
-          </Button>
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        {errorGeneral && <Alert>{errorGeneral}</Alert>}
+
+        <div className={paso === 1 ? 'flex flex-col gap-4' : 'hidden'}>
+          <Input
+            label="Nombre del taller"
+            required
+            autoComplete="organization"
+            error={errors.taller?.nombre?.message}
+            maxLength={LIMITES.nombre}
+            {...register('taller.nombre')}
+          />
+          <Input
+            label="Teléfono del taller"
+            type="tel"
+            inputMode="tel"
+            required
+            placeholder="604 444 1234"
+            error={errors.taller?.telefono?.message}
+            maxLength={LIMITES.telefono}
+            {...register('taller.telefono')}
+          />
+          <Input
+            label="NIT"
+            hint="Opcional"
+            inputMode="numeric"
+            placeholder="901234567-8"
+            error={errors.taller?.nit?.message}
+            maxLength={LIMITES.nit}
+            {...register('taller.nit')}
+          />
+          <Input
+            label="Dirección"
+            hint="Opcional"
+            autoComplete="street-address"
+            error={errors.taller?.direccion?.message}
+            maxLength={LIMITES.direccion}
+            {...register('taller.direccion')}
+          />
         </div>
+
+        <div className={paso === 2 ? 'flex flex-col gap-4' : 'hidden'}>
+          <Note icon="user">
+            Quien crea el taller queda como <b>administrador</b>. Las cuentas de los mecánicos las
+            creas tú después, desde Usuarios.
+          </Note>
+          <Input
+            label="Tu nombre"
+            required
+            autoComplete="name"
+            error={errors.admin?.nombre?.message}
+            maxLength={LIMITES.nombre}
+            {...register('admin.nombre')}
+          />
+          <Input
+            label="Correo"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            required
+            error={errors.admin?.email?.message}
+            maxLength={LIMITES.email}
+            {...register('admin.email')}
+          />
+          <Input
+            label="Celular"
+            type="tel"
+            inputMode="tel"
+            hint="Opcional"
+            autoComplete="tel"
+            error={errors.admin?.telefono?.message}
+            maxLength={LIMITES.telefono}
+            {...register('admin.telefono')}
+          />
+          <Input
+            label="Contraseña"
+            type="password"
+            autoComplete="new-password"
+            required
+            hint="Mínimo 8 caracteres, con letras y números"
+            error={errors.admin?.password?.message}
+            maxLength={LIMITES.password}
+            {...register('admin.password')}
+          />
+          <Input
+            label="Confirma la contraseña"
+            type="password"
+            autoComplete="new-password"
+            required
+            error={errors.admin?.confirmar?.message}
+            maxLength={LIMITES.password}
+            {...register('admin.confirmar')}
+          />
+        </div>
+      </div>
+
+      <div className="sticky bottom-0 border-t border-border bg-surface px-4 py-3">
+        {paso === 1 ? (
+          <Button fullWidth iconRight="chevronRight" onClick={siguiente}>
+            Continuar
+          </Button>
+        ) : (
+          <Button type="submit" fullWidth loading={registro.isPending}>
+            Crear cuenta
+          </Button>
+        )}
       </div>
     </form>
   );

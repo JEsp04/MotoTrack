@@ -1,8 +1,7 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router';
-import { AuthLayout } from '@/components/layout';
 import RouteErrorPage from '@/pages/RouteErrorPage';
-import { FullPageLoader, GuestOnly, HomeRedirect } from './guards';
+import { FullPageLoader, GuestOnly } from './guards';
 import { RoleLayout } from './RoleLayout';
 
 /** Cada página se carga en su propio archivo, solo cuando se visita (HU-11). */
@@ -25,23 +24,33 @@ export const routes: RouteObject[] = [
   {
     errorElement: <RouteErrorPage />,
     children: [
-      { path: '/', element: <HomeRedirect /> },
-
+      // Landing con el panel de ingreso o registro encima (HU-45)
       {
-        element: <AuthLayout />,
+        element: <GuestOnly />,
         children: [
           {
-            element: <GuestOnly />,
+            element: page(() => import('@/pages/landing/LandingLayout')),
             children: [
-              { path: '/login', element: page(() => import('@/pages/auth/LoginPage')) },
-              { path: '/registro', element: page(() => import('@/pages/auth/RegistroPage')) },
+              { path: '/', element: null },
+              {
+                path: '/login',
+                element: page(() => import('@/pages/auth/LoginPage')),
+                handle: { panel: 'Iniciar sesión' },
+              },
+              {
+                path: '/registro',
+                element: page(() => import('@/pages/auth/RegistroPage')),
+                handle: { panel: 'Crear cuenta' },
+              },
               {
                 path: '/registro/taller',
                 element: page(() => import('@/pages/auth/RegistroTallerPage')),
+                handle: { panel: 'Registrar taller' },
               },
               {
                 path: '/registro/cliente',
                 element: page(() => import('@/pages/auth/RegistroClientePage')),
+                handle: { panel: 'Cuenta de cliente' },
               },
             ],
           },

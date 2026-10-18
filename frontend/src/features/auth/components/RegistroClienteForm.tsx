@@ -55,7 +55,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
   }));
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       {errorGeneral && <Alert>{errorGeneral}</Alert>}
       {talleres.isError && (
         <Alert>
@@ -135,7 +135,7 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
       />
 
       <Button type="submit" fullWidth loading={registro.isPending}>
-        Crear mi cuenta
+        Crear cuenta
       </Button>
     </form>
   );

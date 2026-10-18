@@ -37,7 +37,7 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
   });
 
   return (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       {errorGeneral && <Alert>{errorGeneral}</Alert>}
 
       <Input
@@ -51,31 +51,33 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
         maxLength={LIMITES.email}
         {...register('email')}
       />
-      <Input
-        label="Contraseña"
-        type="password"
-        autoComplete="current-password"
-        required
-        error={errors.password?.message}
-        maxLength={LIMITES.password}
-        {...register('password')}
-      />
-
-      <div className="-mt-1 flex justify-end">
-        <button
-          type="button"
-          className="min-h-touch px-1 text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4 hover:decoration-ink"
-          onClick={() => setVerAyuda((v) => !v)}
-          aria-expanded={verAyuda}
-        >
-          ¿Olvidaste tu contraseña?
-        </button>
+      <div className="flex flex-col gap-2">
+        <Input
+          label="Contraseña"
+          type="password"
+          autoComplete="current-password"
+          required
+          error={errors.password?.message}
+          maxLength={LIMITES.password}
+          {...register('password')}
+        />
+        <div className="text-right">
+          <button
+            type="button"
+            className="min-h-10 text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
+            onClick={() => setVerAyuda((v) => !v)}
+            aria-expanded={verAyuda}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+        {verAyuda && (
+          <Alert tono="info">
+            Pídele a tu taller que te ayude a recuperarla. Pronto podrás hacerlo tú mismo desde
+            aquí.
+          </Alert>
+        )}
       </div>
-      {verAyuda && (
-        <Alert tono="info">
-          Pídele a tu taller que te ayude a recuperarla. Pronto podrás hacerlo tú mismo desde aquí.
-        </Alert>
-      )}
 
       <Button type="submit" fullWidth loading={login.isPending}>
         Ingresar

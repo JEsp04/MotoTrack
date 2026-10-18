@@ -40,10 +40,3 @@ export function GuestOnly() {
   }
   return <Outlet />;
 }
-
-/** "/" lleva al inicio del rol o al ingreso. */
-export function HomeRedirect() {
-  const { status, usuario } = useSession();
-  if (status === 'checking') return <FullPageLoader />;
-  return <Navigate to={usuario ? HOME_POR_ROL[usuario.rol] : '/login'} replace />;
-}
