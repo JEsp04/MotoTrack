@@ -23,7 +23,8 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 - **No reescribir historia ya subida** (`push --force`, `rebase` de ramas publicadas) sin aprobación explícita.
 - **Explicar en lenguaje sencillo.** El equipo está aprendiendo Prisma y TypeScript. Cuando se pidan comandos, darlos completos y en orden, para Git Bash en Windows (no PowerShell).
 - **Mobile first:** toda pantalla se diseña primero para 390 px y luego para 1280 px.
-- **El prototipo manda en el diseño.** Toda pantalla nueva o modificada se construye a partir de su pantalla en el prototipo (https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w, copia en `docs/prototipo/`) y de `docs/diseno.md`.
+- **El diseño es idéntico al prototipo.** Toda pantalla nueva o modificada se construye igual a su pantalla en el prototipo (https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w, copia en `docs/prototipo/`): mismo orden, textos, tamaños, componentes y animaciones. No basta con «parecerse». Guía: `docs/diseno.md`.
+  - Lo único que se omite es lo que la app todavía no tiene datos o funciones para mostrar (por ejemplo, fecha estimada de entrega, citas, inventario, IA, WhatsApp). No se inventan datos para llenarlo.
   - Si la pantalla no existe en el prototipo, primero se diseña ahí y se aprueba; después se programa.
   - No se inventan colores, fuentes ni componentes que el prototipo no tenga.
   - Si se ve una diferencia entre el prototipo y lo pedido, se pregunta antes de elegir.
@@ -171,7 +172,7 @@ Una historia está terminada cuando:
 
 1. Cumple **todos** sus criterios de aceptación (`docs/HISTORIAS.md`).
 2. Se ve y funciona en **390 px y 1280 px**, sin desplazamiento horizontal.
-3. Se parece a su pantalla del prototipo (`docs/diseno.md`, sección 8), usa los tokens y los componentes `ui`, y `npm run check:tokens` pasa.
+3. Es idéntica a su pantalla del prototipo (`docs/diseno.md`, sección 8), usa los tokens y los componentes `ui`, y `npm run check:tokens` pasa.
 4. Valida datos en frontend **y** backend; los permisos se revisan en el backend.
 5. Tiene al menos una prueba, y `lint`, `typecheck`, `test` y `build` pasan.
 6. Está en un PR hacia `develop`, revisado por otra persona.

@@ -1003,12 +1003,12 @@ Cada historia trae:
 
 Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nuevo.
 
-**Alcance:** solo cambia cómo se ven las pantallas que ya existen (E2 a E6). No se agregan reglas del negocio, rutas de la API, tablas ni pantallas nuevas. Las funciones que el prototipo muestra y el repositorio todavía no tiene (citas, inventario, IA, suscripción, landing, notificaciones, modo oscuro) quedan para sus propias HU.
+**Alcance:** solo cambia cómo se ven las pantallas que ya existen (E2 a E6), más la landing. No se agregan reglas del negocio, rutas de la API ni tablas. Las funciones que el prototipo muestra y el repositorio todavía no tiene (citas, inventario, IA, suscripción, notificaciones, modo oscuro) quedan para sus propias HU.
 
 **Referencia:** `docs/diseno.md` y el prototipo (`docs/prototipo/mototrack-prototipo.html`, https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w).
 
 **Criterios comunes a todas las historias de esta etapa.** Además de los propios, cada una cumple:
-- **Dado** cada pantalla tocada, **cuando** se compara con su pantalla del prototipo en 390 px y 1440 px, **entonces** coinciden colores, fuentes, forma de los componentes y orden del contenido.
+- **Dado** cada pantalla tocada, **cuando** se pone al lado de su pantalla del prototipo en 390 px y 1440 px, **entonces** es idéntica: colores, fuentes, tamaños, textos, componentes y orden del contenido. Solo falta lo que la app aún no tiene datos para mostrar.
 - **Dado** el código, **cuando** se corre `npm run check:tokens`, **entonces** pasa y no hay colores fuera de `index.css`.
 - **Dado** 360, 390 y 1440 px, **cuando** se recorre la pantalla, **entonces** no hay desplazamiento horizontal y los toques miden al menos 48 px.
 - **Dado** «reducir movimiento» activo en el sistema, **cuando** se usa la pantalla, **entonces** no hay animaciones y todo sigue funcionando.
@@ -1106,20 +1106,24 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 ---
 
-### HU-45 · Ingreso y registro con el diseño nuevo
+### HU-45 · Landing, ingreso y registro con el diseño nuevo
 
-**Historia:** Como **persona que llega a MotoTrack**, quiero que entrar y crear mi cuenta se vea como el prototipo, para que la primera impresión sea la del producto final.
+**Historia:** Como **persona que llega a MotoTrack**, quiero la landing del prototipo y entrar o crear mi cuenta desde ella, para que la primera impresión sea la del producto final.
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
 | 6.5 | Por definir | `feature/diseno-acceso` | Obligatoria | 2 | HU-44 |
 
 **Casos de uso**
-- *Principal:* se ajustan `LoginPage`, `RegistroPage`, `RegistroTallerPage` (2 pasos) y `RegistroClientePage`, con sus formularios.
+- *Principal:*
+  - `/` muestra la landing del prototipo: encabezado de vidrio, «El taller, en vivo.», cinta de placas, recorrido de 6 pasos, celulares de cliente y mecánico, planes y cierre «Enciende tu taller».
+  - Ingreso y registro se abren como panel encima de la landing, igual que en el prototipo (`/login`, `/registro`, `/registro/taller` y `/registro/cliente` siguen funcionando y abren su panel).
+  - El ingreso tiene «Soy del taller / Soy cliente»; los dos entran con correo y contraseña (el código por WhatsApp es de la segunda entrega).
 - *Alterno, error de la API:* el mensaje se sigue mostrando debajo del campo (HU-19 y HU-20).
 
 **Criterios de aceptación**
-- **Dado** las cuatro pantallas, **cuando** se comparan con el prototipo, **entonces** coinciden (criterios comunes).
+- **Dado** la landing y los cuatro paneles, **cuando** se comparan con el prototipo, **entonces** son idénticos (criterios comunes).
+- **Dado** el panel abierto, **cuando** se cierra con la X o con Escape, **entonces** queda la landing en `/`.
 - **Dado** los flujos de HU-19 y HU-20, **cuando** se prueban, **entonces** funcionan igual que antes.
 
 ---

@@ -1,6 +1,6 @@
 # Diseño de MotoTrack
 
-Guía visual de la app. Manda sobre colores, fuentes, componentes, animaciones y la forma de cada pantalla.
+Guía visual de la app. Cada pantalla debe ser **idéntica** a su pantalla del prototipo: mismo orden, textos, tamaños, componentes y animaciones. Solo se omite lo que la app todavía no tiene datos o funciones para mostrar (fecha estimada de entrega, citas, inventario, IA, WhatsApp, modo oscuro); nunca se inventan datos.
 
 - **Prototipo navegable (referencia principal):** https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w
 - **Copia en el repositorio:** `docs/prototipo/mototrack-prototipo.html`. Se abre con doble clic en el navegador (necesita internet para cargar React y las fuentes). Si el prototipo cambia, se reemplaza esta copia en el mismo PR.
@@ -134,12 +134,13 @@ No cambia ninguna regla del negocio: se llama la misma API con el mismo estado y
 
 ## 8. Pantallas: qué parte del prototipo corresponde a cada ruta
 
-**Regla:** se migran solo las pantallas que ya existen en el repositorio. Lo demás del prototipo (citas, inventario, IA, suscripción, landing, notificaciones, modo oscuro) es la dirección de las próximas HU y se construye cuando llegue su historia.
+**Regla:** se migran las pantallas que ya existen en el repositorio y la landing. Lo demás del prototipo (citas, inventario, IA, suscripción, notificaciones, modo oscuro) es la dirección de las próximas HU y se construye cuando llegue su historia.
 
 | Ruta en la app | Pantalla del prototipo | Notas |
 |---|---|---|
-| `/login` | Ingresar | — |
-| `/registro`, `/registro/taller`, `/registro/cliente` | Crear cuenta, Registrar taller, Registro de cliente | Sin OTP (segunda entrega) |
+| `/` | Landing | Igual a la landing aprobada |
+| `/login` | Panel «Iniciar sesión» sobre la landing | «Soy del taller / Soy cliente», con correo y contraseña |
+| `/registro`, `/registro/taller`, `/registro/cliente` | Paneles «Crear cuenta», «Registrar taller» y «Cuenta de cliente» | Sin código por WhatsApp (segunda entrega) |
 | `/admin` (Inicio) | Panel del taller | Lecturas y bahías con las órdenes reales. «Equipo hoy», «Lo que pasó hoy» y la sugerencia de IA quedan para después |
 | `/admin/ordenes`, `/mecanico` | Órdenes | Pestañas segmentadas y buscador |
 | `/admin/ordenes/nueva` | Recibir moto | Formulario de 760 px en computador |
@@ -155,7 +156,7 @@ No cambia ninguna regla del negocio: se llama la misma API con el mismo estado y
 
 ## 9. Antes de entregar una pantalla
 
-- [ ] Se parece a su pantalla del prototipo en 390 px y en 1440 px.
+- [ ] Es idéntica a su pantalla del prototipo en 390 px y en 1440 px (puestas lado a lado).
 - [ ] Solo usa tokens (`npm run check:tokens` pasa) y componentes de `ui`.
 - [ ] No hay desplazamiento horizontal en 360, 390 y 1440 px.
 - [ ] Toques de 48 px como mínimo, foco visible y etiqueta en cada campo.
