@@ -91,7 +91,9 @@ export function RegistroTallerForm({ onRegistro }: { onRegistro: (usuario: Usuar
             className="flex flex-1 flex-col gap-1.5"
           >
             <span
-              className={`h-1.5 rounded-full ${paso >= n ? 'bg-primary' : 'bg-surface-sunken'}`}
+              className={`h-1.5 rounded-full transition-colors duration-300 ${
+                paso > n ? 'bg-ink' : paso === n ? 'bg-accent' : 'bg-surface-2'
+              }`}
               aria-hidden="true"
             />
             <span className={`text-xs font-semibold ${paso === n ? 'text-ink' : 'text-ink-muted'}`}>
