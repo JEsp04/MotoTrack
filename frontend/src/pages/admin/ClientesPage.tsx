@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   Alert,
   AppBar,
-  Badge,
   Button,
   EmptyState,
-  Icon,
+  Fab,
   Input,
-  Plate,
+  List,
+  ListItem,
+  Page,
   SkeletonList,
 } from '@/components/ui';
 import { ClienteSheet, useClientes } from '@/features/clientes';
 import { parseApiError } from '@/lib/api-error';
 import { useDebounce } from '@/lib/use-debounce';
 import { LIMITES } from '@/lib/validaciones';
-import type { ClienteResumen } from '@/types';
 
-/** HU-24 y HU-25 · Buscar, ver y registrar clientes del taller. */
+/** HU-24 y HU-25 · Buscar, ver y registrar clientes del taller (ClientsScreen del prototipo). */
 export default function ClientesPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -34,25 +34,25 @@ export default function ClientesPage() {
 
   const lista = clientes.data?.pages.flatMap((p) => p.data) ?? [];
   const total = clientes.data?.pages[0]?.meta.total ?? 0;
-  const nuevo = (
-    <Button icon="plus" size="sm" onClick={() => setCreando(true)} aria-label="Nuevo cliente">
-      <span className="hidden sm:inline">Nuevo cliente</span>
-    </Button>
-  );
+  const motos = lista.reduce((s, c) => s + c.motos.length, 0);
 
   return (
     <>
       <AppBar
         title="Clientes"
-        subtitle="Busca por nombre, documento, teléfono o placa"
-        actions={nuevo}
+        subtitle={
+          clientes.isSuccess
+            ? `${total === 1 ? '1 cliente' : `${total} clientes`} · ${motos === 1 ? '1 moto' : `${motos} motos`}`
+            : undefined
+        }
       />
-      <div className="flex flex-col gap-4 p-4 lg:px-0">
+      <Page pb="fab">
         <div role="search">
           <Input
             label="Buscar cliente"
+            hideLabel
             type="search"
-            placeholder="Nombre, documento, celular o placa"
+            placeholder="Nombre, celular o placa"
             autoComplete="off"
             maxLength={LIMITES.busqueda}
             value={texto}
@@ -71,37 +71,37 @@ export default function ClientesPage() {
         )}
 
         {clientes.isSuccess && lista.length === 0 && (
-          <EmptyState
-            icon="users"
-            title={q ? 'No encontramos clientes' : 'Aún no tienes clientes'}
-            text={
-              q
-                ? `Nada coincide con «${q}». Revisa lo que escribiste o regístralo.`
-                : 'Registra a los clientes que llegan al taller para abrirles órdenes.'
-            }
-            action={
-              <Button icon="plus" onClick={() => setCreando(true)}>
-                Registrar cliente
-              </Button>
-            }
-          />
+          <div className="rounded-md bg-surface-sunken">
+            <EmptyState
+              icon="users"
+              title={q ? 'No encontramos clientes' : 'Aún no tienes clientes'}
+              text={
+                q
+                  ? `Nada coincide con «${q}». Revisa lo que escribiste o regístralo.`
+                  : 'Registra a los clientes que llegan al taller para abrirles órdenes.'
+              }
+              action={
+                <Button icon="plus" onClick={() => setCreando(true)}>
+                  Registrar cliente
+                </Button>
+              }
+            />
+          </div>
         )}
 
         {lista.length > 0 && (
           <>
-            <p className="text-sm text-ink-muted" aria-live="polite">
-              {total === 1 ? '1 cliente' : `${total} clientes`}
-            </p>
-            <ul
-              className="flex flex-col divide-y divide-border overflow-hidden rounded-md bg-surface-sunken"
-              aria-label="Clientes"
-            >
+            <List label="Clientes">
               {lista.map((c) => (
-                <li key={c.publicId}>
-                  <FilaCliente cliente={c} />
-                </li>
+                <ListItem
+                  key={c.publicId}
+                  initials={c.nombre}
+                  title={c.nombre}
+                  subtitle={[...c.motos.map((m) => m.placa), c.telefono].join(' · ')}
+                  to={`/admin/clientes/${c.publicId}`}
+                />
               ))}
-            </ul>
+            </List>
             {clientes.hasNextPage && (
               <Button
                 variant="secondary"
@@ -114,7 +114,8 @@ export default function ClientesPage() {
             )}
           </>
         )}
-      </div>
+      </Page>
+      <Fab label="Cliente" onClick={() => setCreando(true)} />
 
       <ClienteSheet
         open={creando}
@@ -123,46 +124,5 @@ export default function ClientesPage() {
         onVerExistente={(documento) => buscar(documento)}
       />
     </>
-  );
-}
-
-function FilaCliente({ cliente }: { cliente: ClienteResumen }) {
-  return (
-    <Link
-      to={`/admin/clientes/${cliente.publicId}`}
-      className="flex items-center gap-3.5 p-4 transition-colors duration-150 hover:bg-surface-2 sm:px-5"
-    >
-      <span
-        className="flex size-11 shrink-0 items-center justify-center rounded-sm bg-surface text-sm font-semibold"
-        aria-hidden="true"
-      >
-        {cliente.nombre
-          .split(' ')
-          .slice(0, 2)
-          .map((p) => p[0])
-          .join('')}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate font-semibold">{cliente.nombre}</p>
-          {cliente.tieneCuenta && (
-            <Badge tono="neutral" className="bg-surface">
-              Usa la app
-            </Badge>
-          )}
-        </div>
-        <p className="text-sm text-ink-muted">
-          CC {cliente.documentoIdentidad} · {cliente.telefono}
-        </p>
-        {cliente.motos.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {cliente.motos.map((m) => (
-              <Plate key={m.publicId} placa={m.placa} size="sm" />
-            ))}
-          </div>
-        )}
-      </div>
-      <Icon name="chevronRight" className="shrink-0 text-ink-muted" size={20} />
-    </Link>
   );
 }

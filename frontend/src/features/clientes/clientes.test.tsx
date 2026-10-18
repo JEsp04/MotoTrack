@@ -97,7 +97,7 @@ describe('HU-24 · Registrar un cliente en el taller', () => {
   async function abrirFormulario() {
     api.listar.mockResolvedValue(lista([cliente()]));
     abrirApp('/admin/clientes');
-    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo cliente' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cliente' }));
     return within(await screen.findByRole('dialog', { name: 'Nuevo cliente' }));
   }
 

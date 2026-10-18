@@ -149,7 +149,7 @@ describe('HU-46 · Panel del taller', () => {
     sesionDePrueba('admin');
     api.listar.mockResolvedValue(lista([]));
     abrirApp('/admin');
-    expect(await screen.findByText('No hay motos en el taller')).toBeInTheDocument();
+    expect(await screen.findByText('No hay motos adentro')).toBeInTheDocument();
   });
 });
 

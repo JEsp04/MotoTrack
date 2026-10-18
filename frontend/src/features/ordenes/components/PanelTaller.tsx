@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Arc, Button, EmptyState, Plate, Skeleton } from '@/components/ui';
+import { Arc, Button, EmptyState, Fab, Initials, Plate, Skeleton } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
 import { formatPesos } from '@/lib/format';
@@ -7,127 +7,193 @@ import type { OrdenResumen } from '@/types';
 import { rutaOrden } from '../estados';
 import { usePanelTaller } from '../hooks/use-ordenes';
 
+/** Monto como en el panel del prototipo: «$956.000» (sin espacio) en Michroma */
+const monto = (v: number) => formatPesos(v).replace('$ ', '$');
+
+/** Orden de las bahías, como en el prototipo: primero lo que espera a alguien */
+const PRIORIDAD = [
+  'esperando_aprobacion',
+  'pendiente_repuesto',
+  'en_reparacion',
+  'aprobada',
+  'lista_entrega',
+  'diagnosticada',
+  'registrada',
+];
+
+const hoy = () => {
+  const f = new Intl.DateTimeFormat('es-CO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'America/Bogota',
+  }).format(new Date());
+  return f.charAt(0).toUpperCase() + f.slice(1);
+};
+
 /**
- * HU-46 · Panel del taller: lecturas, una tarjeta por moto adentro con su arco,
- * el equipo de hoy y las entregadas recientemente. Usa la lista de órdenes que ya da la API.
+ * HU-46 · Panel del taller (StaffHomeScreen del prototipo): lecturas, una tarjeta por moto
+ * adentro con su arco, el equipo de hoy y las entregadas recientemente. Usa la lista de
+ * órdenes que ya da la API. «Lo que pasó hoy» y la sugerencia de IA llegan con su HU.
  */
 export function PanelTaller() {
   const { data, isPending, isError, refetch } = usePanelTaller();
 
-  if (isPending) {
-    return (
-      <div
-        className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3"
-        role="status"
-        aria-label="Cargando"
-      >
-        {[1, 2, 3].map((n) => (
-          <Skeleton key={n} className="h-52 rounded-md" />
-        ))}
-      </div>
-    );
-  }
-  if (isError) {
-    return (
-      <EmptyState
-        icon="alert"
-        title="No pudimos cargar el taller"
-        text="Revisa tu conexión e inténtalo de nuevo."
-        action={
-          <Button variant="secondary" icon="refresh" onClick={() => refetch()}>
-            Reintentar
-          </Button>
-        }
-      />
-    );
-  }
-
-  const sinRepuesto = data.abiertas.filter((o) => o.estado === 'pendiente_repuesto').length;
-  const lecturas = [
-    { n: data.totalAbiertas, label: 'adentro', to: '/admin/ordenes' },
-    { n: data.porAprobar, label: 'espera al cliente', to: '/admin/ordenes', hot: true },
-    { n: sinRepuesto, label: 'sin repuesto', to: '/admin/ordenes' },
-    { n: data.listas, label: 'listas para entregar', to: '/admin/ordenes' },
-  ];
-
   return (
-    <div className="flex flex-col gap-6">
-      <ul className="grid grid-cols-2 gap-2.5 md:flex md:gap-2" aria-label="Resumen del taller">
-        {lecturas.map((l) => (
-          <li key={l.label}>
-            <Link
-              to={l.to}
-              className="flex flex-col rounded-[18px] bg-surface-sunken px-3.5 py-3 transition-transform duration-150 ease-out active:scale-[0.97] md:bg-transparent md:px-3 md:py-1.5 md:hover:bg-surface-sunken"
-            >
-              <span
-                className={cn(
-                  'font-num text-[22px] leading-tight',
-                  l.hot && l.n > 0 && 'text-accent-text',
-                )}
-              >
-                {l.n}
-              </span>
-              <span className="text-sm text-ink-muted">{l.label}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <div className="flex flex-col gap-[18px] px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
+      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
+        <div>
+          <p className="text-sm leading-5 text-ink-muted">{hoy()}</p>
+          <h1 className="mt-1 text-[30px] leading-[1.05] font-semibold tracking-[-0.04em] md:text-[40px]">
+            Motos en el taller
+          </h1>
+        </div>
+        {data && (
+          <Lecturas
+            abiertas={data.abiertas}
+            total={data.totalAbiertas}
+            porAprobar={data.porAprobar}
+          />
+        )}
+      </div>
 
-      {data.abiertas.length === 0 ? (
+      {isPending && (
+        <div
+          className="grid grid-cols-1 gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]"
+          role="status"
+          aria-label="Cargando"
+        >
+          {[1, 2, 3].map((n) => (
+            <Skeleton key={n} className="h-52 rounded-md" />
+          ))}
+        </div>
+      )}
+      {isError && (
         <EmptyState
-          icon="moto"
-          title="No hay motos en el taller"
-          text="Cuando recibas una moto, aquí verás cómo va cada reparación."
+          icon="alert"
+          title="No pudimos cargar el taller"
+          text="Revisa tu conexión e inténtalo de nuevo."
           action={
-            <Link
-              to="/admin/ordenes/nueva"
-              className="inline-flex min-h-touch items-center rounded-full bg-primary px-6 font-semibold text-on-primary"
-            >
-              Recibir moto
-            </Link>
+            <Button variant="secondary" icon="refresh" onClick={() => refetch()}>
+              Reintentar
+            </Button>
           }
         />
-      ) : (
-        <ul className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-          {data.abiertas.map((o) => (
-            <li key={o.publicId}>
-              <Bahia orden={o} />
-            </li>
-          ))}
-        </ul>
       )}
 
-      <EquipoHoy abiertas={data.abiertas} />
+      {data &&
+        (data.abiertas.length === 0 ? (
+          <div className="rounded-md bg-surface-sunken">
+            <EmptyState
+              icon="clipboard"
+              title="No hay motos adentro"
+              text="Recibe una moto para crear la primera orden del día."
+            />
+          </div>
+        ) : (
+          <ul className="grid grid-cols-1 gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
+            {[...data.abiertas]
+              .sort((a, b) => PRIORIDAD.indexOf(a.estado) - PRIORIDAD.indexOf(b.estado))
+              .map((o) => (
+                <li key={o.publicId}>
+                  <Bahia orden={o} />
+                </li>
+              ))}
+          </ul>
+        ))}
 
-      {data.recientes.length > 0 && (
+      {data && <EquipoHoy abiertas={data.abiertas} />}
+
+      {data && data.recientes.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-[15px] font-semibold text-ink-muted">Entregadas recientemente</h2>
+          <h2 className="mt-1.5 text-[15px] font-semibold text-ink-muted">
+            Entregadas recientemente
+          </h2>
           <ul className="border-t border-border">
-            {data.recientes.map((o) => (
+            {data.recientes.slice(0, 4).map((o) => (
               <li key={o.publicId} className="border-b border-border">
                 <Link
                   to={rutaOrden('admin', o.publicId)}
-                  className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-1 py-3 hover:bg-surface-sunken md:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  className="grid grid-cols-[86px_minmax(0,1fr)_auto] items-center gap-4 px-1 py-3 text-[15px] md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 >
-                  <Plate placa={o.moto.placa} size="sm" />
+                  <span className="justify-self-start rounded-[6px] border-[1.5px] border-border-strong bg-surface-sunken px-2 pt-1 pb-[3px] font-num text-xs leading-none tracking-[0.12em] text-ink-muted">
+                    {o.moto.placa}
+                  </span>
                   <span className="truncate">
                     {o.moto.marca} {o.moto.referencia}
                   </span>
                   <span className="hidden truncate text-sm text-ink-muted md:block">
                     {o.moto.cliente.nombre}, con {o.mecanico.nombre.split(' ')[0]}
                   </span>
-                  <span className="font-num text-sm">{formatPesos(o.costoTotal)}</span>
+                  <span className="font-num text-sm whitespace-nowrap">{monto(o.costoTotal)}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </section>
       )}
+
+      <Fab label="Nueva orden" to="/admin/ordenes/nueva" />
     </div>
   );
 }
 
-/** Tarjeta de una moto adentro: placa, arco del paso, estado, cliente y total. */
+function Lecturas({
+  abiertas,
+  total,
+  porAprobar,
+}: {
+  abiertas: OrdenResumen[];
+  total: number;
+  porAprobar: number;
+}) {
+  const sinRepuesto = abiertas.filter((o) => o.estado === 'pendiente_repuesto').length;
+  const cotizado = abiertas.reduce((s, o) => s + o.costoTotal, 0);
+  const lecturas = [
+    { n: String(total), label: 'adentro' },
+    { n: String(porAprobar), label: 'espera al cliente', hot: true },
+    { n: String(sinRepuesto), label: 'sin repuesto' },
+    { n: monto(cotizado), label: 'cotizado abierto' },
+  ];
+  return (
+    <ul className="grid grid-cols-2 gap-2.5 md:flex md:gap-2" aria-label="Resumen del taller">
+      {lecturas.map((l) => (
+        <li key={l.label}>
+          <Link
+            to="/admin/ordenes"
+            className="flex flex-col items-start gap-0.5 rounded-[18px] bg-surface-sunken px-3.5 py-3 text-ink transition-transform duration-150 ease-out active:scale-[0.97] md:bg-transparent md:px-3 md:py-1.5"
+          >
+            <span
+              className={cn(
+                'font-num text-[22px] leading-[1.2] tracking-[-0.01em]',
+                l.hot && 'text-accent-text',
+              )}
+            >
+              {l.n}
+            </span>
+            <span className="text-sm text-ink-muted">{l.label}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Pie de la tarjeta, como foot() del prototipo (sin la fecha de entrega, que aún no existe) */
+function Pie({ orden: o }: { orden: OrdenResumen }) {
+  const primer = o.mecanico.nombre.split(' ')[0];
+  if (o.estado === 'esperando_aprobacion')
+    return <Bandera tono="accent">Espera al cliente</Bandera>;
+  if (o.estado === 'pendiente_repuesto') return <Bandera tono="danger">Falta repuesto</Bandera>;
+  if (o.estado === 'registrada')
+    return <span className="min-w-0 truncate">{primer} debe diagnosticar</span>;
+  if (o.estado === 'lista_entrega')
+    return <span className="min-w-0 truncate">Lista para entregar</span>;
+  return <span className="min-w-0 truncate">Con {primer}</span>;
+}
+
+/** Tarjeta de una moto adentro (.hp-bay del prototipo) */
 function Bahia({ orden: o }: { orden: OrdenResumen }) {
   const { label, paso } = ESTADOS_ORDEN[o.estado];
   const espera = o.estado === 'esperando_aprobacion';
@@ -137,15 +203,15 @@ function Bahia({ orden: o }: { orden: OrdenResumen }) {
     <Link
       to={rutaOrden('admin', o.publicId)}
       className={cn(
-        'flex h-full flex-col gap-3.5 rounded-md p-[18px] transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]',
+        'flex h-full flex-col gap-3.5 rounded-md p-[18px] text-ink transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]',
         espera
-          ? 'bg-surface shadow-sheet ring-[1.5px] ring-ink'
+          ? 'bg-surface shadow-[0_24px_40px_-28px_var(--color-ink)] ring-[1.5px] ring-ink ring-inset'
           : 'bg-surface-sunken hover:bg-surface-2',
       )}
     >
-      <span className="flex items-center justify-between gap-3">
-        <Plate placa={o.moto.placa} size="sm" />
-        <span className="font-num text-xs text-ink-muted">#{o.numero}</span>
+      <span className="flex items-center justify-between">
+        <Plate placa={o.moto.placa} />
+        <span className="text-sm leading-5 text-ink-muted">#{o.numero}</span>
       </span>
       <span className="flex items-center gap-3.5">
         <span className="relative size-[78px] shrink-0">
@@ -155,25 +221,19 @@ function Bahia({ orden: o }: { orden: OrdenResumen }) {
           </span>
         </span>
         <span className="min-w-0">
-          <span className="block text-[17px] leading-snug font-semibold">{label}</span>
-          <span className="block truncate text-sm text-ink-muted">
+          <span className="block text-[17px] font-semibold tracking-[-0.01em]">{label}</span>
+          <span className="block truncate text-sm leading-5 text-ink-muted">
             {o.moto.marca} {o.moto.referencia}
           </span>
-          <span className="block truncate text-sm text-ink-muted">{o.moto.cliente.nombre}</span>
+          <span className="block truncate text-sm leading-5 text-ink-muted">
+            {o.moto.cliente.nombre}
+          </span>
         </span>
       </span>
       <span className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3 text-sm">
-        {espera ? (
-          <Bandera tono="accent">Espera al cliente</Bandera>
-        ) : repuesto ? (
-          <Bandera tono="danger">Falta repuesto</Bandera>
-        ) : (
-          <span className="min-w-0 truncate">Con {o.mecanico.nombre.split(' ')[0]}</span>
-        )}
+        <Pie orden={o} />
         {o.costoTotal > 0 ? (
-          <span className="font-num text-[13px] whitespace-nowrap">
-            {formatPesos(o.costoTotal)}
-          </span>
+          <span className="font-num text-sm whitespace-nowrap">{monto(o.costoTotal)}</span>
         ) : (
           <span className="text-ink-muted">Sin cotizar</span>
         )}
@@ -191,7 +251,10 @@ function Bandera({ tono, children }: { tono: 'accent' | 'danger'; children: stri
       )}
     >
       <i
-        className={cn('size-2 rounded-full', tono === 'accent' ? 'bg-accent' : 'bg-danger')}
+        className={cn(
+          'size-2 shrink-0 rounded-full',
+          tono === 'accent' ? 'bg-accent' : 'bg-danger',
+        )}
         aria-hidden="true"
       />
       {children}
@@ -199,7 +262,7 @@ function Bandera({ tono, children }: { tono: 'accent' | 'danger'; children: stri
   );
 }
 
-/** Carga de cada mecánico con las motos abiertas que tiene asignadas. */
+/** Carga de cada mecánico con sus motos abiertas (.hp-mech del prototipo) */
 function EquipoHoy({ abiertas }: { abiertas: OrdenResumen[] }) {
   const porMecanico = new Map<string, { nombre: string; ordenes: OrdenResumen[] }>();
   for (const o of abiertas) {
@@ -211,42 +274,44 @@ function EquipoHoy({ abiertas }: { abiertas: OrdenResumen[] }) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-[15px] font-semibold text-ink-muted">Equipo hoy</h2>
-      <ul className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-        {[...porMecanico.entries()].map(([id, m]) => (
-          <li
-            key={id}
-            className="flex items-center gap-3.5 rounded-md px-[18px] py-4 ring-1 ring-border ring-inset"
-          >
-            <span className="flex size-[46px] shrink-0 items-center justify-center rounded-sm bg-surface-2 text-sm font-semibold">
-              {m.nombre
-                .split(' ')
-                .slice(0, 2)
-                .map((p) => p[0])
-                .join('')}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-semibold">{m.nombre}</span>
-              <span className="mt-2.5 flex gap-1" aria-hidden="true">
-                {m.ordenes.slice(0, 6).map((o) => (
-                  <i
-                    key={o.publicId}
-                    className={cn(
-                      'h-[5px] flex-1 rounded-full',
-                      o.estado === 'esperando_aprobacion' ? 'bg-accent' : 'bg-ink',
-                    )}
-                  />
-                ))}
+      <h2 className="mt-1.5 text-[15px] font-semibold text-ink-muted">Equipo hoy</h2>
+      <ul className="grid grid-cols-1 gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+        {[...porMecanico.entries()].map(([id, m]) => {
+          const espera = m.ordenes.filter((o) => o.estado === 'esperando_aprobacion').length;
+          const primera = m.ordenes[0]!;
+          return (
+            <li
+              key={id}
+              className="flex items-center gap-3.5 rounded-md px-[18px] py-4 ring-1 ring-border ring-inset"
+            >
+              <Initials nombre={m.nombre} className="size-[46px] rounded-[14px]" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold">{m.nombre}</span>
+                <span className="block truncate text-sm leading-5 text-ink-muted">
+                  {ESTADOS_ORDEN[primera.estado].label}: {primera.moto.marca}{' '}
+                  {primera.moto.referencia}
+                </span>
+                <span className="mt-2.5 flex gap-1" aria-hidden="true">
+                  {[0, 1, 2, 3].map((k) => (
+                    <i
+                      key={k}
+                      className={cn(
+                        'h-[5px] flex-1 rounded-[3px]',
+                        k < espera ? 'bg-accent' : k < m.ordenes.length ? 'bg-ink' : 'bg-surface-2',
+                      )}
+                    />
+                  ))}
+                </span>
               </span>
-            </span>
-            <span className="flex flex-col items-end">
-              <span className="font-num text-lg">{m.ordenes.length}</span>
-              <span className="text-sm text-ink-muted">
-                {m.ordenes.length === 1 ? 'moto' : 'motos'}
+              <span className="flex flex-col items-end">
+                <span className="font-num text-[22px] leading-[1.2]">{m.ordenes.length}</span>
+                <span className="text-sm text-ink-muted">
+                  {m.ordenes.length === 1 ? 'moto' : 'motos'}
+                </span>
               </span>
-            </span>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
