@@ -14,8 +14,10 @@ export function Plate({
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-sm border-2 border-ink bg-plate font-num tracking-wider text-ink',
-        size === 'sm' ? 'px-1.5 py-0.5 text-xs' : 'px-2.5 py-1 text-sm',
+        'inline-flex items-center justify-center whitespace-nowrap border-ink bg-plate font-num tracking-[0.12em] text-ink',
+        size === 'sm'
+          ? 'rounded-[5px] border-[1.5px] px-1.5 pt-[3px] pb-0.5 text-[11px]'
+          : 'rounded-[7px] border-2 px-2.5 pt-1 pb-[3px] text-sm',
         className,
       )}
       aria-label={`Placa ${placa.split('').join(' ')}`}

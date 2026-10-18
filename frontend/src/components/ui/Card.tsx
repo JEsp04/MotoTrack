@@ -9,11 +9,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({ flush, className, ...rest }: CardProps) {
   return (
     <div
-      className={cn(
-        'rounded-md border border-border bg-surface shadow-card',
-        !flush && 'p-4',
-        className,
-      )}
+      className={cn('rounded-md bg-surface-sunken', !flush && 'p-4 sm:p-5', className)}
       {...rest}
     />
   );

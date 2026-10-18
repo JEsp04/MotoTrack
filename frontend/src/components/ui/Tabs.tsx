@@ -31,7 +31,7 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
     <div
       role="tablist"
       aria-label={label}
-      className="flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none]"
+      className="flex max-w-full gap-0.5 self-start overflow-x-auto rounded-full bg-surface-sunken p-1 [scrollbar-width:none]"
     >
       {tabs.map((tab, i) => {
         const activa = tab.id === value;
@@ -48,18 +48,19 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              '-mb-px flex min-h-touch shrink-0 items-center gap-2 border-b-3 px-3 text-sm font-semibold whitespace-nowrap transition-colors',
+              'flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm whitespace-nowrap',
+              'transition-[color,background-color] duration-150',
               activa
-                ? 'border-primary text-ink'
-                : 'border-transparent text-ink-muted hover:text-ink',
+                ? 'bg-surface font-semibold text-ink shadow-sm'
+                : 'font-medium text-ink-muted hover:text-ink',
             )}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  'rounded-full px-2 py-0.5 text-xs',
-                  activa ? 'bg-primary text-on-primary' : 'bg-surface-sunken text-ink-muted',
+                  'min-w-5 rounded-full px-1.5 text-center text-[11px] leading-5 font-bold',
+                  activa ? 'bg-accent text-ink' : 'bg-surface-2 text-ink-muted',
                 )}
               >
                 {tab.count}

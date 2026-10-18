@@ -25,10 +25,10 @@ export function Field({ label, required, hint, error, className, children }: Fie
 
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <label htmlFor={id} className="text-sm font-semibold text-ink">
+      <label htmlFor={id} className="text-sm font-medium text-ink">
         {label}
         {required && (
-          <span className="ml-0.5 text-danger" aria-hidden="true">
+          <span className="ml-0.5 text-danger-text" aria-hidden="true">
             *
           </span>
         )}
@@ -40,7 +40,7 @@ export function Field({ label, required, hint, error, className, children }: Fie
         'aria-required': required || undefined,
       })}
       {error ? (
-        <p id={errorId} className="flex items-start gap-1 text-sm font-medium text-danger">
+        <p id={errorId} className="flex items-start gap-1 text-sm font-medium text-danger-text">
           {error}
         </p>
       ) : (

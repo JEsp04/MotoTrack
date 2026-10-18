@@ -68,7 +68,7 @@ export function BottomSheet({ open, title, onClose, children, footer }: BottomSh
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
       <div
-        className="absolute inset-0 animate-fade-in bg-ink/30"
+        className="absolute inset-0 animate-fade-in bg-ink/30 backdrop-blur-[2px]"
         onClick={onClose}
         data-testid="sheet-backdrop"
         aria-hidden="true"
@@ -79,28 +79,28 @@ export function BottomSheet({ open, title, onClose, children, footer }: BottomSh
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex max-h-[90dvh] w-full animate-sheet-up flex-col rounded-t-lg bg-surface shadow-sheet focus:outline-none sm:max-w-lg sm:rounded-lg"
+        className="relative flex max-h-[90dvh] w-full animate-sheet-up flex-col rounded-t-lg bg-surface shadow-sheet focus:outline-none sm:max-w-lg sm:animate-pop sm:rounded-lg"
       >
         <div
-          className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border sm:hidden"
+          className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-surface-2 sm:hidden"
           aria-hidden="true"
         />
-        <header className="flex items-center gap-2 px-5 pt-3 pb-2 sm:pt-5">
-          <h2 id={titleId} className="flex-1 text-lg">
+        <header className="flex items-center gap-2 px-6 pt-3 pb-2 sm:pt-6">
+          <h2 id={titleId} className="flex-1 text-xl">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="-mr-2 flex size-touch items-center justify-center rounded-full text-ink-muted hover:bg-surface-2 hover:text-ink"
+            className="-mr-2 flex size-touch items-center justify-center rounded-full bg-surface-sunken text-ink transition-transform duration-150 ease-out hover:bg-surface-2 active:scale-[0.95]"
             aria-label="Cerrar"
           >
             <Icon name="close" />
           </button>
         </header>
-        <div className="flex flex-col gap-4 overflow-y-auto px-5 pb-5">{children}</div>
+        <div className="flex flex-col gap-4 overflow-y-auto px-6 pb-6">{children}</div>
         {footer && (
-          <footer className="flex gap-3 border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] *:flex-1">
+          <footer className="flex gap-3 border-t border-border px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] *:flex-1">
             {footer}
           </footer>
         )}

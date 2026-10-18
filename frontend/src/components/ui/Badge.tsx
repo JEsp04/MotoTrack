@@ -5,18 +5,20 @@ import type { EstadoOrden } from '@/types';
 
 const TONOS: Record<Tono, string> = {
   neutral: 'bg-surface-sunken text-ink',
-  primary: 'bg-surface-sunken text-ink',
+  primary: 'bg-surface-2 text-ink',
   accent: 'bg-accent-soft text-accent-text',
   success: 'bg-success-soft text-success-text',
-  danger: 'bg-danger-soft text-danger',
+  danger: 'bg-danger-soft text-danger-text',
+  ink: 'bg-ink text-on-primary',
 };
 
 const PUNTOS: Record<Tono, string> = {
   neutral: 'bg-border-strong',
-  primary: 'bg-primary',
+  primary: 'bg-ink',
   accent: 'bg-accent',
   success: 'bg-success',
   danger: 'bg-danger',
+  ink: 'bg-accent',
 };
 
 export function Badge({
@@ -33,7 +35,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-1 pr-2.5 pl-2 text-xs font-semibold',
         TONOS[tono],
         className,
       )}
