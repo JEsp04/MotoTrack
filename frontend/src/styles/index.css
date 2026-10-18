@@ -104,12 +104,18 @@
     outline: 2px solid var(--color-ink);
     outline-offset: 3px;
   }
+  /*
+   * Movimiento reducido: se quitan desplazamientos y animaciones decorativas, pero no la
+   * respuesta a lo que hace la persona. Lo marcado con data-movimiento="esencial" (el relleno
+   * de mantener presionado, la cinta lenta) sigue funcionando.
+   */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *:not([data-movimiento='esencial']),
+    *:not([data-movimiento='esencial'])::before,
+    *:not([data-movimiento='esencial'])::after {
       animation-duration: 1ms !important;
-      transition-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0s !important;
     }
   }
 }
@@ -304,16 +310,6 @@
   }
   .lp-split .l {
     display: inline-block;
-    transition:
-      transform 800ms var(--ease-out),
-      filter 800ms var(--ease-out),
-      opacity 800ms var(--ease-out);
-    transition-delay: calc(var(--i) * 22ms);
-  }
-  .lp-split.pre .l {
-    opacity: 0;
-    transform: translateY(0.42em);
-    filter: blur(10px);
   }
 
   .lp-hero {
@@ -442,14 +438,13 @@
     flex: 1;
     height: 44px;
   }
-  .lp-isla .txt span {
+  .lp-isla .txt > span {
     position: absolute;
     inset: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    opacity: 0;
-    animation: lp-cycle 12s ease 2.3s infinite;
+    white-space: nowrap;
   }
   .lp-isla .txt b {
     font-weight: 600;
@@ -459,34 +454,6 @@
     font-style: normal;
     color: #a9b1ba;
     font-size: 13px;
-  }
-  .lp-isla .txt span:nth-child(2) {
-    animation-delay: 5.3s;
-  }
-  .lp-isla .txt span:nth-child(3) {
-    animation-delay: 8.3s;
-  }
-  .lp-isla .txt span:nth-child(4) {
-    animation-delay: 11.3s;
-  }
-  @keyframes lp-cycle {
-    0% {
-      opacity: 0;
-      filter: blur(4px);
-      transform: translateY(6px);
-    }
-    4%,
-    22% {
-      opacity: 1;
-      filter: blur(0);
-      transform: none;
-    }
-    26%,
-    100% {
-      opacity: 0;
-      filter: blur(4px);
-      transform: translateY(-6px);
-    }
   }
   .lp-isla .live {
     flex: none;
@@ -1252,17 +1219,8 @@
       animation: none;
       clip-path: none;
     }
-    .lp-isla .txt span {
-      animation: none;
-    }
-    .lp-isla .txt span:nth-child(3) {
-      opacity: 1;
-    }
     .lp-tape-in {
       animation-duration: 120s;
-    }
-    .lp-split .l {
-      transition: none;
     }
     .lp-runner {
       transition: none;
@@ -1303,5 +1261,133 @@
     .auth-in {
       animation: none;
     }
+  }
+}
+
+/* Landing en celulares: isla encima de la moto (sin taparla), barra angosta y pie de página */
+@layer components {
+  .lp-menu .lp-menu-cta {
+    display: none;
+  }
+  .lp-foot {
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+  }
+  .lp-foot nav {
+    margin-left: -10px;
+  }
+  @media (min-width: 900px) {
+    .lp-foot .lp-wrap {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px 32px;
+    }
+    .lp-foot nav {
+      margin-left: 0;
+      justify-self: end;
+    }
+    .lp-foot-note {
+      grid-column: 1 / -1;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border);
+    }
+  }
+  @media (max-width: 899px) {
+    .lp-foot .lp-wrap {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .lp-foot nav {
+      flex-direction: column;
+      gap: 0;
+    }
+    .lp-foot nav button {
+      min-height: 44px;
+      text-align: left;
+    }
+    .lp-end-row .lp-btn-big {
+      width: 100%;
+    }
+  }
+  @media (max-width: 599px) {
+    .lp-stage {
+      aspect-ratio: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      margin-top: 40px;
+    }
+    .lp-isla {
+      position: relative;
+      left: auto;
+      top: auto;
+      transform: none;
+      width: 100%;
+    }
+    .lp-moto {
+      position: relative;
+      left: auto;
+      right: auto;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+  }
+  @media (max-width: 439px) {
+    .lp-top {
+      padding: 0 10px;
+    }
+    .lp-bar {
+      padding: 6px 6px 6px 14px;
+      gap: 6px;
+    }
+    .lp-bar .lp-btn-sm {
+      display: none;
+    }
+    .lp-menu .lp-menu-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+      border-radius: 999px;
+      background: var(--color-ink);
+      color: var(--color-on-primary);
+    }
+  }
+}
+
+/* Resultado de la demostración dentro de los celulares de la landing */
+@layer components {
+  .lp-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 102px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: var(--color-surface-sunken);
+    color: var(--color-ink);
+    font-size: 14px;
+    line-height: 20px;
+    text-align: left;
+  }
+  .lp-result .ico {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-success);
+    color: var(--color-on-primary);
+  }
+  .lp-result .ico.pausa {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+  .lp-amount.off {
+    color: var(--color-ink-muted);
+    text-decoration: line-through;
   }
 }

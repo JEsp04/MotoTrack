@@ -1,9 +1,9 @@
+import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { HoldButton, Icon, IconButton, Plate } from '@/components/ui';
 import { LogoMark } from '@/components/layout';
 import { cn } from '@/lib/cn';
-import { toast } from '@/lib/toast';
-import { FitText, SplitText } from './efectos';
+import { FitText, SplitText, TextoRotativo } from './efectos';
 import { reducirMovimiento } from './movimiento';
 
 /** Adónde llevan los botones de la landing (los paneles de ingreso y registro) */
@@ -21,6 +21,13 @@ const PASOS: Array<[string, string]> = [
   ['En reparación', 'Se hace el trabajo'],
   ['Lista', 'Le llega el aviso'],
   ['Entregada', 'Queda en su historial'],
+];
+
+const ISLA = [
+  { titulo: 'Recibida en el taller', detalle: 'Taller Central, 9:10 a. m.' },
+  { titulo: 'Diagnóstico listo', detalle: 'Julián revisó cadena y piñón' },
+  { titulo: 'En reparación con Julián', detalle: 'Entrega estimada: 18 sep' },
+  { titulo: 'Lista para recoger', detalle: 'Laura ya recibió el aviso' },
 ];
 
 const CINTA: Array<[string, string]> = [
@@ -112,6 +119,232 @@ function CabezaCelular({ t, s, placa }: { t: string; s: string; placa: string })
         <small>{s}</small>
       </div>
       <Plate placa={placa} />
+    </div>
+  );
+}
+
+/** Resultado de la demostración: se ve unos segundos y vuelve al inicio */
+function useDemo<T extends string>(inicial: T) {
+  const [estado, setEstado] = useState<T>(inicial);
+  useEffect(() => {
+    if (estado === inicial) return;
+    const t = setTimeout(() => setEstado(inicial), 4500);
+    return () => clearTimeout(t);
+  }, [estado, inicial]);
+  return [estado, setEstado] as const;
+}
+
+const FUNDIDO = {
+  initial: { opacity: 0, y: 8, filter: 'blur(4px)' },
+  animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  exit: { opacity: 0, y: -8, filter: 'blur(4px)' },
+  transition: { duration: 0.35, ease: [0.23, 1, 0.32, 1] as const },
+};
+
+/** Aviso dentro del celular cuando se suelta el botón (en vez de una alerta) */
+function Resultado({ texto, tono = 'ok' }: { texto: string; tono?: 'ok' | 'pausa' }) {
+  return (
+    <motion.div {...FUNDIDO} className="lp-result" role="status">
+      <span className={cn('ico', tono === 'pausa' && 'pausa')}>
+        <Icon name={tono === 'pausa' ? 'clock' : 'check'} size={16} stroke={2.6} />
+      </span>
+      {texto}
+    </motion.div>
+  );
+}
+
+/** Celular del cliente: aprueba o rechaza manteniendo presionado */
+function CelularCliente() {
+  const [estado, setEstado] = useDemo<'espera' | 'aprobada' | 'rechazada'>('espera');
+  const paso = estado === 'aprobada' ? 3 : 2;
+  return (
+    <div className="lp-phone">
+      <div className="lp-screen">
+        <EstadoCelular />
+        <CabezaCelular t="Pulsar NS200" s="OT-1045, Taller Central" placa="HQL93D" />
+        <div className="lp-pill">
+          <span className="live" />
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={estado} {...FUNDIDO} className="flex-1">
+              <b>
+                {estado === 'espera'
+                  ? 'Esperando tu aprobación'
+                  : estado === 'aprobada'
+                    ? 'Aprobaste la cotización'
+                    : 'Rechazaste la cotización'}
+              </b>
+              <small>
+                {estado === 'rechazada' ? 'Recoge tu moto sin reparación' : `Paso ${paso + 1} de 6`}
+              </small>
+              {estado !== 'rechazada' && (
+                <div className="segs" aria-hidden="true">
+                  {[0, 1, 2, 3, 4, 5].map((k) => (
+                    <i key={k} className={k < paso ? 'ok' : k === paso ? 'now' : ''} />
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <div className={cn('lp-amount', estado === 'rechazada' && 'off')}>$132.000</div>
+        <div className="lp-why">Mateo encontró las pastillas delanteras al 10 %.</div>
+        <div className="lp-card">
+          <div className="row">
+            <span>Pastillas delanteras</span>
+            <span>$ 68.000</span>
+          </div>
+          <div className="row">
+            <span>Mano de obra y purga</span>
+            <span>$ 40.000</span>
+          </div>
+          <div className="row">
+            <span>Líquido DOT 4</span>
+            <span>$ 24.000</span>
+          </div>
+        </div>
+        <div className="lp-dock">
+          <AnimatePresence mode="wait" initial={false}>
+            {estado === 'espera' ? (
+              <motion.div key="botones" {...FUNDIDO} className="flex flex-col gap-2">
+                <HoldButton
+                  demo
+                  fullWidth
+                  className="min-h-[50px] rounded-2xl text-[15px]"
+                  label="Mantén para aprobar"
+                  doneLabel="Suelta para aprobar"
+                  onConfirm={() => setEstado('aprobada')}
+                />
+                <HoldButton
+                  variant="soft"
+                  fullWidth
+                  className="min-h-11 rounded-2xl text-sm"
+                  label="Mantén para rechazar"
+                  doneLabel="Suelta para rechazar"
+                  onConfirm={() => setEstado('rechazada')}
+                />
+              </motion.div>
+            ) : (
+              <Resultado
+                key="resultado"
+                tono={estado === 'aprobada' ? 'ok' : 'pausa'}
+                texto={
+                  estado === 'aprobada'
+                    ? 'El taller recibió tu aprobación y empieza el trabajo.'
+                    : 'El taller recibió el aviso. Tu moto queda lista para recoger.'
+                }
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Celular del mecánico: marca la moto lista o avisa que falta un repuesto */
+function CelularMecanico() {
+  const [estado, setEstado] = useDemo<'reparacion' | 'lista' | 'repuesto'>('reparacion');
+  const paso = estado === 'lista' ? 5 : 4;
+  return (
+    <div className="lp-phone">
+      <div className="lp-screen">
+        <EstadoCelular />
+        <CabezaCelular t="Yamaha FZ 2.0" s="OT-1048, Laura Gómez" placa="KTR45F" />
+        <div className="lp-ring" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path
+              d={TRAZO_ARCO}
+              fill="none"
+              strokeWidth="7"
+              strokeLinecap="round"
+              className="stroke-surface-sunken"
+            />
+            <path
+              d={TRAZO_ARCO}
+              pathLength={6}
+              fill="none"
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={`${paso} 6`}
+              className={cn(
+                'transition-[stroke-dasharray,stroke] duration-700 ease-in-out',
+                estado === 'repuesto' ? 'stroke-danger' : 'stroke-ink',
+              )}
+            />
+          </svg>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span key={paso} {...FUNDIDO} className="dig">
+              {paso}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={estado} {...FUNDIDO} className="lp-ring-l">
+            {estado === 'reparacion'
+              ? 'En reparación'
+              : estado === 'lista'
+                ? 'Lista para entregar'
+                : 'Esperando repuesto'}
+            <small>
+              {estado === 'reparacion'
+                ? 'Julián, desde las 10:40 a. m.'
+                : estado === 'lista'
+                  ? 'Laura recibió el aviso'
+                  : 'La orden queda en pausa'}
+            </small>
+          </motion.div>
+        </AnimatePresence>
+        <div className="lp-card">
+          <div className="task">
+            <span className="bx on">
+              <Chulo className="stroke-accent" />
+            </span>
+            <span>Kit de arrastre</span>
+            <span>$ 230.000</span>
+          </div>
+          <div className="task">
+            <span className={cn('bx', estado === 'lista' && 'on')}>
+              {estado === 'lista' && <Chulo className="stroke-accent" />}
+            </span>
+            <span>Aceite 20W-50</span>
+            <span>$ 32.000</span>
+          </div>
+        </div>
+        <div className="lp-dock">
+          <AnimatePresence mode="wait" initial={false}>
+            {estado === 'reparacion' ? (
+              <motion.div key="botones" {...FUNDIDO} className="flex flex-col gap-2">
+                <HoldButton
+                  demo
+                  fullWidth
+                  className="min-h-[50px] rounded-2xl text-[15px]"
+                  label="Mantén para marcar lista"
+                  doneLabel="Suelta para confirmar"
+                  onConfirm={() => setEstado('lista')}
+                />
+                <HoldButton
+                  variant="soft"
+                  fullWidth
+                  className="min-h-11 rounded-2xl text-sm"
+                  label="Mantén si falta repuesto"
+                  doneLabel="Suelta para avisar"
+                  onConfirm={() => setEstado('repuesto')}
+                />
+              </motion.div>
+            ) : (
+              <Resultado
+                key="resultado"
+                tono={estado === 'lista' ? 'ok' : 'pausa'}
+                texto={
+                  estado === 'lista'
+                    ? 'Moto lista. El cliente ya recibió el aviso.'
+                    : 'Orden en pausa por repuesto. El cliente lo ve.'
+                }
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 }
@@ -232,6 +465,16 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
           <div className="lp-menu">
             <button
               type="button"
+              className="lp-menu-cta"
+              onClick={() => {
+                setMenu(false);
+                acciones.crearCuenta();
+              }}
+            >
+              Crear cuenta
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setMenu(false);
                 acciones.ingresar();
@@ -285,24 +528,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
             >
               <div className="lp-isla" aria-hidden="true">
                 <span className="p">KTR</span>
-                <div className="txt">
-                  <span>
-                    <b>Recibida en el taller</b>
-                    <em>Taller Central, 9:10 a. m.</em>
-                  </span>
-                  <span>
-                    <b>Diagnóstico listo</b>
-                    <em>Julián revisó cadena y piñón</em>
-                  </span>
-                  <span>
-                    <b>En reparación con Julián</b>
-                    <em>Entrega estimada: 18 sep</em>
-                  </span>
-                  <span>
-                    <b>Lista para recoger</b>
-                    <em>Laura ya recibió el aviso</em>
-                  </span>
-                </div>
+                <TextoRotativo mensajes={ISLA} />
                 <span className="live" />
               </div>
               <div className="lp-moto" aria-hidden="true">
@@ -339,7 +565,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
         </section>
 
         <div className="lp-tape" role="region" aria-label="Lo que está pasando en el taller">
-          <div className="lp-tape-in">
+          <div className="lp-tape-in" data-movimiento="esencial">
             {[...CINTA, ...CINTA].map(([placa, texto], i) => (
               <span key={i} aria-hidden={i >= CINTA.length || undefined}>
                 <Plate placa={placa} />
@@ -400,60 +626,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
                 Recibe un enlace con lo que encontró el mecánico y el total. Mantiene presionado
                 para aprobar o rechazar, así no decide por un toque accidental.
               </p>
-              <div className="lp-phone">
-                <div className="lp-screen">
-                  <EstadoCelular />
-                  <CabezaCelular t="Pulsar NS200" s="OT-1045, Taller Central" placa="HQL93D" />
-                  <div className="lp-pill">
-                    <span className="live" />
-                    <div className="flex-1">
-                      <b>Esperando tu aprobación</b>
-                      <small>Paso 3 de 6</small>
-                      <div className="segs" aria-hidden="true">
-                        {[0, 1, 2, 3, 4, 5].map((k) => (
-                          <i key={k} className={k < 2 ? 'ok' : k === 2 ? 'now' : ''} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="lp-amount">$132.000</div>
-                  <div className="lp-why">Mateo encontró las pastillas delanteras al 10 %.</div>
-                  <div className="lp-card">
-                    <div className="row">
-                      <span>Pastillas delanteras</span>
-                      <span>$ 68.000</span>
-                    </div>
-                    <div className="row">
-                      <span>Mano de obra y purga</span>
-                      <span>$ 40.000</span>
-                    </div>
-                    <div className="row">
-                      <span>Líquido DOT 4</span>
-                      <span>$ 24.000</span>
-                    </div>
-                  </div>
-                  <div className="lp-dock">
-                    <HoldButton
-                      demo
-                      fullWidth
-                      className="min-h-[50px] rounded-2xl text-[15px]"
-                      label="Mantén para aprobar"
-                      doneLabel="Suelta para aprobar"
-                      onConfirm={() => toast('Así aprueba el cliente. Pruébalo en la app.')}
-                    />
-                    <HoldButton
-                      variant="soft"
-                      fullWidth
-                      className="min-h-11 rounded-2xl text-sm"
-                      label="Mantén para rechazar"
-                      doneLabel="Suelta para rechazar"
-                      onConfirm={() =>
-                        toast('El cliente elige el motivo y el taller recibe el aviso.')
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+              <CelularCliente />
             </article>
             <article className="lp-tile">
               <SplitText text="El mecánico mantiene presionado." />
@@ -461,69 +634,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
                 Ve solo sus motos. El botón se llena mientras lo sostiene, así nada cambia por un
                 toque accidental con guantes. Pruébalo.
               </p>
-              <div className="lp-phone">
-                <div className="lp-screen">
-                  <EstadoCelular />
-                  <CabezaCelular t="Yamaha FZ 2.0" s="OT-1048, Laura Gómez" placa="KTR45F" />
-                  <div className="lp-ring" aria-hidden="true">
-                    <svg viewBox="0 0 100 100">
-                      <path
-                        d={TRAZO_ARCO}
-                        fill="none"
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        className="stroke-surface-sunken"
-                      />
-                      <path
-                        d={TRAZO_ARCO}
-                        pathLength={6}
-                        fill="none"
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray="4 6"
-                        className="stroke-ink"
-                      />
-                    </svg>
-                    <span className="dig">4</span>
-                  </div>
-                  <div className="lp-ring-l">
-                    En reparación
-                    <small>Julián, desde las 10:40 a. m.</small>
-                  </div>
-                  <div className="lp-card">
-                    <div className="task">
-                      <span className="bx on">
-                        <Chulo className="stroke-accent" />
-                      </span>
-                      <span>Kit de arrastre</span>
-                      <span>$ 230.000</span>
-                    </div>
-                    <div className="task">
-                      <span className="bx" />
-                      <span>Aceite 20W-50</span>
-                      <span>$ 32.000</span>
-                    </div>
-                  </div>
-                  <div className="lp-dock">
-                    <HoldButton
-                      demo
-                      fullWidth
-                      className="min-h-[50px] rounded-2xl text-[15px]"
-                      label="Mantén para marcar lista"
-                      doneLabel="Suelta para confirmar"
-                      onConfirm={() => toast('Moto lista. El cliente recibe el aviso.')}
-                    />
-                    <HoldButton
-                      variant="soft"
-                      fullWidth
-                      className="min-h-11 rounded-2xl text-sm"
-                      label="Mantén si falta repuesto"
-                      doneLabel="Suelta para avisar"
-                      onConfirm={() => toast('Orden en pausa por repuesto.')}
-                    />
-                  </div>
-                </div>
-              </div>
+              <CelularMecanico />
             </article>
           </div>
         </section>

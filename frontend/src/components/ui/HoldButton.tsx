@@ -128,12 +128,14 @@ export function HoldButton({
       <span
         aria-hidden="true"
         data-testid="hold-relleno"
+        data-movimiento="esencial"
         className={cn(
           'absolute inset-0 flex items-center justify-center px-3 text-center font-bold',
-          'transition-[clip-path] duration-200 ease-out [clip-path:inset(0_100%_0_0)]',
-          holding &&
-            'motion-safe:duration-[1200ms] motion-safe:ease-linear motion-safe:[clip-path:inset(0)]',
-          ready && '[clip-path:inset(0)]',
+          'transition-[clip-path]',
+          // El avance se ve siempre, también con movimiento reducido: es la respuesta al dedo
+          holding || ready
+            ? 'duration-[1200ms] ease-linear [clip-path:inset(0)]'
+            : 'duration-200 ease-out [clip-path:inset(0_100%_0_0)]',
           demo && !holding && 'hold-demo',
           relleno,
         )}
