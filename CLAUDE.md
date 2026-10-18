@@ -160,7 +160,8 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 - **Ramas:**
   - `main`: entregas.
   - `develop`: integración.
-  - `feature/…`, `fix/…`, `chore/…`, `docs/…`: trabajo, siempre desde `develop` actualizado.
+  - `HU-<número>` (por ejemplo `HU-41`): una rama por historia, para encontrarla fácil. Si una historia depende de otra que aún no está en `develop`, su rama sale de la rama de esa historia.
+  - `fix/…`, `chore/…`, `docs/…`: trabajo que no es una historia, siempre desde `develop` actualizado.
 - **PR siempre hacia `develop`** (¡no hacia `main!`), con 1 revisión y la revisión automática de GitHub en verde.
 - **Commits en español con prefijo:** `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`. Al final, las historias que cubre (`HU-19, HU-20`).
 - **Antes de cambiar de rama:** `git status`. Un `package-lock.json` modificado sin razón se descarta con `git checkout -- <ruta>`.

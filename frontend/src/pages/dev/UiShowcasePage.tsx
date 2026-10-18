@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   AppBar,
+  Arc,
   Badge,
   BottomSheet,
   Button,
@@ -8,6 +9,8 @@ import {
   DataList,
   EmptyState,
   Initials,
+  Dial,
+  HoldButton,
   Input,
   List,
   ListItem,
@@ -53,6 +56,34 @@ export default function UiShowcasePage() {
             <Button loading>Guardando</Button>
             <Button disabled>Deshabilitado</Button>
             <Button size="sm">Pequeño</Button>
+          </div>
+        </Seccion>
+
+        <Seccion title="Mantener presionado">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <HoldButton
+              label="Lista para entregar"
+              onConfirm={() => toast('Confirmado', 'success')}
+            />
+            <HoldButton
+              label="Mantén para rechazar"
+              variant="danger"
+              doneLabel="Suelta para rechazar"
+              onConfirm={() => toast('Rechazado', 'danger')}
+            />
+            <HoldButton label="Reanudar" variant="soft" onConfirm={() => toast('Reanudada')} />
+          </div>
+        </Seccion>
+
+        <Seccion title="Progreso de la orden">
+          <div className="flex flex-wrap items-center gap-6">
+            <Dial paso={4} label="En reparación" sub="Andrés Gómez" />
+            <Dial paso={4} label="Falta repuesto" alerta />
+            <div className="flex gap-3">
+              {[1, 3, 5, 6].map((n) => (
+                <Arc key={n} paso={n} className="size-16" />
+              ))}
+            </div>
           </div>
         </Seccion>
 

@@ -1,11 +1,13 @@
 export { Alert } from './Alert';
 export { AppBar } from './AppBar';
+export { Arc, Dial } from './Arc';
 export { Badge, StatusBadge } from './Badge';
 export { BottomSheet } from './BottomSheet';
 export { Button, type ButtonVariant } from './Button';
 export { Card } from './Card';
 export { EmptyState } from './EmptyState';
 export { Field } from './Field';
+export { HoldButton, HOLD_MS, type HoldVariant } from './HoldButton';
 export { Icon, type IconName } from './Icon';
 export { Input } from './Input';
 export { Plate } from './Plate';

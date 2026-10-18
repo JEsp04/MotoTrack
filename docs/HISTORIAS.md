@@ -1022,7 +1022,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-base` | Obligatoria | 2 | — |
+| 6.5 | Por definir | `HU-41` | Obligatoria | 2 | — |
 
 **Casos de uso**
 - *Principal:*
@@ -1046,7 +1046,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-base` | Obligatoria | 3 | HU-41 |
+| 6.5 | Por definir | `HU-42` | Obligatoria | 3 | HU-41 |
 
 **Casos de uso**
 - *Principal:* se ajustan `Button`, `Input`, `Select`, `Textarea`, `Card`, `Badge`, `StatusBadge`, `Plate`, `Tabs`, `BottomSheet`, `AppBar`, `EmptyState`, `Skeleton`, `Toaster`, `Alert` y `Logo` según `docs/diseno.md` (sección 6). Se actualiza `/dev/ui`.
@@ -1066,7 +1066,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-base` | Obligatoria | 2 | HU-42 |
+| 6.5 | Por definir | `HU-43` | Obligatoria | 2 | HU-42 |
 
 **Casos de uso**
 - *Principal:*
@@ -1089,7 +1089,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-navegacion` | Obligatoria | 3 | HU-42 |
+| 6.5 | Por definir | `HU-44` | Obligatoria | 3 | HU-42 |
 
 **Casos de uso**
 - *Principal:*
@@ -1112,7 +1112,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-acceso` | Obligatoria | 2 | HU-44 |
+| 6.5 | Por definir | `HU-45` | Obligatoria | 2 | HU-44 |
 
 **Casos de uso**
 - *Principal:*
@@ -1134,7 +1134,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-admin` | Obligatoria | 3 | HU-44 |
+| 6.5 | Por definir | `HU-46` | Obligatoria | 3 | HU-44 |
 
 **Casos de uso**
 - *Principal:*
@@ -1157,7 +1157,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-ordenes` | Obligatoria | 2 | HU-44 |
+| 6.5 | Por definir | `HU-47` | Obligatoria | 2 | HU-44 |
 
 **Casos de uso**
 - *Principal:* se ajustan `OrdenesLista`, `OrdenCard` (placa, estado y arco pequeño) y `NuevaOrdenForm` (3 pasos), con pestañas segmentadas y buscador.
@@ -1175,7 +1175,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-ordenes` | Obligatoria | 3 | HU-43, HU-47 |
+| 6.5 | Por definir | `HU-48` | Obligatoria | 3 | HU-43, HU-47 |
 
 **Casos de uso**
 - *Principal:*
@@ -1198,7 +1198,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-cliente` | Obligatoria | 3 | HU-43, HU-44 |
+| 6.5 | Por definir | `HU-49` | Obligatoria | 3 | HU-43, HU-44 |
 
 **Casos de uso**
 - *Principal:*
@@ -1220,7 +1220,7 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 | Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
 |---|---|---|---|---|---|
-| 6.5 | Por definir | `feature/diseno-cierre` | Obligatoria | 1 | HU-45 a HU-49 |
+| 6.5 | Por definir | `HU-50` | Obligatoria | 1 | HU-45 a HU-49 |
 
 **Casos de uso**
 - *Principal:*
