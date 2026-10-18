@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useSession } from '@/features/auth';
 import { abrirApp, sesionDePrueba } from '@/test/utils';
 
@@ -48,11 +49,26 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
     actuales.forEach((link) => expect(link).toHaveTextContent('Clientes'));
   });
 
-  it('en computador, "Cerrar sesión" está en el menú lateral', async () => {
+  it('en computador, "Cerrar sesión" y "Perfil" están en el menú del avatar (HU-44)', async () => {
     sesionDePrueba('cliente');
     abrirApp('/cliente');
     await screen.findByRole('heading', { name: 'Mis motos' });
+    const avatar = screen.getByRole('button', { name: /Cuenta de/ });
+    expect(avatar).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(avatar);
+    expect(avatar).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Perfil/ }).length).toBe(2);
+  });
+
+  it('el admin tiene el botón «Recibir moto» en la barra superior (HU-44)', async () => {
+    sesionDePrueba('admin');
+    abrirApp('/admin');
+    await screen.findByRole('heading', { name: /Hola, Carolina/ });
+    expect(screen.getByRole('link', { name: /Recibir moto/ })).toHaveAttribute(
+      'href',
+      '/admin/ordenes/nueva',
+    );
   });
 
   it('una dirección inexistente muestra la página 404', async () => {

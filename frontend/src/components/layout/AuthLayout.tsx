@@ -1,28 +1,54 @@
 import { Outlet } from 'react-router';
 import { Logo } from './Logo';
 
-/** Pantallas sin sesión: ingreso y registro. Tarjeta centrada; en computador, panel de marca. */
+/**
+ * Pantallas sin sesión: ingreso y registro (HU-44).
+ * Fondo blanco único; en computador, a la izquierda el mensaje de la marca con la
+ * «isla» de seguimiento del prototipo.
+ */
 export function AuthLayout() {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_minmax(480px,560px)]">
-      <section className="relative hidden overflow-hidden bg-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        <Logo tone="light" />
-        <div className="max-w-md">
-          <h2 className="text-4xl leading-tight text-white">
-            Tu taller en orden, <span className="text-accent">tus clientes tranquilos.</span>
+      <section className="relative hidden flex-col justify-between overflow-hidden bg-surface-sunken p-12 lg:flex">
+        <Logo />
+        <div className="max-w-xl">
+          <h2 className="text-[clamp(3rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.05em]">
+            El taller, en vivo.
           </h2>
-          <p className="mt-4 text-lg text-white/75">
-            Órdenes, diagnósticos y aprobaciones en un solo lugar, desde el celular.
+          <p className="mt-5 max-w-md text-lg text-ink-muted">
+            El taller avanza la orden y el dueño de la moto lo ve al instante en su celular.
           </p>
+          {/* Isla de seguimiento: así ve el cliente su moto */}
+          <div
+            className="mt-10 flex max-w-md items-center gap-3 rounded-lg bg-ink py-3 pr-5 pl-3 text-on-primary"
+            aria-hidden="true"
+          >
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-plate font-num text-[10px] text-ink">
+              KLM
+            </span>
+            <span className="min-w-0 flex-1">
+              <b className="block font-semibold">En reparación con Andrés</b>
+              <span className="mt-2 flex gap-1">
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <i
+                    key={n}
+                    className={
+                      n < 4
+                        ? 'h-1 flex-1 rounded-full bg-on-primary'
+                        : n === 4
+                          ? 'h-1 flex-1 rounded-full bg-accent'
+                          : 'h-1 flex-1 rounded-full bg-on-primary/25'
+                    }
+                  />
+                ))}
+              </span>
+            </span>
+          </div>
         </div>
-        <p className="text-sm text-white/60">Hecho en Medellín para talleres de motos.</p>
-        <div
-          className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full border-[48px] border-primary/10"
-          aria-hidden="true"
-        />
+        <p className="text-sm text-ink-muted">Hecho en Medellín para talleres de motos.</p>
       </section>
-      <main className="flex flex-col px-4 py-8 sm:px-8 lg:justify-center lg:px-14">
-        <div className="mb-8 lg:hidden">
+      <main className="flex flex-col px-5 py-6 sm:px-8 lg:justify-center lg:px-14">
+        <div className="mb-10 lg:hidden">
           <Logo />
         </div>
         <div className="mx-auto w-full max-w-md">

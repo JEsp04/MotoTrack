@@ -2,7 +2,7 @@ import { AppLayout } from '@/components/layout';
 import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
 import type { Rol } from '@/types';
 import { RequireRole } from './guards';
-import { NAV_POR_ROL } from './nav';
+import { ACCION_PRINCIPAL, NAV_POR_ROL } from './nav';
 
 /** Layout con sesión para un rol: guarda + menú de ese rol. */
 export function RoleLayout({ rol }: { rol: Rol }) {
@@ -20,7 +20,12 @@ function RoleShell({ rol }: { rol: Rol }) {
   return (
     <AppLayout
       items={NAV_POR_ROL[rol]}
-      user={{ nombre: usuario?.nombre ?? '', rolLabel: ROL_LABEL[rol] }}
+      user={{
+        nombre: usuario?.nombre ?? '',
+        rolLabel: ROL_LABEL[rol],
+        taller: usuario?.taller.nombre,
+      }}
+      accionPrincipal={ACCION_PRINCIPAL[rol]}
       onLogout={salir}
     />
   );
