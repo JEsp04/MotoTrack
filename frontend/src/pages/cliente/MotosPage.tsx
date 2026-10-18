@@ -20,7 +20,22 @@ export default function MotosPage() {
 
   return (
     <>
-      <AppBar title="Mis motos" actions={lista.length > 0 ? agregar : undefined} />
+      <AppBar
+        title="Mis motos"
+        subtitle="En qué va cada una"
+        actions={
+          lista.length > 0 ? (
+            <Button
+              icon="plus"
+              size="sm"
+              onClick={() => setSheet({ open: true, moto: null })}
+              aria-label="Agregar moto"
+            >
+              <span className="hidden sm:inline">Agregar moto</span>
+            </Button>
+          ) : undefined
+        }
+      />
       <div className="flex flex-col gap-3 p-4 lg:px-0">
         {motos.isPending && <SkeletonList rows={2} />}
         {motos.isError && (
@@ -40,7 +55,7 @@ export default function MotosPage() {
           />
         )}
         {lista.length > 0 && (
-          <ul className="grid gap-3 md:grid-cols-2" aria-label="Mis motos">
+          <ul className="grid grid-cols-1 gap-3.5 md:grid-cols-2" aria-label="Mis motos">
             {lista.map((m) => (
               <li key={m.publicId}>
                 <MotoCard
