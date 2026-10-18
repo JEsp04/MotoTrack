@@ -53,19 +53,24 @@ export interface DialProps {
   className?: string;
 }
 
-/** Dial grande del detalle de la orden: arco, número del paso y estado. */
+/**
+ * Dial grande del detalle de la orden (.mt-dial del prototipo): arco de 200 × 190 px con el
+ * número del paso adentro y el estado debajo.
+ */
 export function Dial({ paso, label, sub, alerta, className }: DialProps) {
   const cancelada = paso === 0;
   return (
     <div
       role="img"
       aria-label={cancelada ? `Orden ${label.toLowerCase()}` : `Paso ${paso} de 6: ${label}`}
-      className={cn('relative mx-auto h-[210px] w-[220px]', className)}
+      className={cn('relative mx-auto mt-1 mb-[46px] h-[190px] w-[200px]', className)}
     >
       <Arc paso={paso} alerta={alerta} grosor={5} className="absolute inset-0 size-full" />
-      <div className="absolute inset-0 flex flex-col items-center justify-center pt-4 text-center">
+      <div className="absolute inset-0 flex items-center justify-center pt-2.5">
         <span className="font-num text-[70px] leading-none">{cancelada ? '–' : paso}</span>
-        <b className="mt-2 text-[15px] font-semibold">{label}</b>
+      </div>
+      <div className="absolute top-[168px] -right-[60px] -left-[60px] flex flex-col items-center text-center">
+        <b className="text-base font-semibold">{label}</b>
         {sub && <small className="mt-0.5 text-[13px] text-ink-muted">{sub}</small>}
       </div>
     </div>

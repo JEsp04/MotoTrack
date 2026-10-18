@@ -108,7 +108,8 @@ export function HoldButton({
       onBlur={reiniciar}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        'relative inline-flex min-h-[54px] touch-none items-center justify-center overflow-hidden rounded-[18px] px-5 text-base font-semibold select-none',
+        'relative inline-flex touch-none items-center justify-center overflow-hidden rounded-[18px] px-5 font-semibold select-none',
+        variant === 'soft' ? 'min-h-touch text-[15px]' : 'min-h-[54px] text-base',
         'transition-transform duration-150 ease-out active:scale-[0.98]',
         'disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100',
         base,
