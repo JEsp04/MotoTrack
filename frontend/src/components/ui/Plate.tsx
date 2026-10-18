@@ -18,7 +18,7 @@ export function Plate({
       className={cn(
         'inline-flex shrink-0 items-center justify-center border-ink bg-plate font-num leading-none tracking-[0.12em] whitespace-nowrap text-ink',
         size === 'lg'
-          ? 'rounded-lg border-2 px-3 pt-1.5 pb-[5px] text-lg'
+          ? 'rounded-[8px] border-2 px-3 pt-1.5 pb-[5px] text-lg'
           : 'rounded-[6px] border-[1.5px] px-2 pt-1 pb-[3px] text-xs',
         className,
       )}

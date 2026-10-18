@@ -54,7 +54,7 @@ function Formulario({ orden, onClose }: Props) {
   return (
     <BottomSheet
       open
-      title={editando ? 'Editar diagnóstico' : 'Diagnosticar'}
+      title="Diagnóstico"
       onClose={onClose}
       footer={
         <>
@@ -62,7 +62,7 @@ function Formulario({ orden, onClose }: Props) {
             Cancelar
           </Button>
           <Button type="submit" form="form-diagnostico" loading={guardar.isPending}>
-            Guardar diagnóstico
+            Guardar
           </Button>
         </>
       }
@@ -74,14 +74,15 @@ function Formulario({ orden, onClose }: Props) {
           required
           rows={4}
           maxLength={5000}
-          hint="Qué encontraste al revisar la moto"
+          placeholder="Qué encontraste en la moto"
           error={errors.hallazgos?.message}
           {...register('hallazgos')}
         />
         <Textarea
-          label="Trabajo recomendado"
+          label="Recomendación"
           required
           rows={3}
+          placeholder="Qué se debe hacer"
           maxLength={5000}
           error={errors.trabajoRecomendado?.message}
           {...register('trabajoRecomendado')}

@@ -166,7 +166,9 @@ describe('HU-31 · Detalle', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/admin/ordenes/${orden.publicId}`);
     expect(await screen.findByRole('heading', { name: 'Orden #12' })).toBeInTheDocument();
-    expect(screen.getByText('$ 65.000')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Servicios' }));
+    expect(screen.getAllByText('$ 65.000').length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole('tab', { name: 'Historial' }));
     const historial = screen.getByRole('list', { name: 'Historial de estados' });
     expect(within(historial).getByText('Orden creada')).toBeInTheDocument();
   });
@@ -194,9 +196,9 @@ describe('HU-31 · Detalle', () => {
     const orden = ordenDetalle({ estado: 'cerrada' });
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/admin/ordenes/${orden.publicId}`);
-    expect(await screen.findByText('Orden cerrada: solo lectura.')).toBeInTheDocument();
+    expect(await screen.findByText(/Orden cerrada · solo lectura/)).toBeInTheDocument();
     expect(botones()).toEqual([]);
-    expect(screen.queryByRole('button', { name: /Agregar servicio/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agregar' })).not.toBeInTheDocument();
   });
 
   it('una orden ajena muestra «No encontramos esta orden»', async () => {
@@ -229,10 +231,9 @@ describe('HU-34 · Aprobar o rechazar', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Rechazar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Rechazar el diagnóstico' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
     expect(hoja.getByText('$ 65.000')).toBeInTheDocument();
-    await mantener(hoja.getByRole('button', { name: /Mantén para rechazar/ }));
-    expect(hoja.getByText(/escríbelo para continuar/)).toBeInTheDocument();
+    expect(hoja.getByRole('button', { name: /Mantén para confirmar/ })).toBeDisabled();
     expect(api.cambiarEstado).not.toHaveBeenCalled();
   });
 });
@@ -245,11 +246,11 @@ describe('HU-35 · Avanzar la reparación', () => {
     api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'pendiente_repuesto' });
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Falta repuesto' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Falta un repuesto' }));
-    await mantener(hoja.getByRole('button', { name: /Mantén para guardar/ }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
+    expect(hoja.getByRole('button', { name: /Mantén para confirmar/ })).toBeDisabled();
     expect(api.cambiarEstado).not.toHaveBeenCalled();
-    await userEvent.type(hoja.getByLabelText(/Qué repuesto falta/), 'Kit de arrastre');
-    await mantener(hoja.getByRole('button', { name: /Mantén para guardar/ }));
+    await userEvent.type(hoja.getByLabelText(/Observación/), 'Kit de arrastre');
+    await mantener(hoja.getByRole('button', { name: /Mantén para confirmar/ }));
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(
         orden.publicId,
@@ -310,16 +311,16 @@ describe('HU-32 · Diagnóstico', () => {
     api.obtener.mockResolvedValue(orden);
     api.guardarDiagnostico.mockResolvedValue({ ...orden, estado: 'diagnosticada' });
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Diagnosticar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Diagnosticar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Registrar diagnóstico' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Diagnóstico' }));
     await userEvent.type(hoja.getByLabelText(/Hallazgos/), 'Ruido');
-    await userEvent.type(hoja.getByLabelText(/Trabajo recomendado/), 'Cambiar cadena');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar diagnóstico' }));
+    await userEvent.type(hoja.getByLabelText(/Recomendación/), 'Cambiar cadena');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(
       await hoja.findByText('Los hallazgos debe tener al menos 10 caracteres'),
     ).toBeInTheDocument();
     await userEvent.type(hoja.getByLabelText(/Hallazgos/), ' fuerte en la cadena');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar diagnóstico' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(api.guardarDiagnostico).toHaveBeenCalledWith(orden.publicId, {
         hallazgos: 'Ruido fuerte en la cadena',
@@ -346,11 +347,12 @@ describe('HU-33 · Servicios', () => {
     ]);
     api.agregarServicio.mockResolvedValue(orden);
     abrirApp(`/admin/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Agregar servicio' }));
+    await userEvent.click(await screen.findByRole('tab', { name: 'Servicios' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }));
     const hoja = within(await screen.findByRole('dialog', { name: 'Agregar servicio' }));
     await screen.findByRole('option', { name: 'Sincronización · $ 120.000' });
     await userEvent.selectOptions(hoja.getByLabelText(/Servicio/), 'srv-1');
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }));
+    await userEvent.click(hoja.getByRole('button', { name: 'Agregar' }));
     await waitFor(() =>
       expect(api.agregarServicio).toHaveBeenCalledWith(orden.publicId, {
         servicioPublicId: 'srv-1',
