@@ -7,13 +7,15 @@ export interface ArcProps {
   paso: number;
   /** Rojo cuando la orden está detenida (por ejemplo, falta un repuesto) */
   alerta?: boolean;
+  /** Amarillo cuando la orden espera algo (por ejemplo, la aprobación del cliente) */
+  espera?: boolean;
   /** Grosor del trazo */
   grosor?: number;
   className?: string;
 }
 
 /** Arco de progreso de 6 pasos, como el de un velocímetro. Decorativo: el texto va aparte. */
-export function Arc({ paso, alerta = false, grosor = 7, className }: ArcProps) {
+export function Arc({ paso, alerta = false, espera = false, grosor = 7, className }: ArcProps) {
   const n = Math.max(0, Math.min(6, paso));
   return (
     <svg viewBox="0 0 100 100" className={cn('block', className)} aria-hidden="true">
@@ -34,7 +36,7 @@ export function Arc({ paso, alerta = false, grosor = 7, className }: ArcProps) {
           strokeDasharray={`${n} 6`}
           className={cn(
             'transition-[stroke-dasharray] duration-700 ease-in-out',
-            alerta ? 'stroke-danger' : 'stroke-ink',
+            alerta ? 'stroke-danger' : espera ? 'stroke-accent' : 'stroke-ink',
           )}
         />
       )}

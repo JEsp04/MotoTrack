@@ -29,7 +29,7 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
   it('con sesión, /login lleva al inicio del rol', async () => {
     sesionDePrueba('admin');
     const router = abrirApp('/login');
-    expect(await screen.findByRole('heading', { name: /Hola, Carolina/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Motos en el taller' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/admin');
   });
 
@@ -68,7 +68,7 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
   it('el admin tiene el botón «Recibir moto» en la barra superior (HU-44)', async () => {
     sesionDePrueba('admin');
     abrirApp('/admin');
-    await screen.findByRole('heading', { name: /Hola, Carolina/ });
+    await screen.findByRole('heading', { name: 'Motos en el taller' });
     expect(screen.getByRole('link', { name: /Recibir moto/ })).toHaveAttribute(
       'href',
       '/admin/ordenes/nueva',

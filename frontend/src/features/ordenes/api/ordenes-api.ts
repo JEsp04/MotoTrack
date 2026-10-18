@@ -37,14 +37,24 @@ const detalle = (r: { data: ApiResponse<OrdenDetalle> }) => r.data.data;
 /** Llamadas a /api/ordenes y /api/servicios (HU-28 a HU-37) */
 export const ordenesApi = {
   /** El backend filtra según el rol: admin todas, mecánico las suyas, cliente las de sus motos */
-  listar: ({ grupo, q, page }: { grupo: GrupoId; q?: string; page: number }) =>
+  listar: ({
+    grupo,
+    q,
+    page,
+    limit = POR_PAGINA,
+  }: {
+    grupo: GrupoId;
+    q?: string;
+    page: number;
+    limit?: number;
+  }) =>
     http
       .get<ApiList<OrdenResumen>>('/ordenes', {
         params: {
           grupo: grupo === 'todas' ? undefined : grupo,
           q: q || undefined,
           page,
-          limit: POR_PAGINA,
+          limit,
         },
       })
       .then((r) => r.data),

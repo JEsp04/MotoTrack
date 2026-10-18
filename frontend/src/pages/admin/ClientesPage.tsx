@@ -5,7 +5,6 @@ import {
   AppBar,
   Badge,
   Button,
-  Card,
   EmptyState,
   Icon,
   Input,
@@ -36,8 +35,8 @@ export default function ClientesPage() {
   const lista = clientes.data?.pages.flatMap((p) => p.data) ?? [];
   const total = clientes.data?.pages[0]?.meta.total ?? 0;
   const nuevo = (
-    <Button icon="plus" size="sm" onClick={() => setCreando(true)}>
-      Nuevo cliente
+    <Button icon="plus" size="sm" onClick={() => setCreando(true)} aria-label="Nuevo cliente">
+      <span className="hidden sm:inline">Nuevo cliente</span>
     </Button>
   );
 
@@ -93,7 +92,10 @@ export default function ClientesPage() {
             <p className="text-sm text-ink-muted" aria-live="polite">
               {total === 1 ? '1 cliente' : `${total} clientes`}
             </p>
-            <ul className="flex flex-col gap-3" aria-label="Clientes">
+            <ul
+              className="flex flex-col divide-y divide-border overflow-hidden rounded-md bg-surface-sunken"
+              aria-label="Clientes"
+            >
               {lista.map((c) => (
                 <li key={c.publicId}>
                   <FilaCliente cliente={c} />
@@ -128,27 +130,39 @@ function FilaCliente({ cliente }: { cliente: ClienteResumen }) {
   return (
     <Link
       to={`/admin/clientes/${cliente.publicId}`}
-      className="group block rounded-md focus-visible:outline-offset-4"
+      className="flex items-center gap-3.5 p-4 transition-colors duration-150 hover:bg-surface-2 sm:px-5"
     >
-      <Card className="flex items-center gap-3 transition-colors group-hover:border-primary">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-semibold">{cliente.nombre}</p>
-            {cliente.tieneCuenta && <Badge tono="primary">Usa la app</Badge>}
-          </div>
-          <p className="text-sm text-ink-muted">
-            CC {cliente.documentoIdentidad} · {cliente.telefono}
-          </p>
-          {cliente.motos.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {cliente.motos.map((m) => (
-                <Plate key={m.publicId} placa={m.placa} size="sm" />
-              ))}
-            </div>
+      <span
+        className="flex size-11 shrink-0 items-center justify-center rounded-sm bg-surface text-sm font-semibold"
+        aria-hidden="true"
+      >
+        {cliente.nombre
+          .split(' ')
+          .slice(0, 2)
+          .map((p) => p[0])
+          .join('')}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate font-semibold">{cliente.nombre}</p>
+          {cliente.tieneCuenta && (
+            <Badge tono="neutral" className="bg-surface">
+              Usa la app
+            </Badge>
           )}
         </div>
-        <Icon name="chevronRight" className="shrink-0 text-ink-muted" size={20} />
-      </Card>
+        <p className="text-sm text-ink-muted">
+          CC {cliente.documentoIdentidad} · {cliente.telefono}
+        </p>
+        {cliente.motos.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {cliente.motos.map((m) => (
+              <Plate key={m.publicId} placa={m.placa} size="sm" />
+            ))}
+          </div>
+        )}
+      </div>
+      <Icon name="chevronRight" className="shrink-0 text-ink-muted" size={20} />
     </Link>
   );
 }

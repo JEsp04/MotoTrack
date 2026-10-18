@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, AppBar, Badge, Button, Card, EmptyState, SkeletonList } from '@/components/ui';
+import { Alert, AppBar, Badge, Button, EmptyState, SkeletonList } from '@/components/ui';
 import { NuevoMecanicoSheet, useCambiarEstado, useEquipo } from '@/features/equipo';
 import { parseApiError } from '@/lib/api-error';
 import { formatFecha } from '@/lib/format';
@@ -19,7 +19,20 @@ export default function EquipoPage() {
 
   return (
     <>
-      <AppBar title="Equipo" subtitle="Mecánicos del taller" actions={agregar} />
+      <AppBar
+        title="Equipo"
+        subtitle="Mecánicos del taller"
+        actions={
+          <Button
+            icon="plus"
+            size="sm"
+            onClick={() => setCreando(true)}
+            aria-label="Agregar mecánico"
+          >
+            <span className="hidden sm:inline">Agregar mecánico</span>
+          </Button>
+        }
+      />
       <div className="flex flex-col gap-3 p-4 lg:px-0">
         {equipo.isPending && <SkeletonList rows={3} />}
         {equipo.isError && (
@@ -39,7 +52,10 @@ export default function EquipoPage() {
           />
         )}
         {mecanicos.length > 0 && (
-          <ul className="flex flex-col gap-3" aria-label="Mecánicos">
+          <ul
+            className="flex flex-col divide-y divide-border overflow-hidden rounded-md bg-surface-sunken"
+            aria-label="Mecánicos"
+          >
             {mecanicos.map((m) => (
               <li key={m.publicId}>
                 <TarjetaMecanico mecanico={m} />
@@ -75,7 +91,17 @@ function TarjetaMecanico({ mecanico }: { mecanico: Integrante }) {
   }
 
   return (
-    <Card className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className="flex items-center gap-3.5 p-4 sm:px-5">
+      <span
+        className="flex size-11 shrink-0 items-center justify-center rounded-sm bg-surface text-sm font-semibold"
+        aria-hidden="true"
+      >
+        {mecanico.nombre
+          .split(' ')
+          .slice(0, 2)
+          .map((p) => p[0])
+          .join('')}
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate font-semibold">{mecanico.nombre}</p>
@@ -93,12 +119,13 @@ function TarjetaMecanico({ mecanico }: { mecanico: Integrante }) {
       <Button
         variant={activo ? 'secondary' : 'primary'}
         size="sm"
+        className={activo ? 'bg-surface ring-1 ring-border hover:bg-surface-2' : undefined}
         loading={cambiar.isPending}
         onClick={alternar}
         aria-label={`${activo ? 'Desactivar' : 'Activar'} a ${mecanico.nombre}`}
       >
         {activo ? 'Desactivar' : 'Activar'}
       </Button>
-    </Card>
+    </div>
   );
 }
