@@ -12,10 +12,23 @@ export interface TabsProps<T extends string> {
   value: T;
   onChange: (id: T) => void;
   label: string;
+  /**
+   * `chips`: filtros en píldora con conteo (.mt-fchip del prototipo).
+   * `underline`: pestañas a lo ancho con raya inferior (.mt-tabs del prototipo).
+   */
+  variant?: 'chips' | 'underline';
+  className?: string;
 }
 
 /** Pestañas con desplazamiento horizontal en celular y flechas del teclado. */
-export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsProps<T>) {
+export function Tabs<T extends string>({
+  tabs,
+  value,
+  onChange,
+  label,
+  variant = 'chips',
+  className,
+}: TabsProps<T>) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function onKeyDown(e: KeyboardEvent, index: number) {
@@ -27,11 +40,17 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
     onChange(tabs[next]!.id);
   }
 
+  const chips = variant === 'chips';
+
   return (
     <div
       role="tablist"
       aria-label={label}
-      className="flex max-w-full gap-0.5 self-start overflow-x-auto rounded-full bg-surface-sunken p-1 [scrollbar-width:none]"
+      className={cn(
+        'flex overflow-x-auto [scrollbar-width:none]',
+        chips ? '-mx-4 gap-2 px-4 py-0.5' : 'border-b border-border bg-surface/78',
+        className,
+      )}
     >
       {tabs.map((tab, i) => {
         const activa = tab.id === value;
@@ -48,24 +67,22 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              'flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm whitespace-nowrap',
-              'transition-[color,background-color] duration-150',
-              activa
-                ? 'bg-surface font-semibold text-ink shadow-sm'
-                : 'font-medium text-ink-muted hover:text-ink',
+              'shrink-0 text-sm font-semibold whitespace-nowrap',
+              chips
+                ? cn(
+                    'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 transition-colors duration-150',
+                    activa
+                      ? 'border-ink bg-ink text-on-primary'
+                      : 'border-border bg-surface text-ink',
+                  )
+                : cn(
+                    'min-h-touch flex-auto border-b-3 px-2',
+                    activa ? 'border-ink text-ink' : 'border-transparent text-ink-muted',
+                  ),
             )}
           >
             {tab.label}
-            {tab.count !== undefined && (
-              <span
-                className={cn(
-                  'min-w-5 rounded-full px-1.5 text-center text-[11px] leading-5 font-bold',
-                  activa ? 'bg-accent text-ink' : 'bg-surface-2 text-ink-muted',
-                )}
-              >
-                {tab.count}
-              </span>
-            )}
+            {tab.count !== undefined && <span className="text-xs opacity-80">{tab.count}</span>}
           </button>
         );
       })}

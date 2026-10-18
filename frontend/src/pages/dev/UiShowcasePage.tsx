@@ -5,16 +5,24 @@ import {
   BottomSheet,
   Button,
   Card,
+  DataList,
   EmptyState,
+  Initials,
   Input,
+  List,
+  ListItem,
+  Note,
   Plate,
+  Segmented,
+  SelectCard,
   Select,
   SkeletonList,
   StatusBadge,
+  Stepper,
   Tabs,
   Textarea,
 } from '@/components/ui';
-import { LISTA_ESTADOS } from '@/lib/estados-orden';
+import { LISTA_ESTADOS, PASOS } from '@/lib/estados-orden';
 import { formatFechaHora, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
 
@@ -83,6 +91,7 @@ export default function UiShowcasePage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tono="primary">Plan Inteligente</Badge>
+            <Plate placa="KTR45F" size="lg" />
             <Plate placa="KLM45F" />
             <Plate placa="BOX33E" size="sm" />
           </div>
@@ -111,6 +120,78 @@ export default function UiShowcasePage() {
               { id: 'todas', label: 'Todas', count: 12 },
               { id: 'proceso', label: 'En proceso', count: 5 },
               { id: 'listas', label: 'Listas', count: 2 },
+            ]}
+          />
+        </Seccion>
+
+        <Seccion title="Pestañas de detalle">
+          <Tabs
+            variant="underline"
+            label="Secciones de la orden"
+            value={tab}
+            onChange={setTab}
+            tabs={[
+              { id: 'todas', label: 'Resumen' },
+              { id: 'proceso', label: 'Diagnóstico' },
+              { id: 'listas', label: 'Historial' },
+            ]}
+          />
+        </Seccion>
+
+        <Seccion title="Listas, notas y recorrido">
+          <List label="Ejemplo de lista">
+            <ListItem
+              initials="Laura Gómez"
+              title="Laura Gómez"
+              subtitle="KTR45F · 300 412 8870"
+              onClick={() => {}}
+            />
+            <ListItem
+              leading={<Plate placa="HQL93D" />}
+              title="Bajaj Pulsar NS200"
+              subtitle="27.600 km"
+              onClick={() => {}}
+            />
+            <ListItem icon="plus" title="Agregar moto" onClick={() => {}} />
+            <ListItem
+              icon="logout"
+              title="Cerrar sesión"
+              danger
+              chevron={false}
+              onClick={() => {}}
+            />
+          </List>
+          <Note icon="clock" tono="accent">
+            El taller espera tu respuesta para empezar.
+          </Note>
+          <Card title="Progreso">
+            <Stepper pasos={PASOS} actual={3} />
+          </Card>
+          <Card title="Contacto">
+            <DataList
+              items={[
+                ['Celular', '320 655 0932'],
+                ['Correo', 'cdiaz@correo.com'],
+              ]}
+            />
+          </Card>
+          <div role="radiogroup" aria-label="Ejemplo" className="flex flex-col gap-2">
+            <SelectCard checked onSelect={() => {}}>
+              <Initials nombre="Laura Gómez" />
+              <span className="font-semibold">Laura Gómez</span>
+            </SelectCard>
+            <SelectCard checked={false} onSelect={() => {}}>
+              <Initials nombre="Andrés Ruiz" />
+              <span className="font-semibold">Andrés Ruiz</span>
+            </SelectCard>
+          </div>
+          <Segmented
+            label="Tipo de cuenta"
+            value="taller"
+            onChange={() => {}}
+            options={[
+              { id: 'taller', label: 'Soy del taller' },
+              { id: 'cliente', label: 'Soy cliente' },
             ]}
           />
         </Seccion>

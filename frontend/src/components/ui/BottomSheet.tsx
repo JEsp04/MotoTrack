@@ -68,7 +68,7 @@ export function BottomSheet({ open, title, onClose, children, footer }: BottomSh
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
       <div
-        className="absolute inset-0 animate-fade-in bg-ink/30 backdrop-blur-[2px]"
+        className="absolute inset-0 animate-fade-in bg-ink/32"
         onClick={onClose}
         data-testid="sheet-backdrop"
         aria-hidden="true"
@@ -79,28 +79,28 @@ export function BottomSheet({ open, title, onClose, children, footer }: BottomSh
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex max-h-[90dvh] w-full animate-sheet-up flex-col rounded-t-lg bg-surface shadow-sheet focus:outline-none sm:max-w-lg sm:animate-pop sm:rounded-lg"
+        className="relative flex max-h-[88dvh] w-full animate-sheet-up flex-col rounded-t-lg bg-surface shadow-sheet focus:outline-none sm:w-[520px] sm:animate-pop sm:rounded-lg"
       >
         <div
-          className="mx-auto mt-2.5 h-1.5 w-10 rounded-full bg-surface-2 sm:hidden"
+          className="mx-auto mt-2 h-1 w-10 rounded-full bg-border-strong sm:hidden"
           aria-hidden="true"
         />
-        <header className="flex items-center gap-2 px-6 pt-3 pb-2 sm:pt-6">
-          <h2 id={titleId} className="flex-1 text-xl">
+        <header className="flex items-center justify-between py-2 pr-2 pl-5">
+          <h2 id={titleId} className="text-lg leading-6 font-semibold tracking-[-0.02em]">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="-mr-2 flex size-touch items-center justify-center rounded-full bg-surface-sunken text-ink transition-transform duration-150 ease-out hover:bg-surface-2 active:scale-[0.95]"
+            className="flex size-touch items-center justify-center rounded-full text-ink transition-transform duration-150 ease-out active:scale-[0.94] active:bg-surface-sunken"
             aria-label="Cerrar"
           >
-            <Icon name="close" />
+            <Icon name="close" size={22} />
           </button>
         </header>
-        <div className="flex flex-col gap-4 overflow-y-auto px-6 pb-6">{children}</div>
+        <div className="flex flex-col gap-4 overflow-y-auto px-5 pt-1 pb-4">{children}</div>
         {footer && (
-          <footer className="flex gap-3 border-t border-border px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] *:flex-1">
+          <footer className="flex gap-3 border-t border-border px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] *:flex-1">
             {footer}
           </footer>
         )}

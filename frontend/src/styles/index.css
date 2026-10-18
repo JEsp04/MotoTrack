@@ -49,7 +49,7 @@
   --spacing-touch: 48px; /* zona de toque mínima: h-touch, min-h-touch, size-touch */
   --spacing-sidebar: 240px;
   --spacing-bottom-nav: 68px;
-  --spacing-topnav: 64px;
+  --spacing-topnav: 73px; /* barra superior en computador: 12 + 48 + 12 + 1 de borde */
   --spacing-form: 760px; /* ancho máximo de formularios en computador */
 
   /* Curvas de animación (docs/diseno.md, sección 5) */
