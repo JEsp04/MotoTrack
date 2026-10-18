@@ -6,7 +6,9 @@ import {
   Badge,
   Button,
   Card,
+  Dial,
   EmptyState,
+  HoldButton,
   Plate,
   Skeleton,
   SkeletonList,
@@ -14,12 +16,13 @@ import {
 } from '@/components/ui';
 import { useSession } from '@/features/auth';
 import { parseApiError } from '@/lib/api-error';
+import { ESTADOS_ORDEN } from '@/lib/estados-orden';
 import { formatFecha, formatFechaHora, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import type { OrdenDetalle, Rol } from '@/types';
 import { accionesPara, actorDe, ESTADOS_EDITABLES, type Accion, type Actor } from '../estados';
-import { useOrden, useQuitarServicio } from '../hooks/use-ordenes';
-import { MENSAJE_CLIENTE } from '../textos';
+import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-ordenes';
+import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
 import { ServicioSheet } from './ServicioSheet';
@@ -84,18 +87,32 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   const [accion, setAccion] = useState<Accion | null>(null);
   const [diagnosticando, setDiagnosticando] = useState(false);
   const [agregandoServicio, setAgregandoServicio] = useState(false);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const cambiar = useCambiarEstado(orden.publicId);
 
   const acciones = accionesPara(orden.estado, actor);
   const editable = ESTADOS_EDITABLES.includes(orden.estado);
   const puedeDiagnosticar = actor === 'mecanico_asignado' && editable;
   const puedeEditarServicios = editable && (actor === 'admin' || actor === 'mecanico_asignado');
   const mensaje = rol === 'cliente' ? MENSAJE_CLIENTE[orden.estado] : undefined;
+  const { paso, label } = ESTADOS_ORDEN[orden.estado];
+
+  /** Las acciones sin texto obligatorio se confirman manteniendo presionado, sin hoja (HU-48) */
+  async function cambiarDirecto(a: Accion) {
+    setErrorAccion(null);
+    try {
+      await cambiar.mutateAsync({ estado: a.a });
+      toast(`Orden: ${ETIQUETA_ESTADO[a.a]}`, 'success');
+    } catch (error) {
+      setErrorAccion(parseApiError(error).message);
+    }
+  }
 
   return (
     <>
       <AppBar
         title={`Orden #${orden.numero}`}
-        subtitle={`${orden.moto.marca} ${orden.moto.referencia}`}
+        subtitle={`Ingresó el ${formatFecha(orden.fechaIngreso)}`}
         onBack={() => navigate(-1)}
         actions={<StatusBadge estado={orden.estado} />}
       />
@@ -105,13 +122,28 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
           <p className="text-sm text-ink-muted">Orden cerrada: solo lectura.</p>
         )}
 
-        <Card className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
+        <section aria-label="Avance de la orden" className="flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xl leading-snug font-semibold tracking-tight">
+                {orden.moto.marca} {orden.moto.referencia} · {orden.moto.modelo}
+              </p>
+              <p className="truncate text-sm text-ink-muted">
+                {rol !== 'cliente' && `${orden.moto.cliente.nombre}, `}
+                {km.format(orden.kilometrajeIngreso)} km
+              </p>
+            </div>
             <Plate placa={orden.moto.placa} />
-            <span className="font-semibold">
-              {orden.moto.marca} {orden.moto.referencia} · {orden.moto.modelo}
-            </span>
           </div>
+          <Dial
+            paso={paso}
+            label={label}
+            sub={`Con ${orden.mecanico.nombre.split(' ')[0]}`}
+            alerta={orden.estado === 'pendiente_repuesto'}
+          />
+        </section>
+
+        <Card className="flex flex-col gap-4">
           <dl className="grid gap-3 sm:grid-cols-2">
             {rol !== 'cliente' && (
               <Dato
@@ -211,7 +243,7 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
             {orden.historial.map((h, i) => (
               <li key={`${h.creadoEn}-${i}`} className="relative flex gap-3 pb-4 last:pb-0">
                 <span className="relative flex w-3 justify-center" aria-hidden="true">
-                  <span className="mt-1.5 size-3 rounded-full bg-primary" />
+                  <span className="mt-1.5 size-3 rounded-full bg-ink" />
                   {i < orden.historial.length - 1 && (
                     <span className="absolute top-5 bottom-[-4px] w-0.5 bg-border" />
                   )}
@@ -233,19 +265,43 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
         </section>
 
         {acciones.length > 0 && (
-          <div className="sticky bottom-[calc(var(--spacing-bottom-nav)+env(safe-area-inset-bottom)+8px)] z-10 lg:bottom-4">
-            <Card className="flex flex-wrap gap-3 shadow-sheet *:flex-1">
-              {acciones.map((a) => (
-                <Button
-                  key={`${a.a}-${a.label}`}
-                  variant={a.variante}
-                  onClick={() => setAccion(a)}
-                  className="min-w-36"
-                >
-                  {a.label}
-                </Button>
-              ))}
-            </Card>
+          <div
+            aria-label="Acciones de la orden"
+            role="group"
+            className="sticky bottom-[calc(var(--spacing-bottom-nav)+env(safe-area-inset-bottom))] z-10 -mx-4 flex flex-col gap-2 border-t border-border bg-surface/85 px-4 py-3 backdrop-blur-xl lg:bottom-0 lg:mx-0 lg:px-0"
+          >
+            {errorAccion && <Alert>{errorAccion}</Alert>}
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:*:flex-1">
+              {acciones.map((a) => {
+                const clave = `${a.a}-${a.label}`;
+                // Las que piden escribir algo (motivo, repuesto) abren la hoja primero
+                if (a.observacion) {
+                  return (
+                    <Button
+                      key={clave}
+                      variant="secondary"
+                      onClick={() => setAccion(a)}
+                      className={a.variante === 'danger' ? 'text-danger-text' : undefined}
+                    >
+                      {a.label}
+                    </Button>
+                  );
+                }
+                const texto = textoHold(a.label);
+                return (
+                  <HoldButton
+                    key={clave}
+                    label={texto.mantener}
+                    doneLabel={texto.soltar}
+                    variant={a.variante === 'primary' ? 'primary' : 'soft'}
+                    loading={cambiar.isPending && cambiar.variables?.estado === a.a}
+                    disabled={cambiar.isPending}
+                    onConfirm={() => cambiarDirecto(a)}
+                    fullWidth
+                  />
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -286,7 +342,7 @@ function Servicios({ orden, editable }: { orden: OrdenDetalle; editable: boolean
                 {s.cantidad} × {formatPesos(s.precioUnitario)}
               </p>
             </div>
-            <span className="font-semibold">{formatPesos(s.subtotal)}</span>
+            <span className="font-num text-sm whitespace-nowrap">{formatPesos(s.subtotal)}</span>
             {editable && (
               <Button
                 variant="ghost"

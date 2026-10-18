@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Alert, BottomSheet, Button, Textarea } from '@/components/ui';
+import { Alert, BottomSheet, Button, HoldButton, Textarea } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
-import { ETIQUETA_ESTADO } from '../textos';
+import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import type { Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
 
@@ -62,20 +62,22 @@ function Formulario({
           <Button variant="secondary" onClick={onClose}>
             Volver
           </Button>
-          <Button
-            variant={accion.variante === 'danger' ? 'danger' : 'primary'}
+          {/* Se confirma manteniendo presionado (HU-48) */}
+          <HoldButton
+            label={textoHold(accion.label).mantener}
+            doneLabel={textoHold(accion.label).soltar}
+            variant={accion.a === 'cancelada' ? 'danger' : 'primary'}
             loading={cambiar.isPending}
-            onClick={enviar}
-          >
-            {confirmar?.boton ?? accion.label}
-          </Button>
+            onConfirm={enviar}
+            className="flex-[1.6]"
+          />
         </>
       }
     >
       {errorGeneral && <Alert>{errorGeneral}</Alert>}
       {confirmar && <p className="text-ink-muted">{confirmar.texto}</p>}
       {accion.mostrarTotal && (
-        <div className="flex items-center justify-between rounded-md bg-surface-sunken px-4 py-3">
+        <div className="flex items-center justify-between rounded-sm bg-surface-sunken px-4 py-3">
           <span className="font-semibold">Total</span>
           <span className="font-num text-xl">{formatPesos(total)}</span>
         </div>

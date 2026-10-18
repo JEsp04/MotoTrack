@@ -1,5 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HOLD_MS } from '@/components/ui';
 import { useSession } from '@/features/auth';
 import { clientesApi } from '@/features/clientes/api/clientes-api';
 import { equipoApi } from '@/features/equipo/api/equipo-api';
@@ -48,24 +49,29 @@ beforeEach(() => {
   useSession.getState().clearSession();
 });
 
+/** Nombre visible de un botón; el de mantener presionado sin la instrucción final */
+const nombre = (b: HTMLElement) =>
+  (
+    b.getAttribute('aria-label')?.replace('. Mantén presionado para confirmar.', '') ??
+    b.textContent ??
+    ''
+  ).trim();
+
 const botones = () =>
   screen
     .queryAllByRole('button')
-    .map((b) => b.textContent?.trim())
-    .filter((t) =>
-      [
-        'Enviar para aprobación',
-        'Aprobar',
-        'Rechazar',
-        'Iniciar reparación',
-        'Lista para entregar',
-        'Falta repuesto',
-        'Reanudar',
-        'Entregar moto',
-        'Cerrar orden',
-        'Cancelar orden',
-      ].includes(t ?? ''),
+    .map(nombre)
+    .filter(
+      (t) =>
+        t.startsWith('Mantén para') || ['Rechazar', 'Falta repuesto', 'Cancelar orden'].includes(t),
     );
+
+/** Mantiene presionado un HoldButton hasta que se llena y lo suelta (HU-48) */
+async function mantener(boton: HTMLElement) {
+  fireEvent.pointerDown(boton, { button: 0 });
+  await act(() => new Promise((r) => setTimeout(r, HOLD_MS + 50)));
+  fireEvent.pointerUp(boton);
+}
 
 describe('HU-28 · Estados en el frontend', () => {
   it('tiene las mismas transiciones que el backend (sin la del diagnóstico)', () => {
@@ -171,7 +177,7 @@ describe('HU-31 · Detalle', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
     await screen.findByRole('heading', { name: 'Orden #12' });
-    expect(botones()).toEqual(['Lista para entregar', 'Falta repuesto']);
+    expect(botones()).toEqual(['Mantén para marcar lista', 'Falta repuesto']);
   });
 
   it('el cliente no ve botones de cambio de estado en reparación', async () => {
@@ -202,16 +208,13 @@ describe('HU-31 · Detalle', () => {
 });
 
 describe('HU-34 · Aprobar o rechazar', () => {
-  it('el cliente aprueba desde una hoja que muestra el total', async () => {
+  it('el cliente aprueba manteniendo presionado', async () => {
     sesionDePrueba('cliente');
     const orden = ordenDetalle({ estado: 'esperando_aprobacion' });
     api.obtener.mockResolvedValue(orden);
     api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'aprobada' });
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Aprobar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Aprobar el diagnóstico' }));
-    expect(hoja.getByText('$ 65.000')).toBeInTheDocument();
-    await userEvent.click(hoja.getByRole('button', { name: 'Sí, aprobar' }));
+    await mantener(await screen.findByRole('button', { name: /Mantén para aprobar/ }));
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'aprobada', undefined),
     );
@@ -227,7 +230,8 @@ describe('HU-34 · Aprobar o rechazar', () => {
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Rechazar' }));
     const hoja = within(await screen.findByRole('dialog', { name: 'Rechazar el diagnóstico' }));
-    await userEvent.click(hoja.getByRole('button', { name: 'Sí, rechazar' }));
+    expect(hoja.getByText('$ 65.000')).toBeInTheDocument();
+    await mantener(hoja.getByRole('button', { name: /Mantén para rechazar/ }));
     expect(hoja.getByText(/escríbelo para continuar/)).toBeInTheDocument();
     expect(api.cambiarEstado).not.toHaveBeenCalled();
   });
@@ -242,10 +246,10 @@ describe('HU-35 · Avanzar la reparación', () => {
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Falta repuesto' }));
     const hoja = within(await screen.findByRole('dialog', { name: 'Falta un repuesto' }));
-    await userEvent.click(hoja.getByRole('button', { name: 'Guardar' }));
+    await mantener(hoja.getByRole('button', { name: /Mantén para guardar/ }));
     expect(api.cambiarEstado).not.toHaveBeenCalled();
     await userEvent.type(hoja.getByLabelText(/Qué repuesto falta/), 'Kit de arrastre');
-    await userEvent.click(hoja.getByRole('button', { name: 'Guardar' }));
+    await mantener(hoja.getByRole('button', { name: /Mantén para guardar/ }));
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(
         orden.publicId,
@@ -261,11 +265,36 @@ describe('HU-35 · Avanzar la reparación', () => {
     api.obtener.mockResolvedValue(orden);
     api.cambiarEstado.mockRejectedValue(new (await import('axios')).AxiosError('Network Error'));
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Iniciar reparación' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Iniciar reparación' }));
-    await userEvent.click(hoja.getByRole('button', { name: 'Iniciar reparación' }));
-    expect(await hoja.findByText('No pudimos conectar. Intenta de nuevo.')).toBeInTheDocument();
+    await mantener(await screen.findByRole('button', { name: /Mantén para iniciar/ }));
+    expect(await screen.findByText('No pudimos conectar. Intenta de nuevo.')).toBeInTheDocument();
     expect(screen.getAllByText('Aprobada').length).toBeGreaterThan(0);
+  });
+});
+
+describe('HU-48 · Cambiar de estado manteniendo presionado', () => {
+  it('el mecánico marca la moto lista sin abrir hoja', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'en_reparacion' });
+    api.obtener.mockResolvedValue(orden);
+    api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'lista_entrega' });
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    await mantener(await screen.findByRole('button', { name: /Mantén para marcar lista/ }));
+    await waitFor(() =>
+      expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'lista_entrega', undefined),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('si se suelta antes de tiempo no cambia nada', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'en_reparacion' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    const boton = await screen.findByRole('button', { name: /Mantén para marcar lista/ });
+    fireEvent.pointerDown(boton, { button: 0 });
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    fireEvent.pointerUp(boton);
+    expect(api.cambiarEstado).not.toHaveBeenCalled();
   });
 });
 
