@@ -12,7 +12,7 @@ export default function NotFoundPage() {
       </p>
       <Link
         to="/"
-        className="inline-flex min-h-touch items-center rounded-md bg-primary px-5 font-semibold text-on-primary hover:bg-primary/90"
+        className="inline-flex min-h-touch items-center rounded-full bg-primary px-6 font-semibold text-on-primary transition-transform duration-150 ease-out hover:bg-primary/88 active:scale-[0.97]"
       >
         Volver al inicio
       </Link>

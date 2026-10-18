@@ -108,6 +108,7 @@ Viven en `frontend/src/components/ui`. Cada uno se ve en `/dev/ui`.
 | `TopNav` *(nuevo, computador)* | Barra superior de vidrio: marca, pestañas segmentadas, botón principal y menú del avatar (perfil, cerrar sesión) |
 | `BottomNav` | Barra inferior en el celular con las opciones del rol |
 | `Logo` | Cuadro tinta redondeado con un arco blanco de velocímetro y aguja amarilla |
+| `Toaster` | Avisos en tinta arriba de la pantalla (debajo de la barra superior en computador), para no tapar la barra de acciones |
 
 ---
 
