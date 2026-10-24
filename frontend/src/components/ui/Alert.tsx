@@ -5,9 +5,9 @@ import { Icon, type IconName } from './Icon';
 type TonoAlerta = 'danger' | 'info' | 'success';
 
 const ESTILOS: Record<TonoAlerta, { clase: string; icono: IconName }> = {
-  danger: { clase: 'border-danger/30 bg-danger-soft text-danger', icono: 'alert' },
-  info: { clase: 'border-primary/30 bg-surface-sunken text-ink', icono: 'info' },
-  success: { clase: 'border-success/30 bg-success-soft text-success-text', icono: 'check' },
+  danger: { clase: 'bg-danger-soft text-danger-text', icono: 'alert' },
+  info: { clase: 'bg-surface-sunken text-ink', icono: 'info' },
+  success: { clase: 'bg-success-soft text-success-text', icono: 'check' },
 };
 
 /** Mensaje en línea dentro de un formulario o tarjeta (por ejemplo, el error general de un envío). */
@@ -25,7 +25,7 @@ export function Alert({
     <div
       role={tono === 'danger' ? 'alert' : 'status'}
       className={cn(
-        'flex items-start gap-2 rounded-md border px-3.5 py-3 text-sm font-medium',
+        'flex items-start gap-2 rounded-sm px-4 py-3 text-sm font-medium',
         clase,
         className,
       )}

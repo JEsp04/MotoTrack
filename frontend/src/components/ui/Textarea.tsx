@@ -20,7 +20,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           ref={ref}
           rows={rows}
           required={required}
-          className={cn(controlClasses(error), 'min-h-24 resize-y py-3')}
+          className={cn(controlClasses(error), 'min-h-24 resize-y py-[11px]')}
           {...a11y}
           {...rest}
         />

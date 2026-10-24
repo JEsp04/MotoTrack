@@ -12,10 +12,23 @@ export interface TabsProps<T extends string> {
   value: T;
   onChange: (id: T) => void;
   label: string;
+  /**
+   * `chips`: filtros en píldora con conteo (.mt-fchip del prototipo).
+   * `underline`: pestañas a lo ancho con raya inferior (.mt-tabs del prototipo).
+   */
+  variant?: 'chips' | 'underline';
+  className?: string;
 }
 
 /** Pestañas con desplazamiento horizontal en celular y flechas del teclado. */
-export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsProps<T>) {
+export function Tabs<T extends string>({
+  tabs,
+  value,
+  onChange,
+  label,
+  variant = 'chips',
+  className,
+}: TabsProps<T>) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   function onKeyDown(e: KeyboardEvent, index: number) {
@@ -27,11 +40,17 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
     onChange(tabs[next]!.id);
   }
 
+  const chips = variant === 'chips';
+
   return (
     <div
       role="tablist"
       aria-label={label}
-      className="flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none]"
+      className={cn(
+        'flex overflow-x-auto [scrollbar-width:none]',
+        chips ? '-mx-4 gap-2 px-4 py-0.5' : 'border-b border-border bg-surface/78',
+        className,
+      )}
     >
       {tabs.map((tab, i) => {
         const activa = tab.id === value;
@@ -48,23 +67,22 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              '-mb-px flex min-h-touch shrink-0 items-center gap-2 border-b-3 px-3 text-sm font-semibold whitespace-nowrap transition-colors',
-              activa
-                ? 'border-primary text-ink'
-                : 'border-transparent text-ink-muted hover:text-ink',
+              'shrink-0 text-sm font-semibold whitespace-nowrap',
+              chips
+                ? cn(
+                    'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 transition-colors duration-150',
+                    activa
+                      ? 'border-ink bg-ink text-on-primary'
+                      : 'border-border bg-surface text-ink',
+                  )
+                : cn(
+                    'min-h-touch flex-auto border-b-3 px-2',
+                    activa ? 'border-ink text-ink' : 'border-transparent text-ink-muted',
+                  ),
             )}
           >
             {tab.label}
-            {tab.count !== undefined && (
-              <span
-                className={cn(
-                  'rounded-full px-2 py-0.5 text-xs',
-                  activa ? 'bg-primary text-on-primary' : 'bg-surface-sunken text-ink-muted',
-                )}
-              >
-                {tab.count}
-              </span>
-            )}
+            {tab.count !== undefined && <span className="text-xs opacity-80">{tab.count}</span>}
           </button>
         );
       })}

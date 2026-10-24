@@ -79,7 +79,7 @@ function TarjetaMecanico({ mecanico }: { mecanico: Integrante }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate font-semibold">{mecanico.nombre}</p>
-          <Badge tono={activo ? 'success' : 'neutral'} dot>
+          <Badge tono={activo ? 'success' : 'neutral'} icon={activo ? 'check' : 'lock'}>
             {activo ? 'Activo' : 'Desactivado'}
           </Badge>
         </div>
