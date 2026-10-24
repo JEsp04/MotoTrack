@@ -9,7 +9,7 @@ export default function RouteErrorPage() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 px-6 text-center">
-      <span className="flex size-16 items-center justify-center rounded-full bg-danger-soft text-danger">
+      <span className="flex size-16 items-center justify-center rounded-[20px] bg-danger-soft text-danger-text">
         <Icon name="alert" size={32} />
       </span>
       <h1 className="text-2xl">{es404 ? 'No encontramos esta página' : 'Algo salió mal'}</h1>

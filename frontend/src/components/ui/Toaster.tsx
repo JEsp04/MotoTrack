@@ -8,7 +8,10 @@ const ESTILOS: Record<TonoToast, { clase: string; icono: IconName; iconoClase?: 
   danger: { clase: 'bg-danger text-on-primary', icono: 'alert' },
 };
 
-/** Avisos flotantes. Se monta una vez en App; se usan con toast('…') desde lib/toast. */
+/**
+ * Avisos flotantes. Se monta una vez en App; se usan con toast('…') desde lib/toast.
+ * Van arriba para no tapar la barra de acciones ni el botón de mantener presionado.
+ */
 export function Toaster() {
   const items = useToastStore((s) => s.items);
   const dismiss = useToastStore((s) => s.dismiss);
@@ -16,7 +19,7 @@ export function Toaster() {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--spacing-bottom-nav)+12px)] z-[60] flex flex-col items-center gap-2 px-4 lg:bottom-6"
+      className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+12px)] z-[60] flex flex-col items-center gap-2 px-4 lg:top-[calc(var(--spacing-topnav)+12px)] lg:items-end lg:px-6"
     >
       {items.map((t) => (
         <div

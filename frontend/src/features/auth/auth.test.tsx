@@ -218,8 +218,8 @@ describe('HU-22 · Cerrar sesión', () => {
     api.logout.mockResolvedValue(undefined);
     sesionDePrueba('admin');
     const router = abrirApp('/admin/perfil');
-    await screen.findByRole('heading', { name: 'Perfil' });
-    // En el perfil (celular) y en el menú lateral (computador) hay botón de salir
+    await screen.findByRole('heading', { name: 'Más' });
+    // En «Más» (celular) y en el menú del avatar (computador) hay botón de salir
     const botones = screen.getAllByRole('button', { name: 'Cerrar sesión' });
     await userEvent.click(botones[botones.length - 1]!);
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
