@@ -50,6 +50,26 @@ export function usePanelTaller() {
   });
 }
 
+/**
+ * HU-47 · Cuántas órdenes hay en cada pestaña (para los filtros del prototipo).
+ * Usa la misma lista de la API pidiendo una sola fila por grupo.
+ */
+export function useConteoOrdenes() {
+  return useQuery({
+    queryKey: ['ordenes', 'lista', 'conteo'],
+    queryFn: async () => {
+      const grupos = ['todas', 'en_proceso', 'por_aprobar', 'listas', 'cerradas'] as const;
+      const r = await Promise.all(
+        grupos.map((grupo) => ordenesApi.listar({ grupo, page: 1, limit: 1 })),
+      );
+      return Object.fromEntries(grupos.map((g, i) => [g, r[i]!.meta.total])) as Record<
+        (typeof grupos)[number],
+        number
+      >;
+    },
+  });
+}
+
 /** HU-31 · Detalle */
 export function useOrden(publicId: string) {
   return useQuery({

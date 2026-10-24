@@ -154,7 +154,7 @@ export const GRUPOS = [
   { id: 'en_proceso', label: 'En proceso' },
   { id: 'por_aprobar', label: 'Por aprobar' },
   { id: 'listas', label: 'Listas' },
-  { id: 'cerradas', label: 'Cerradas' },
+  { id: 'cerradas', label: 'Historial' },
 ] as const;
 
 export type GrupoId = (typeof GRUPOS)[number]['id'];
