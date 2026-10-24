@@ -1,44 +1,42 @@
 # PROGRESS.md · Checklist de tareas y roadmap
 
-Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md`.
+Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct). Diseño: `docs/diseno.md` y `docs/prototipo/`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: 12 de octubre de 2026 (noche).
+Última actualización: sábado 24 de octubre de 2026.
 
 Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
 ## Resumen
 
-| Etapa | Historias | Estado |
-|---|---|---|
-| E0 · Preparación del repositorio | HU-01 a HU-05 | ✅ En `develop` (10-oct) |
-| E1 · Base de datos | HU-06 a HU-07 | ✅ En `develop` (10-oct) |
-| E2 · Base del frontend | HU-08 a HU-12 | ✅ En `develop` (10-oct) |
-| E3 · Autenticación en backend | HU-13 a HU-18 | ✅ En `develop` (10-oct) |
-| E4 · Autenticación en frontend | HU-19 a HU-22 | ✅ En `develop` (12-oct, PR #10) |
-| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | ✅ En `develop` (12-oct, PR #12) |
-| E6 · Órdenes de servicio | HU-28 a HU-37 | 🔎 En revisión: rama `feature/ordenes` (12-oct) |
-| E7 · Despliegue y entrega | HU-38 a HU-40 | ⏳ Siguiente |
+| Etapa | Historias | Pts | Estado |
+|---|---|---|---|
+| E0 · Preparación del repositorio | HU-01 a HU-05 | 9 | ✅ En `develop` (10-oct) |
+| E1 · Base de datos | HU-06 a HU-07 | 7 | ✅ En `develop` (10-oct) |
+| E2 · Base del frontend | HU-08 a HU-12 | 13 | ✅ En `develop` (10-oct) |
+| E3 · Autenticación en backend | HU-13 a HU-18 | 13 | ✅ En `develop` (10-oct) |
+| E4 · Autenticación en frontend | HU-19 a HU-22 | 9 | ✅ En `develop` (12-oct, PR #10) |
+| E5 · Usuarios, clientes y motos | HU-23 a HU-27 | 10 | ✅ En `develop` (12-oct, PR #12) |
+| E6 · Órdenes de servicio | HU-28 a HU-37 | 21 | ✅ En `develop` (12-oct, PR #13) |
+| E6.5 · Migración al diseño nuevo | HU-41 a HU-50 | 24 | ✅ En `develop` (24-oct, PR #16 a #25) |
+| E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ Pendiente: no hay nada de despliegue en el repositorio |
 
-**Avance:** 27 de 40 historias unidas · 61 de 88 puntos (≈ 69 %). Con E6 en revisión: 37 historias · 82 puntos (≈ 93 %).
+**Avance:** 47 de 50 historias unidas · 106 de 112 puntos (≈ 95 %). Solo faltan las 3 historias de E7 (6 puntos), todas obligatorias.
 
 ---
 
-## Roadmap hacia la primera entrega (viernes 17-oct)
+## Roadmap para cerrar el entregable
 
-El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
+La fecha de la primera entrega en `docs/HISTORIAS.md` era el viernes 17-oct. Ese día se agregó **E6.5 · Migración al diseño nuevo**, que iba antes de E7; se desarrolló el 17 y 18-oct y se unió el 24-oct. E7 sigue sin hacerse (no existen `api/index.ts`, `vercel.json` ni la etiqueta `v0.1`). **Hay que acordar una fecha nueva con el equipo.**
 
-| Fecha | Plan |
-|---|---|
-| ~~10–13 oct~~ | ~~E0, E1, E2, E3~~ ✅ terminadas el 10-oct |
-| ~~Lun 12 – mar 13~~ | ~~E4~~ ✅ terminada el 12-oct |
-| ~~Mar 13 – mié 14~~ | ~~E5~~ ✅ terminada el 12-oct |
-| ~~Mié 14 – jue 16~~ | ~~E6~~ 🔎 hecha el 12-oct, en revisión |
-| Mié 15 | HU-38: base en Aiven (temprano, para probar con datos reales) |
-| Jue 16 | HU-39 despliegue en Vercel + HU-40 prueba de punta a punta y `v0.1` |
-| Vie 17 | **Primera entrega** |
+| Paso | Historia | Depende de | Estado |
+|---|---|---|---|
+| ✅ | E6.5 · HU-41 a HU-50 · Migración al diseño nuevo (24 pts) | E6 | ✅ Unida el 24-oct |
+| 2 | HU-38 · Base en Aiven (gratis, sin tarjeta) | HU-06 | ⏳ Pedir confirmación antes de crear la cuenta |
+| 3 | HU-39 · Publicar en Vercel Hobby (rama `chore/despliegue`) | HU-38, HU-11 | ⏳ Pedir confirmación antes de crear la cuenta |
+| 4 | HU-40 · Prueba de punta a punta y `v0.1` (rama `release/v0.1`) | Todas las obligatorias | ⏳ |
 
-**Plan de riesgo:** si el 15-oct E6 va atrasada, HU-33 (servicios y costo) pasa a la segunda entrega.
+~~Plan de riesgo: HU-33 pasa a la segunda entrega~~ Ya no aplica: HU-33 *(deseable)* quedó unida con E6.
 
 ---
 
@@ -79,49 +77,84 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 - [x] HU-21 · Sesión que sobrevive a recargar la página
 - [x] HU-22 · Acceso según mi rol y botón de salir
 
-### Mejora transversal (12-oct) ✅ PR #11
-
-- [x] `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes (se conservan los `Int`)
-- [x] Largo máximo en todos los campos y `maxLength` en los inputs
-
 ## E5 · Usuarios, clientes y motos ✅
 
 - [x] HU-23 · Crear cuentas de mecánico
 - [x] HU-24 · Registrar un cliente en el taller
 - [x] HU-25 · Buscar y ver clientes
-- [x] HU-26 · Registrar una moto (el alterno B, desde el formulario de la orden, queda en `feature/ordenes`)
+- [x] HU-26 · Registrar una moto (el alterno B, desde el formulario de la orden, llegó con E6 en el PR #13)
 - [x] HU-27 · Ver mis motos como cliente
 
-## E6 · Órdenes de servicio 🔎 (hecha, falta PR a `develop`)
+## E6 · Órdenes de servicio ✅ PR #13
 
-- [~] HU-28 · Motor de estados e historial (backend)
-- [~] HU-29 · Crear una orden de servicio
-- [~] HU-30 · Ver la lista de órdenes
-- [~] HU-31 · Ver el detalle y el historial de una orden
-- [~] HU-32 · Registrar el diagnóstico
-- [~] HU-33 · Agregar servicios y calcular el costo *(deseable)*
-- [~] HU-34 · Aprobar o rechazar el diagnóstico
-- [~] HU-35 · Avanzar la reparación
-- [~] HU-36 · Entregar y cerrar la orden
-- [~] HU-37 · Cancelar una orden con motivo
+- [x] HU-28 · Motor de estados e historial (backend)
+- [x] HU-29 · Crear una orden de servicio
+- [x] HU-30 · Ver la lista de órdenes
+- [x] HU-31 · Ver el detalle y el historial de una orden
+- [x] HU-32 · Registrar el diagnóstico
+- [x] HU-33 · Agregar servicios y calcular el costo *(deseable)*
+- [x] HU-34 · Aprobar o rechazar el diagnóstico
+- [x] HU-35 · Avanzar la reparación
+- [x] HU-36 · Entregar y cerrar la orden
+- [x] HU-37 · Cancelar una orden con motivo
 
-## E7 · Despliegue y entrega
+## E6.5 · Migración al diseño nuevo ✅ PR #16 a #25
 
-- [ ] HU-38 · Base de datos en la nube (Aiven, gratis)
-- [ ] HU-39 · Publicar la app en Vercel (Hobby, gratis)
-- [ ] HU-40 · Prueba de punta a punta y versión `v0.1`
+Solo cambia cómo se ven las pantallas (más la landing); el backend no cambia. Una rama por historia (`HU-41` … `HU-50`).
+
+- [x] HU-41 · Colores y fuentes nuevos (PR #16)
+- [x] HU-42 · Componentes base con el diseño nuevo (PR #17)
+- [x] HU-43 · Botón de mantener presionado y arco de progreso (PR #18)
+- [x] HU-44 · Navegación nueva (PR #19)
+- [x] HU-45 · Landing, ingreso y registro con el diseño nuevo (PR #20)
+- [x] HU-46 · Panel del taller, clientes y equipo (PR #21)
+- [x] HU-47 · Lista de órdenes y recibir moto (PR #22)
+- [x] HU-48 · Detalle de la orden con mantener presionado (PR #23)
+- [x] HU-49 · Seguimiento del cliente (PR #24)
+- [x] HU-50 · Perfil, páginas de error y revisión final (PR #25)
+
+## Mejoras transversales ✅
+
+- [x] `publicId` UUIDv7 en talleres, usuarios, clientes, motocicletas y órdenes, y largo máximo en campos e inputs (12-oct, PR #11)
+- [x] `publicId` también en `servicios` y `detalle_servicios` (12-oct, PR #13)
+- [x] Guardián de tokens de color: `npm run check:tokens` (12-oct, PR #14)
+- [x] Pruebas del backend sin mocks de Prisma, bloqueado por ESLint (12-oct, PR #15)
+- [x] Se borra el duplicado `docs/CONTEXTO.md` (16-oct)
+
+## E7 · Despliegue y entrega ⏳
+
+Cada casilla es un criterio de aceptación de `docs/HISTORIAS.md`. Con las reglas nuevas, las ramas pueden llamarse `HU-38`, `HU-39` y `HU-40`.
+
+- [ ] HU-38 · Base de datos en la nube (Aiven, gratis) · 1 pt
+  - [ ] Cuenta en Aiven con plan gratuito, sin tarjeta ni costo *(consultar antes)*
+  - [ ] Cadena de conexión con SSL guardada fuera del repositorio
+  - [ ] `prisma migrate deploy` crea las tablas y se cargan los datos de ejemplo
+- [ ] HU-39 · Publicar la app en Vercel (Hobby, gratis) · 3 pts · rama `chore/despliegue`
+  - [ ] `api/index.ts` exporta la app de Express y `vercel.json` manda `/api/*` a la función y el resto a `index.html`
+  - [ ] Repositorio conectado en Vercel con las variables de entorno; `main` publica y cada PR tiene vista previa
+  - [ ] `/api/health` responde 200 en la dirección publicada
+  - [ ] Al iniciar sesión y recargar, la sesión sigue (cookie en el mismo dominio)
+  - [ ] Abrir directamente `/cliente/motos` carga sin 404
+  - [ ] El plan es Hobby, sin costo
+- [ ] HU-40 · Prueba de punta a punta y versión `v0.1` · 2 pts · rama `release/v0.1`
+  - [ ] Guion completo en 390 px y 1280 px: taller y mecánico → cliente, moto y orden → diagnóstico → el cliente se registra y aprueba → reparación con repuesto faltante → lista → entrega y cierre
+  - [ ] El historial muestra el registro inicial y los 9 cambios de estado
+  - [ ] Se repite el guion rechazando el diagnóstico
+  - [ ] En 390 px no hay desplazamiento horizontal ni botones de menos de 48 px
+  - [ ] `develop` se une a `main`, se crea la etiqueta `v0.1` y el README tiene la dirección publicada y las cuentas de prueba
 
 ---
 
 ## Tareas del equipo (fuera de las historias)
 
-- [ ] Cada integrante configura su entorno: `git pull`, `npm install`, `.env`, `CREATE DATABASE mototrack`, `npm run db:deploy` y `npm run seed`
-- [ ] Integrar la landing page de un compañero (moverla a `frontend/src/pages/LandingPage.tsx` en una rama nueva desde `develop`)
+- [ ] Acordar la fecha nueva para terminar E7 y quién la lleva
+- [ ] Cada integrante actualiza su entorno con `develop`: `git pull`, `npm install`, `.env`, `CREATE DATABASE mototrack`, `npm run db:deploy` y `npm run seed`
+- [ ] Corregir los enlaces a `docs/CONTEXTO.md` (borrado el 16-oct) en `README.md` y `docs/HISTORIAS.md`: ahora es `contexto.md` en la raíz. El resumen de `HISTORIAS.md` también dice todavía «40 historias, 88 puntos»
+- [ ] Decidir qué pasa con la landing del compañero: la del prototipo ya quedó integrada en HU-45 (`features/landing`)
 - [ ] Poner `develop` como rama por defecto en GitHub (Settings → General), para no abrir PRs hacia `main` por error
 - [ ] Proteger `develop`: exigir 1 revisión y la revisión automática en verde
-- [ ] Definir quién lleva cada etapa de E4 a E7
 
-## Segunda entrega (backlog)
+## Segunda entrega (backlog, «Fuera de esta entrega» en `docs/HISTORIAS.md`)
 
 - [ ] Citas y agenda
 - [ ] Inventario de repuestos y movimientos
@@ -129,3 +162,5 @@ El calendario del 9-oct se reajustó porque E0 a E3 se terminaron el 10-oct.
 - [ ] OTP por WhatsApp o correo, invitación de mecánicos y recuperar contraseña *(cuesta dinero: consultar antes)*
 - [ ] Pagos y membresías *(cuesta dinero: consultar antes)*
 - [ ] Notificaciones, reportes y landing comercial
+- [ ] Lo que el prototipo muestra y la app aún no tiene: fecha estimada de entrega, suscripción y modo oscuro
+- [ ] Servicios adicionales en una orden ya aprobada (hoy hay que cancelar y abrir otra, HU-33 alterno B)

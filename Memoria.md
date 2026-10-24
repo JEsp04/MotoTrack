@@ -4,47 +4,49 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 
 - Se lee al **empezar** cada sesión.
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
-- Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`.
+- Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`; los criterios de aceptación del entregable, en `docs/HISTORIAS.md`; el diseño, en `docs/diseno.md` y `docs/prototipo/`.
 
-Última actualización: lunes 12 de octubre de 2026 (noche).
+Última actualización: sábado 24 de octubre de 2026.
 
 ---
 
 ## Estado actual
 
-- **Rama `develop`:** E0 a E5 unidas (HU-01 a HU-27) más la mejora de `publicId` y largo máximo. PR #4 a #12. Último commit: `87bc5c8 Merge pull request #12 from JEsp04/feature/clientes-motos`.
+- **Avance del entregable (`docs/HISTORIAS.md`):** 47 de 50 historias en `develop` (106 de 112 puntos, ≈ 95 %). Falta solo **E7 · Despliegue y entrega (HU-38 a HU-40, 6 pts)**.
+- **Rama `develop`:** E0 a E6.5 unidas (HU-01 a HU-50), PR #4 a #25. Último commit: `e50feda Merge pull request #25 from JEsp04/HU-50` (24-oct).
+  - PR #13: E6 · órdenes de servicio (`feature/ordenes`).
+  - PR #14: guardián de tokens de color (`npm run check:tokens`).
+  - PR #15: pruebas del backend sin mocks de Prisma (ESLint lo bloquea).
+  - 16-oct: se borra el duplicado `docs/CONTEXTO.md`.
+  - PR #16 a #25: E6.5 · migración al diseño nuevo, una rama por historia (`HU-41` … `HU-50`), unidas el 24-oct.
 - **Backend funcionando:**
   - API en TypeScript con Prisma 7 y MySQL.
-  - Auth completa, talleres públicos, equipo (`/usuarios`), `/clientes` y `/motos`.
+  - Auth completa, talleres públicos, equipo (`/usuarios`), `/clientes`, `/motos`, `/ordenes` y `/servicios`. `/api/health` ya existe (lo pide HU-39).
   - Hacia afuera solo `publicId` (UUIDv7); los `Int` son internos.
-- **Frontend funcionando:**
-  - Sistema de diseño (16 componentes `ui`), menú por rol, rutas con `lazy`, 404 y error.
+  - 91 pruebas contra MySQL real.
+- **Frontend funcionando, con el diseño nuevo del prototipo aprobado el 17-oct:**
+  - Fondo blanco y un solo acento amarillo; fuentes Geist y Michroma. Componentes `ui` nuevos: `HoldButton`, `Arc`, `Fab`, `IconButton`, `List`, `Note`, `Page`, `Segmented`, `SelectCard`, `Stepper`.
+  - Barra inferior en celular y barra superior con menú del avatar en computador; rutas con `lazy`, 404 y error.
+  - Landing del prototipo con ingreso y registro en un panel encima (HU-45).
   - Ingreso, registro, sesión al recargar y cierre de sesión.
-  - Equipo, Clientes (buscador, detalle) y Mis motos.
-- **E6 terminada en la rama `feature/ordenes`** (falta revisión y PR a `develop`).
-- **Base de datos:** 10 tablas; migraciones `20261010150000_inicial`, `20261012210000_public_id` y (en `feature/ordenes`) `20261012230000_public_id_servicios`; seed con el taller Moto Express Laureles.
-- **Aún no desplegado** (Vercel + Aiven, E7).
+  - Panel del taller, Clientes, Equipo, Órdenes y recibir moto, detalle de la orden con dial y «mantener presionado», seguimiento del cliente, perfil.
+- **Base de datos:** 10 tablas; migraciones `20261010150000_inicial`, `20261012210000_public_id` y `20261012230000_public_id_servicios`, las tres en `develop`; seed con el taller Moto Express Laureles.
+- **Aún no desplegado.** En el repositorio no existen `api/index.ts`, `vercel.json` ni la etiqueta `v0.1`, y `main` sigue en el commit inicial `b7b3c71`.
 
 ## Sesión activa
 
-**E6 lista para revisión** en `feature/ordenes` (sale de `develop` después del PR #12):
-- **Backend:**
-  - `ordenes/estados.ts`: las 10 transiciones y quién hace cada una. `cambiarEstado()` es la única función que cambia el estado y guarda el historial en la misma transacción (con control de concurrencia: si dos personas cambian a la vez, la segunda recibe 409).
-  - `/api/ordenes`: crear (número consecutivo por taller, una orden abierta por moto, kilometraje no menor al último), listar por rol con `grupo` y `q`, detalle, cambio de estado, diagnóstico y servicios. `GET /api/servicios` (catálogo).
-  - `publicId` en `servicios` y `detalle_servicios` (migración nueva).
-  - **91 pruebas** (59 anteriores + 32 nuevas). Una prueba recorre las 100 combinaciones de estados: las permitidas pasan y las demás dan 409.
-- **Frontend:**
-  - `features/ordenes`: listas por rol con pestañas (Todas, En proceso, Por aprobar, Listas, Cerradas) y buscador; crear orden en 3 pasos (cliente → moto → datos), registrando cliente o moto nuevos ahí mismo (HU-26 alterno B y HU-29 alterno A); detalle con línea de tiempo y solo los botones del rol; confirmaciones en hoja inferior.
-  - **83 pruebas** (67 anteriores + 16 nuevas).
-- **Prueba de punta a punta contra la API y MySQL:** orden creada por el admin → diagnóstico urgente y 2 servicios ($ 70.000) por el mecánico → aprobación por teléfono → reparación con repuesto faltante → entrega → cierre (10 registros en el historial). Además, un cliente aprueba su orden desde la app.
-- **Hay migración nueva:** después del `pull`, `npm install` y `npm run db:deploy` en `backend`.
+**Siguiente: E7 · Despliegue y entrega**, en este orden (criterios detallados en `PROGRESS.md`):
 
-**Siguiente: E7 · Despliegue y entrega (HU-38 a HU-40).** HU-38 y HU-39 implican crear cuentas en Aiven y Vercel (planes gratis): pedir confirmación antes.
+1. **HU-38 · Aiven:** base MySQL gratis con SSL, `prisma migrate deploy` y seed. Crear la cuenta implica un servicio en la nube: **pedir confirmación antes**.
+2. **HU-39 · Vercel Hobby** (rama `chore/despliegue`): `api/index.ts` + `vercel.json`; `/api/health` 200, sesión al recargar, `/cliente/motos` directo sin 404. **Pedir confirmación antes** de crear la cuenta.
+3. **HU-40 · `v0.1`** (rama `release/v0.1`): guion de punta a punta en 390 y 1280 px, aprobando y rechazando; historial con registro inicial + 9 cambios; `develop` → `main`, etiqueta `v0.1` y README con la dirección y las cuentas.
 
-**Para probar E6 en tu PC:**
-1. `git checkout feature/ordenes`; en `backend`: `npm install`, `npm run db:deploy` y `npm run seed`; en `frontend`: `npm install`.
+**Pendiente de decidir:** la primera entrega estaba para el viernes 17-oct; ese día se sumó E6.5, que ya está unida. E7 no se ha hecho: falta la fecha nueva y quién la lleva.
+
+**Para probar lo que hay en tu PC:**
+1. Usar la copia del Escritorio (`C:\Users\USER\Desktop\MotoTrack\MotoTrack`); la de Descargas quedó 35 commits atrás. `git checkout develop` y `git pull`; en `backend`: `npm install`, `npm run db:deploy` y `npm run seed`; en `frontend`: `npm install`.
 2. `npm run dev` en las dos carpetas.
-3. Admin `admin@mototrack.co`, mecánico `andres@mototrack.co`, cliente `juan@correo.co` (clave `MotoTrack2026`). Juan tiene la orden #2 esperando su aprobación.
+3. Admin `admin@mototrack.co`, mecánico `andres@mototrack.co`, cliente `juan@correo.co` (clave `MotoTrack2026`). Juan tiene la orden #2 esperando su aprobación (se aprueba manteniendo presionado).
 
 ## Decisiones vigentes
 
@@ -54,6 +56,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 9-oct | 10 estados de orden; se quita el rol `recepcionista`; el cliente entra con correo y contraseña (OTP después) |
 | 9-oct | Sesión: token de acceso en memoria + renovación en cookie `httpOnly`, con rotación |
 | 9-oct | Despliegue aprobado: Vercel Hobby (frontend + API) + Aiven MySQL gratis |
+| 9-oct | Alcance de la primera entrega: las 40 historias de `docs/HISTORIAS.md`; lo de «Fuera de esta entrega» va a la segunda |
 | 10-oct | Prisma 7 con `@prisma/adapter-mariadb`. No se usa Prisma 8: el 10-oct era una versión candidata (rc) |
 | 10-oct | TypeScript 6.0 (typescript-eslint aún no soporta la 7) y React Router 7 |
 | 10-oct | Citas, repuestos, inventario, IA y notificaciones **no** tienen tabla todavía (segunda entrega) |
@@ -73,15 +76,24 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 12-oct | Cuando el admin aprueba o rechaza por el cliente, el historial dice «El cliente aprobó/rechazó por teléfono (registrado por el taller)» |
 | 12-oct | `publicId` también en `servicios` y `detalle_servicios`. HU-33 entra en la primera entrega. E6 en una sola rama `feature/ordenes` |
 | 12-oct | En la API, `modelo` de la moto es el año (como se dice en Colombia) y `referencia` es el nombre comercial (NMAX 155) |
+| 12-oct | Colores solo con los tokens de `src/styles/index.css`; `npm run check:tokens` lo revisa en `npm test` y en GitHub (PR #14) |
+| 12-oct | Pruebas del backend siempre contra MySQL real: prohibidos `vi.mock` y simuladores de Prisma; ESLint lo bloquea (PR #15) |
+| 16-oct | Se borra `docs/CONTEXTO.md`: la fuente es `contexto.md` en la raíz, junto con `CLAUDE.md` |
+| 17-oct | Se agrega **E6.5 · Migración al diseño** (HU-41 a HU-50, 24 pts) en `docs/HISTORIAS.md`. Va antes de E7. El entregable pasa a 50 historias y 112 puntos |
+| 17-oct | Prototipo nuevo aprobado (https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w, copia en `docs/prototipo/`). El diseño debe ser **idéntico** al prototipo; lo que la app aún no tiene se omite, no se inventa |
+| 17-oct | Un solo fondo blanco y un solo acento amarillo; Geist para el texto y Michroma para marca, placas, números y montos. Cambiar el estado de una orden se confirma con `HoldButton` |
+| 17-oct | Ramas `HU-<número>`, una por historia. Comandos para Git Bash en Windows (no PowerShell) |
 
 ## Cosas a tener en cuenta
 
+- **E7 atrasada:** la fecha de la primera entrega (17-oct) ya pasó sin despliegue. Confirmar con el equipo la fecha nueva antes de planear.
+- **Dos copias del repositorio:** la de Descargas está desactualizada (llega al 16-oct). Trabajar en la del Escritorio.
+- **Enlaces rotos a `docs/CONTEXTO.md`:** `README.md` y `docs/HISTORIAS.md` (encabezado, «Definición de terminado» y el total) todavía lo nombran, y el total de `HISTORIAS.md` sigue diciendo 40 historias y 88 puntos. Hay que apuntarlos a `contexto.md` y a `CLAUDE.md`, sección 6.
 - **La migración inicial se escribió a mano** porque el entorno de Claude no puede descargar el motor de Prisma. Se probó en MariaDB y Paula la aplicó en MySQL 8 con `prisma migrate reset` el 10-oct. Si algún compañero ve *drift* en una base sin datos: `npx prisma migrate reset`.
 - **Bases viejas de Sequelize:** quien tenga tablas antiguas en `mototrack` debe hacer `npx prisma migrate reset`.
-- **Landing page de un compañero:** se hizo sobre la plantilla JSX anterior. Al hacer `pull` habrá conflictos. Plan: moverla a `pages/LandingPage.tsx` en una rama nueva.
+- **Landing page de un compañero:** la del prototipo ya quedó en `features/landing` (HU-45). Falta decidir si la del compañero se descarta.
 - **GitHub abre los PR hacia `main` por defecto.** Ya pasó una vez (PR cerrado y rehecho). Siempre revisar que la base sea `develop`.
 - **Windows y saltos de línea:** el repositorio guarda LF (`.gitattributes`). Si `package-lock.json` aparece modificado solo por `npm install`, se descarta.
-- **`docs/CONTEXTO.md`** (del 9-oct) quedó reemplazado por `contexto.md` + `CLAUDE.md`. Pendiente decidir si se borra.
 
 ## Bitácora de sesiones
 
@@ -91,3 +103,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 9-oct | Contexto y stack definidos (`docs/CONTEXTO.md`), auditoría del repositorio, despliegue elegido, 40 historias de usuario (`docs/HISTORIAS.md`) |
 | 10-oct | E0 a E3 desarrolladas, revisadas y unidas en `develop` (PR #4 a #8). Base local reseteada con Prisma. Autores de commits corregidos |
 | 12-oct | Creación de `CLAUDE.md`, `contexto.md`, `Memoria.md` y `PROGRESS.md`. E4 completa (HU-19 a HU-22) en `feature/auth-frontend`. La landing se retrasa porque un compañero está sin conexión. Rama `feature/validaciones-publicid`: `publicId` UUIDv7 y largo máximo en formularios. PR #10 y #11 unidos. E5 completa (HU-23 a HU-27), unida en el PR #12. E6 completa (HU-28 a HU-37) en `feature/ordenes` |
+| 12-oct (noche) | PR #13 (E6), #14 (guardián de tokens) y #15 (pruebas sin mocks) unidos en `develop` |
+| 16-oct | Se borra el duplicado `docs/CONTEXTO.md` (`22a4a7c`) |
+| 17-oct | Prototipo nuevo aprobado, `docs/diseno.md` y E6.5 (HU-41 a HU-50) en `docs/HISTORIAS.md`. Desarrollo de E6.5 (17 y 18-oct) |
+| 24-oct | PR #16 a #25 (E6.5) unidos en `develop`. `PROGRESS.md` y `Memoria.md` alineados con `docs/HISTORIAS.md`: E6 y E6.5 marcadas como unidas, avance 47/50 (106/112 pts), E7 desglosada por criterios de aceptación y fecha nueva pendiente |
