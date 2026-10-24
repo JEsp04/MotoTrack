@@ -120,6 +120,39 @@ describe('HU-30 · Lista de órdenes', () => {
   });
 });
 
+describe('HU-46 · Panel del taller', () => {
+  it('muestra las lecturas y una tarjeta por moto adentro, y la que espera al cliente resalta', async () => {
+    sesionDePrueba('admin');
+    api.listar.mockImplementation(async ({ grupo }) => {
+      if (grupo === 'por_aprobar')
+        return lista([ordenResumen({ numero: 7, estado: 'esperando_aprobacion' })]);
+      if (grupo === 'en_proceso')
+        return lista([
+          ordenResumen({ numero: 8, estado: 'pendiente_repuesto' }),
+          ordenResumen({ numero: 9 }),
+        ]);
+      return lista([]);
+    });
+    abrirApp('/admin');
+    const resumen = await screen.findByRole('list', { name: 'Resumen del taller' });
+    expect(within(resumen).getByText('adentro').previousSibling).toHaveTextContent('3');
+    expect(within(resumen).getByText('sin repuesto').previousSibling).toHaveTextContent('1');
+    expect(screen.getByText('Espera al cliente')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /#7/ })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/admin\/ordenes\//),
+    );
+    expect(screen.getByText('Equipo hoy')).toBeInTheDocument();
+  });
+
+  it('sin motos adentro invita a recibir una', async () => {
+    sesionDePrueba('admin');
+    api.listar.mockResolvedValue(lista([]));
+    abrirApp('/admin');
+    expect(await screen.findByText('No hay motos adentro')).toBeInTheDocument();
+  });
+});
+
 describe('HU-31 · Detalle', () => {
   it('muestra servicios con el total en pesos y el historial', async () => {
     sesionDePrueba('admin');

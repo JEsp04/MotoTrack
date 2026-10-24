@@ -142,7 +142,7 @@ No cambia ninguna regla del negocio: se llama la misma API con el mismo estado y
 | `/` | Landing | Igual a la landing aprobada |
 | `/login` | Panel «Iniciar sesión» sobre la landing | «Soy del taller / Soy cliente», con correo y contraseña |
 | `/registro`, `/registro/taller`, `/registro/cliente` | Paneles «Crear cuenta», «Registrar taller» y «Cuenta de cliente» | Sin código por WhatsApp (segunda entrega) |
-| `/admin` (Inicio) | Panel del taller | Lecturas y bahías con las órdenes reales. «Equipo hoy», «Lo que pasó hoy» y la sugerencia de IA quedan para después |
+| `/admin` (Inicio) | Panel del taller | Lecturas, bahías, «Equipo hoy» y «Entregadas recientemente» con las órdenes reales. «Lo que pasó hoy» y la sugerencia de IA quedan para después |
 | `/admin/ordenes`, `/mecanico` | Órdenes | Pestañas segmentadas y buscador |
 | `/admin/ordenes/nueva` | Recibir moto | Formulario de 760 px en computador |
 | `/<rol>/ordenes/:id` | Detalle de la orden | Dial de 6 pasos y botones de mantener presionado |

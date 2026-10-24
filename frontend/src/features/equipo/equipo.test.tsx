@@ -39,7 +39,7 @@ describe('HU-23 · Equipo', () => {
       mecanico({ nombre: 'Felipe Ríos', estado: 'inactivo' }),
     ]);
     abrirApp('/admin/equipo');
-    const lista = await screen.findByRole('list', { name: 'Mecánicos' });
+    const lista = await screen.findByRole('list', { name: 'Usuarios' });
     expect(within(lista).getAllByRole('listitem')).toHaveLength(2);
     expect(within(lista).getByText('Desactivado')).toBeInTheDocument();
   });
@@ -94,6 +94,7 @@ describe('HU-23 · Equipo', () => {
     api.listar.mockResolvedValue([andres]);
     api.cambiarEstado.mockResolvedValue({ ...andres, estado: 'inactivo' });
     abrirApp('/admin/equipo');
+    await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Andrés Gómez' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Desactivar a Andrés Gómez' }));
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(andres.publicId, 'inactivo'),

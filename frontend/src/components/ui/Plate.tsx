@@ -1,5 +1,4 @@
 import { cn } from '@/lib/cn';
-import { formatPlaca } from '@/lib/format';
 
 /**
  * Placa amarilla de moto colombiana, como .mt-plate del prototipo.
@@ -25,7 +24,7 @@ export function Plate({
       )}
       aria-label={`Placa ${placa.split('').join(' ')}`}
     >
-      {formatPlaca(placa)}
+      {placa.replace(/\s+/g, '').toUpperCase()}
     </span>
   );
 }

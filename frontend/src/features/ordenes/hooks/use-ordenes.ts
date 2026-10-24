@@ -26,6 +26,30 @@ export function useOrdenes(grupo: GrupoId, q: string) {
   });
 }
 
+/**
+ * HU-46 · Datos del panel del taller con la misma lista de órdenes (sin endpoints nuevos):
+ * las abiertas (en proceso, por aprobar y listas) y las últimas cerradas.
+ */
+export function usePanelTaller() {
+  return useQuery({
+    queryKey: ['ordenes', 'lista', 'panel'],
+    queryFn: async () => {
+      const [enProceso, porAprobar, listas, cerradas] = await Promise.all(
+        (['en_proceso', 'por_aprobar', 'listas', 'cerradas'] as const).map((grupo) =>
+          ordenesApi.listar({ grupo, page: 1, limit: 50 }),
+        ),
+      );
+      return {
+        abiertas: [...porAprobar!.data, ...enProceso!.data, ...listas!.data],
+        totalAbiertas: enProceso!.meta.total + porAprobar!.meta.total + listas!.meta.total,
+        porAprobar: porAprobar!.meta.total,
+        listas: listas!.meta.total,
+        recientes: cerradas!.data.filter((o) => o.estado !== 'cancelada').slice(0, 5),
+      };
+    },
+  });
+}
+
 /** HU-31 · Detalle */
 export function useOrden(publicId: string) {
   return useQuery({

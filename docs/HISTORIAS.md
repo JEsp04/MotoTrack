@@ -1138,11 +1138,11 @@ Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nue
 
 **Casos de uso**
 - *Principal:*
-  - `InicioPage`: lecturas (motos adentro, esperando al cliente, sin repuesto) y una tarjeta por moto abierta con su arco, armadas con la lista de órdenes que ya da `GET /api/ordenes`.
+  - `InicioPage`: lecturas (motos adentro, esperando al cliente, sin repuesto, listas), una tarjeta por moto abierta con su arco, «Equipo hoy» (motos por mecánico) y «Entregadas recientemente», todo armado con la lista de órdenes que ya da `GET /api/ordenes`.
   - `ClientesPage`, `ClienteDetallePage` y `EquipoPage` con el estilo nuevo.
   - Formularios y hojas con un ancho máximo de 760 px en computador; el botón de guardar mide lo mismo que el formulario.
 - *Alterno, taller sin órdenes:* el panel muestra un estado vacío con el botón «Recibir moto».
-- *Alterno, lo que el prototipo tiene y la API no:* «Equipo hoy», «Lo que pasó hoy» y la sugerencia de IA **no** se hacen ahora; necesitan datos nuevos y van en una HU futura.
+- *Alterno, lo que el prototipo tiene y la API no:* «Lo que pasó hoy» y la sugerencia de IA **no** se hacen ahora; necesitan datos nuevos y van en una HU futura.
 
 **Criterios de aceptación**
 - **Dado** un admin con órdenes abiertas, **cuando** abre Inicio, **entonces** ve una tarjeta por moto con su placa, estado y arco, y al tocarla va al detalle.
