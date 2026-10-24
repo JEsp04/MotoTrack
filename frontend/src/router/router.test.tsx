@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useSession } from '@/features/auth';
 import { abrirApp, sesionDePrueba } from '@/test/utils';
 
@@ -48,11 +49,30 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
     actuales.forEach((link) => expect(link).toHaveTextContent('Clientes'));
   });
 
-  it('en computador, "Cerrar sesión" está en el menú lateral', async () => {
-    sesionDePrueba('cliente');
-    abrirApp('/cliente');
-    await screen.findByRole('heading', { name: 'Mis motos' });
+  it('en computador, «Mi cuenta» y «Cerrar sesión» están en el menú del avatar; en celular, en «Más» (HU-44)', async () => {
+    sesionDePrueba('admin');
+    abrirApp('/admin/ordenes');
+    await screen.findByRole('heading', { name: 'Órdenes' });
+    const avatar = screen.getByRole('button', { name: /Cuenta de/ });
+    expect(avatar).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(avatar);
+    expect(avatar).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Mi cuenta/ })).toHaveAttribute(
+      'href',
+      '/admin/perfil',
+    );
+    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/admin/perfil');
+  });
+
+  it('el admin tiene el botón «Recibir moto» en la barra superior (HU-44)', async () => {
+    sesionDePrueba('admin');
+    abrirApp('/admin');
+    await screen.findByRole('heading', { name: /Hola, Carolina/ });
+    expect(screen.getByRole('link', { name: /Recibir moto/ })).toHaveAttribute(
+      'href',
+      '/admin/ordenes/nueva',
+    );
   });
 
   it('una dirección inexistente muestra la página 404', async () => {
