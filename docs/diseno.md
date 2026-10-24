@@ -84,7 +84,8 @@ Pocas y con intención. Responden a lo que hace la persona.
 
 - **Botones:** al presionarlos se encogen a `scale(.97)`.
 - **Hover:** solo en pantallas con mouse: `@media (hover: hover) and (pointer: fine)`. En el celular no hay *hover*.
-- **Reducir movimiento:** si el sistema lo pide (`prefers-reduced-motion`), se quitan las animaciones. Ya está en `index.css`.
+- **Reducir movimiento:** si el sistema lo pide (`prefers-reduced-motion`), se quitan los desplazamientos y desenfoques; los cambios de contenido quedan como un fundido simple. Lo que responde al dedo (el relleno de mantener presionado) se marca con `data-movimiento="esencial"` y sigue animándose. Ya está en `index.css`.
+- **Animaciones de texto de la landing:** con [Motion](https://motion.dev) (`motion/react`), al estilo de React Bits (BlurText y RotatingText), en `features/landing/components/efectos.tsx`.
 - **Librerías:** primero CSS. Si una animación lo necesita de verdad, se puede usar Motion o un componente gratis de React Bits, avisando al equipo. **Nada de pago** sin aprobación.
 
 ---
@@ -118,7 +119,7 @@ Se usa para **cambiar el estado de una orden**, porque es una acción que no se 
 - Cuando se llena, dice **«Suelta para …»**. Al **soltar**, se hace la acción.
 - Si suelta antes, el relleno se devuelve en 200 ms y no pasa nada.
 - Con teclado: mantener Enter o Espacio hace lo mismo.
-- Con «reducir movimiento» activo, el relleno no se anima, pero sigue pidiendo mantener.
+- Con «reducir movimiento» activo, el relleno se sigue llenando: es la respuesta a lo que hace la persona.
 
 **Cuándo va directo y cuándo con hoja:**
 

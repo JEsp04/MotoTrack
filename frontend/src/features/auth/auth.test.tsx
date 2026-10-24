@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AxiosError, AxiosHeaders, type AxiosResponse } from 'axios';
 import { abrirApp, sesionDePrueba, USUARIOS_PRUEBA } from '@/test/utils';
@@ -89,22 +89,22 @@ describe('HU-20 · Registro', () => {
     expect(await screen.findByRole('link', { name: /Tengo un taller/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Soy cliente/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Soy mecánico/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/Pídele al administrador de tu taller/)).toBeInTheDocument();
+    expect(screen.getByText(/administrador de tu taller te crea la cuenta/)).toBeInTheDocument();
   });
 
   it('taller: el paso 1 conserva lo escrito al volver desde el paso 2', async () => {
     abrirApp('/registro/taller');
     await userEvent.type(await screen.findByLabelText(/Nombre del taller/), 'Moto Express');
     await userEvent.type(screen.getByLabelText(/Teléfono del taller/), '6044441234');
-    await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(await screen.findByLabelText(/Tu nombre/)).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Atrás' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
     expect(screen.getByLabelText(/Nombre del taller/)).toHaveValue('Moto Express');
   });
 
   it('taller: no avanza si falta un dato del paso 1', async () => {
     abrirApp('/registro/taller');
-    await userEvent.click(await screen.findByRole('button', { name: 'Siguiente' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Continuar' }));
     expect(await screen.findByText('El nombre del taller es obligatorio')).toBeInTheDocument();
   });
 
@@ -112,12 +112,14 @@ describe('HU-20 · Registro', () => {
     abrirApp('/registro/taller');
     await userEvent.type(await screen.findByLabelText(/Nombre del taller/), 'Moto Express');
     await userEvent.type(screen.getByLabelText(/Teléfono del taller/), '6044441234');
-    await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     await userEvent.type(screen.getByLabelText(/Tu nombre/), 'Carolina');
     await userEvent.type(screen.getByLabelText(/^Correo/), 'caro@correo.co');
     await userEvent.type(screen.getByLabelText(/^Contraseña/), 'MotoTrack2026');
     await userEvent.type(screen.getByLabelText(/Confirma la contraseña/), 'Otra2026');
-    await userEvent.click(screen.getByRole('button', { name: 'Crear mi taller' }));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Crear cuenta' }),
+    );
     expect(await screen.findByText('Las contraseñas no coinciden')).toBeInTheDocument();
     expect(api.registrarTaller).not.toHaveBeenCalled();
   });
@@ -132,12 +134,14 @@ describe('HU-20 · Registro', () => {
     abrirApp('/registro/taller');
     await userEvent.type(await screen.findByLabelText(/Nombre del taller/), 'Moto Express');
     await userEvent.type(screen.getByLabelText(/Teléfono del taller/), '6044441234');
-    await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
     await userEvent.type(screen.getByLabelText(/Tu nombre/), 'Carolina');
     await userEvent.type(screen.getByLabelText(/^Correo/), 'admin@mototrack.co');
     await userEvent.type(screen.getByLabelText(/^Contraseña/), 'MotoTrack2026');
     await userEvent.type(screen.getByLabelText(/Confirma la contraseña/), 'MotoTrack2026');
-    await userEvent.click(screen.getByRole('button', { name: 'Crear mi taller' }));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Crear cuenta' }),
+    );
     expect(await screen.findByLabelText(/^Correo/)).toHaveAccessibleDescription(
       'Este correo ya está registrado',
     );
@@ -164,7 +168,9 @@ describe('HU-20 · Registro', () => {
     await userEvent.type(screen.getByLabelText(/^Correo/), 'laura@correo.co');
     await userEvent.type(screen.getByLabelText(/^Contraseña/), 'Clave1234');
     await userEvent.type(screen.getByLabelText(/Confirma la contraseña/), 'Clave1234');
-    await userEvent.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Crear cuenta' }),
+    );
     await waitFor(() => expect(router.state.location.pathname).toBe('/cliente'));
     expect(api.registrarCliente).toHaveBeenCalledWith(
       expect.objectContaining({
