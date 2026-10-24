@@ -12,7 +12,8 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 
 ## Estado actual
 
-- **Avance del entregable (`docs/HISTORIAS.md`):** 47 de 50 historias en `develop` (106 de 112 puntos, ≈ 95 %). Falta solo **E7 · Despliegue y entrega (HU-38 a HU-40, 6 pts)**.
+- **Avance del entregable (`docs/HISTORIAS.md`):** 47 de 50 historias en `develop` (106 de 112 puntos, ≈ 95 %). Falta **E7 · Despliegue y entrega (HU-38 a HU-40, 6 pts)**, que desde el 24-oct queda de última.
+- **Segunda etapa (`docs/HISTORIAS-2.md`):** HU-51 a HU-75 (E8 a E11, 25 historias, 59 pts, sin costo) más HU-76 a HU-81 (E12, con costo, solo si se aprueban). Repartidas entre A, V y J en `docs/REPARTO.md`. Ninguna empezada.
 - **Rama `develop`:** E0 a E6.5 unidas (HU-01 a HU-50), PR #4 a #25. Último commit: `e50feda Merge pull request #25 from JEsp04/HU-50` (24-oct).
   - PR #13: E6 · órdenes de servicio (`feature/ordenes`).
   - PR #14: guardián de tokens de color (`npm run check:tokens`).
@@ -35,16 +36,22 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 
 ## Sesión activa
 
-**Siguiente: E7 · Despliegue y entrega**, en este orden (criterios detallados en `PROGRESS.md`):
+**Siguiente: Ronda 1 de la segunda etapa**, los tres en paralelo (guía paso a paso en `docs/FLUJO.md`, reparto en `docs/REPARTO.md`):
 
-1. **HU-38 · Aiven:** base MySQL gratis con SSL, `prisma migrate deploy` y seed. Crear la cuenta implica un servicio en la nube: **pedir confirmación antes**.
-2. **HU-39 · Vercel Hobby** (rama `chore/despliegue`): `api/index.ts` + `vercel.json`; `/api/health` 200, sesión al recargar, `/cliente/motos` directo sin 404. **Pedir confirmación antes** de crear la cuenta.
-3. **HU-40 · `v0.1`** (rama `release/v0.1`): guion de punta a punta en 390 y 1280 px, aprobando y rechazando; historial con registro inicial + 9 cambios; `develop` → `main`, etiqueta `v0.1` y README con la dirección y las cuentas.
+| Persona | Tema | Ronda 1 | Al final (E7) | Revisa a |
+|---|---|---|---|---|
+| **A** | Inventario y el día del mecánico | HU-51 → HU-52 → HU-53 | HU-38 · Aiven | V |
+| **V** | Citas y la experiencia del cliente | HU-57 → HU-62 → HU-66 | HU-39 · Vercel | J |
+| **J** | Avisos, reportes y ajustes del taller | HU-73 → HU-69 → HU-67 | HU-40 · Guion y `v0.1` | A |
 
-**Pendiente de decidir:** la primera entrega estaba para el viernes 17-oct; ese día se sumó E6.5, que ya está unida. E7 no se ha hecho: falta la fecha nueva y quién la lleva.
+- HU-51 (A) es la primera migración; V migra después de que se una. Avisar en el grupo antes de cada `db:migrate`.
+- HU-73 (J) va primero porque el menú «Más» lo necesitan inventario (A) y citas (V) en la ronda 2.
+- E7 se hace cuando las rondas 1 a 3 estén en `develop`. Aiven y Vercel: **pedir confirmación antes** de crear las cuentas.
+
+**Pendiente de decidir:** fecha de cierre de las rondas y de E7; si el guion de HU-40 suma citas, repuestos, avisos y código de retiro; si se aprueba algún gasto de E12.
 
 **Para probar lo que hay en tu PC:**
-1. Usar la copia del Escritorio (`C:\Users\USER\Desktop\MotoTrack\MotoTrack`); la de Descargas quedó 35 commits atrás. `git checkout develop` y `git pull`; en `backend`: `npm install`, `npm run db:deploy` y `npm run seed`; en `frontend`: `npm install`.
+1. En tu copia del repositorio: `git checkout develop` y `git pull`; en `backend`: `npm install`, `npm run db:deploy` y `npm run seed`; en `frontend`: `npm install`.
 2. `npm run dev` en las dos carpetas.
 3. Admin `admin@mototrack.co`, mecánico `andres@mototrack.co`, cliente `juan@correo.co` (clave `MotoTrack2026`). Juan tiene la orden #2 esperando su aprobación (se aprueba manteniendo presionado).
 
@@ -83,11 +90,13 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 17-oct | Prototipo nuevo aprobado (https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w, copia en `docs/prototipo/`). El diseño debe ser **idéntico** al prototipo; lo que la app aún no tiene se omite, no se inventa |
 | 17-oct | Un solo fondo blanco y un solo acento amarillo; Geist para el texto y Michroma para marca, placas, números y montos. Cambiar el estado de una orden se confirma con `HoldButton` |
 | 17-oct | Ramas `HU-<número>`, una por historia. Comandos para Git Bash en Windows (no PowerShell) |
+| 24-oct | Segunda etapa: HU-51 a HU-81 en `docs/HISTORIAS-2.md`. **E7 queda de última**, después de HU-51 a HU-75. E12 (HU-76 a HU-81) solo con aprobación de gasto |
+| 24-oct | Reparto por tema (`docs/REPARTO.md`): A inventario + HU-38, V citas y cliente + HU-39, J avisos y taller + HU-40. Revisiones cruzadas: A→V, V→J, J→A. Se puede cambiar si alguien prefiere front o back |
 
 ## Cosas a tener en cuenta
 
-- **E7 atrasada:** la fecha de la primera entrega (17-oct) ya pasó sin despliegue. Confirmar con el equipo la fecha nueva antes de planear.
-- **Dos copias del repositorio:** la de Descargas está desactualizada (llega al 16-oct). Trabajar en la del Escritorio.
+- **E7 atrasada:** la fecha de la primera entrega (17-oct) ya pasó sin despliegue, y ahora va después de las rondas 1 a 3. Confirmar la fecha nueva con el equipo.
+- **Varias copias del repositorio:** cada integrante tiene la suya (por ejemplo `C:\Users\Paula\IUSH\MotoTrack`). Antes de empezar, `git pull origin develop` para arrancar del mismo punto. Si en un PC hay una copia vieja (Descargas), no se usa.
 - **Enlaces rotos a `docs/CONTEXTO.md`:** `README.md` y `docs/HISTORIAS.md` (encabezado, «Definición de terminado» y el total) todavía lo nombran, y el total de `HISTORIAS.md` sigue diciendo 40 historias y 88 puntos. Hay que apuntarlos a `contexto.md` y a `CLAUDE.md`, sección 6.
 - **La migración inicial se escribió a mano** porque el entorno de Claude no puede descargar el motor de Prisma. Se probó en MariaDB y Paula la aplicó en MySQL 8 con `prisma migrate reset` el 10-oct. Si algún compañero ve *drift* en una base sin datos: `npx prisma migrate reset`.
 - **Bases viejas de Sequelize:** quien tenga tablas antiguas en `mototrack` debe hacer `npx prisma migrate reset`.
@@ -107,3 +116,4 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 16-oct | Se borra el duplicado `docs/CONTEXTO.md` (`22a4a7c`) |
 | 17-oct | Prototipo nuevo aprobado, `docs/diseno.md` y E6.5 (HU-41 a HU-50) en `docs/HISTORIAS.md`. Desarrollo de E6.5 (17 y 18-oct) |
 | 24-oct | PR #16 a #25 (E6.5) unidos en `develop`. `PROGRESS.md` y `Memoria.md` alineados con `docs/HISTORIAS.md`: E6 y E6.5 marcadas como unidas, avance 47/50 (106/112 pts), E7 desglosada por criterios de aceptación y fecha nueva pendiente |
+| 24-oct (tarde) | Nuevas historias HU-51 a HU-81 (`docs/HISTORIAS-2.md`), reparto entre A, V y J (`docs/REPARTO.md`) y guía de sesión (`docs/FLUJO.md`). `PROGRESS.md` y `Memoria.md` sincronizados con el reparto; siguiente: Ronda 1 |

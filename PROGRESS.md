@@ -1,6 +1,6 @@
 # PROGRESS.md · Checklist de tareas y roadmap
 
-Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct). Diseño: `docs/diseno.md` y `docs/prototipo/`.
+Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct) y `docs/HISTORIAS-2.md` (segunda etapa, HU-51 a HU-81). Reparto: `docs/REPARTO.md`. Guía de cada sesión: `docs/FLUJO.md`. Diseño: `docs/diseno.md` y `docs/prototipo/`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
 Última actualización: sábado 24 de octubre de 2026.
@@ -19,22 +19,34 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E5 · Usuarios, clientes y motos | HU-23 a HU-27 | 10 | ✅ En `develop` (12-oct, PR #12) |
 | E6 · Órdenes de servicio | HU-28 a HU-37 | 21 | ✅ En `develop` (12-oct, PR #13) |
 | E6.5 · Migración al diseño nuevo | HU-41 a HU-50 | 24 | ✅ En `develop` (24-oct, PR #16 a #25) |
-| E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ Pendiente: no hay nada de despliegue en el repositorio |
+| E8 · Inventario de repuestos | HU-51 a HU-56 | 16 | ⏳ A · `docs/HISTORIAS-2.md` |
+| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V |
+| E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ V (61, 62, 63, 65, 66), A (64, 68), J (67) |
+| E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J |
+| E12 · Funciones con costo | HU-76 a HU-81 | 21 | ⛔ Solo si se aprueba el gasto |
+| E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ De última: A (HU-38), V (HU-39), J (HU-40) |
 
-**Avance:** 47 de 50 historias unidas · 106 de 112 puntos (≈ 95 %). Solo faltan las 3 historias de E7 (6 puntos), todas obligatorias.
+**Avance del primer entregable:** 47 de 50 historias unidas · 106 de 112 puntos (≈ 95 %). Faltan las 3 historias de E7 (6 puntos), todas obligatorias.
+**Segunda etapa:** 0 de 25 historias sin costo (59 puntos).
 
 ---
 
-## Roadmap para cerrar el entregable
+## Roadmap
 
-La fecha de la primera entrega en `docs/HISTORIAS.md` era el viernes 17-oct. Ese día se agregó **E6.5 · Migración al diseño nuevo**, que iba antes de E7; se desarrolló el 17 y 18-oct y se unió el 24-oct. E7 sigue sin hacerse (no existen `api/index.ts`, `vercel.json` ni la etiqueta `v0.1`). **Hay que acordar una fecha nueva con el equipo.**
+**Decisión del 24-oct:** antes de E7 van las historias nuevas HU-51 a HU-75, en 3 rondas. E7 queda de última. Cada ronda termina cuando sus PR están unidos en `develop`. Falta acordar fechas con el equipo.
 
-| Paso | Historia | Depende de | Estado |
+| Ronda | A · Inventario y mecánico | V · Citas y cliente | J · Avisos y taller |
 |---|---|---|---|
-| ✅ | E6.5 · HU-41 a HU-50 · Migración al diseño nuevo (24 pts) | E6 | ✅ Unida el 24-oct |
-| 2 | HU-38 · Base en Aiven (gratis, sin tarjeta) | HU-06 | ⏳ Pedir confirmación antes de crear la cuenta |
-| 3 | HU-39 · Publicar en Vercel Hobby (rama `chore/despliegue`) | HU-38, HU-11 | ⏳ Pedir confirmación antes de crear la cuenta |
-| 4 | HU-40 · Prueba de punta a punta y `v0.1` (rama `release/v0.1`) | Todas las obligatorias | ⏳ |
+| 1 · Tablas y API | HU-51 → HU-52 → HU-53 (8) | HU-57 → HU-62 → HU-66 (7) | HU-73 → HU-69 → HU-67 (8) |
+| 2 · Pantallas | HU-54 → HU-55 → HU-64 (8) | HU-58 → HU-59 → HU-60 (8) | HU-70 → HU-71 → HU-72 (6) |
+| 3 · Integración | HU-68 → HU-56 (4) | HU-61 → HU-63 → HU-65 (5) | HU-74 → HU-75 (5) |
+| E7 · Despliegue | HU-38 · Aiven (1) | HU-39 · Vercel (3) | HU-40 · Guion y `v0.1` (2) |
+
+- HU-51 (A) es la primera migración de la ronda 1; las migraciones van una a la vez (`docs/REPARTO.md`, sección 3).
+- HU-73 (J) va primero: el menú «Más» lo necesitan HU-54 (A) y HU-58 (V).
+- HU-75 (J) espera a HU-61 (V) y HU-68 (A), que se entregan al inicio de la ronda 3.
+- Aiven y Vercel: pedir confirmación antes de crear las cuentas.
+- Revisiones cruzadas: A revisa a V, V revisa a J y J revisa a A.
 
 ~~Plan de riesgo: HU-33 pasa a la segunda entrega~~ Ya no aplica: HU-33 *(deseable)* quedó unida con E6.
 
@@ -145,22 +157,71 @@ Cada casilla es un criterio de aceptación de `docs/HISTORIAS.md`. Con las regla
 
 ---
 
+## Segunda etapa (`docs/HISTORIAS-2.md`) ⏳
+
+Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
+
+### E8 · Inventario de repuestos · 16 pts
+
+- [ ] HU-51 · Tablas de repuestos y movimientos · 3 pts · [A, ronda 1, primera migración]
+- [ ] HU-52 · API de repuestos y stock crítico · 3 pts · [A, ronda 1]
+- [ ] HU-53 · Registrar entradas, salidas y ajustes de stock · 2 pts · [A, ronda 1]
+- [ ] HU-54 · Pantalla de inventario · 3 pts · [A, ronda 2, necesita HU-73]
+- [ ] HU-55 · Registrar un repuesto nuevo · 2 pts · [A, ronda 2]
+- [ ] HU-56 · Repuestos en la cotización del diagnóstico · 3 pts · [A, ronda 3]
+
+### E9 · Citas y agenda · 11 pts
+
+- [ ] HU-57 · Tabla y API de citas · 3 pts · [V, ronda 1]
+- [ ] HU-58 · Agenda de citas del taller · 3 pts · [V, ronda 2, necesita HU-73]
+- [ ] HU-59 · Pedir una cita como cliente · 3 pts · [V, ronda 2]
+- [ ] HU-60 · Ver, reprogramar y cancelar mis citas · 2 pts · [V, ronda 2]
+
+### E10 · El día a día del taller · 16 pts
+
+- [ ] HU-61 · Ficha de la moto con su historial · 2 pts · [V, ronda 3, al inicio: J la necesita]
+- [ ] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1]
+- [ ] HU-63 · Reasignar el mecánico de una orden *(deseable)* · 1 pt · [V, ronda 3]
+- [ ] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2]
+- [ ] HU-65 · Inicio del cliente · 2 pts · [V, ronda 3]
+- [ ] HU-66 · Código de retiro para entregar la moto · 2 pts · [V, ronda 1]
+- [ ] HU-67 · Invitar usuarios al taller con un código · 3 pts · [J, ronda 1]
+- [ ] HU-68 · Contactar al cliente por WhatsApp sin costo *(deseable)* · 1 pt · [A, ronda 3, al inicio: J la necesita]
+
+### E11 · Avisos, reportes y ajustes · 16 pts
+
+- [ ] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1]
+- [ ] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2]
+- [ ] HU-71 · Reportes del taller · 3 pts · [J, ronda 2]
+- [ ] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2]
+- [ ] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero]
+- [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]
+- [ ] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68]
+
+### E12 · Funciones con costo · 21 pts *(solo si se aprueba el gasto; no asignadas)*
+
+- [ ] HU-76 · Recuperar la contraseña con un código · 3 pts · [J si se aprueba]
+- [ ] HU-77 · Verificar el celular con un código · 3 pts · [J si se aprueba]
+- [ ] HU-78 · Fotos en el diagnóstico · 2 pts · [A si se aprueba]
+- [ ] HU-79 · Asistente IA de diagnóstico · 5 pts · [A si se aprueba]
+- [ ] HU-80 · Plan del taller y facturas · 3 pts · [V si se aprueba]
+- [ ] HU-81 · Pagar con tarjeta, PSE o Nequi · 5 pts · [V si se aprueba]
+
+---
+
 ## Tareas del equipo (fuera de las historias)
 
-- [ ] Acordar la fecha nueva para terminar E7 y quién la lleva
+- [ ] Acordar las fechas de las rondas 1 a 3 y de E7
+- [ ] Decidir si el guion de HU-40 suma cita, repuesto en la cotización, aviso al cliente y código de retiro
 - [ ] Cada integrante actualiza su entorno con `develop`: `git pull`, `npm install`, `.env`, `CREATE DATABASE mototrack`, `npm run db:deploy` y `npm run seed`
 - [ ] Corregir los enlaces a `docs/CONTEXTO.md` (borrado el 16-oct) en `README.md` y `docs/HISTORIAS.md`: ahora es `contexto.md` en la raíz. El resumen de `HISTORIAS.md` también dice todavía «40 historias, 88 puntos»
 - [ ] Decidir qué pasa con la landing del compañero: la del prototipo ya quedó integrada en HU-45 (`features/landing`)
 - [ ] Poner `develop` como rama por defecto en GitHub (Settings → General), para no abrir PRs hacia `main` por error
 - [ ] Proteger `develop`: exigir 1 revisión y la revisión automática en verde
 
-## Segunda entrega (backlog, «Fuera de esta entrega» en `docs/HISTORIAS.md`)
+## Backlog que aún no tiene historia
 
-- [ ] Citas y agenda
-- [ ] Inventario de repuestos y movimientos
-- [ ] Alertas IA y chat de diagnóstico *(cuesta dinero: consultar antes)*
-- [ ] OTP por WhatsApp o correo, invitación de mecánicos y recuperar contraseña *(cuesta dinero: consultar antes)*
-- [ ] Pagos y membresías *(cuesta dinero: consultar antes)*
-- [ ] Notificaciones, reportes y landing comercial
-- [ ] Lo que el prototipo muestra y la app aún no tiene: fecha estimada de entrega, suscripción y modo oscuro
+Citas, inventario, avisos, reportes, invitaciones, fecha estimada, tema oscuro, IA, OTP y pagos ya tienen historia en `docs/HISTORIAS-2.md` (ver arriba). Queda sin historia:
+
+- [ ] Landing comercial
 - [ ] Servicios adicionales en una orden ya aprobada (hoy hay que cancelar y abrir otra, HU-33 alterno B)

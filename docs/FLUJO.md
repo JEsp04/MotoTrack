@@ -10,12 +10,22 @@ Todos los comandos son para **Git Bash en Windows** (no PowerShell).
 
 ## 1. Dónde trabajar
 
-- **Solo en la copia del Escritorio:** `C:\Users\USER\Desktop\MotoTrack\MotoTrack`.
-- La copia de Descargas está vieja (35 commits atrás). No se usa.
+- Cada persona trabaja en **su propia copia** del repositorio, en su computador, con `develop` al día (sección 2.1). Todos arrancan desde el mismo commit de `develop`.
+- Si en un computador hay dos copias, se usa la más reciente y la otra no se toca.
 
 ```bash
-cd /c/Users/USER/Desktop/MotoTrack/MotoTrack
+cd /ruta/a/tu/copia/MotoTrack   # por ejemplo /c/Users/Paula/IUSH/MotoTrack
 ```
+
+### Quién lleva qué (detalle en `docs/REPARTO.md`)
+
+| Persona | Tema | Historias | Al final (E7) | Revisa a |
+|---|---|---|---|---|
+| **A** | Inventario y el día del mecánico | HU-51 a 56, 64 y 68 (20 pts) | HU-38 · Aiven | V |
+| **V** | Citas y la experiencia del cliente | HU-57 a 63, 65 y 66 (20 pts) | HU-39 · Vercel | J |
+| **J** | Avisos, reportes y ajustes del taller | HU-67 y 69 a 75 (19 pts) | HU-40 · Guion y `v0.1` | A |
+
+J lleva el tema con más integración: conecta `cambiarEstado()` con los avisos (HU-69) y arma la versión final (HU-40).
 
 ---
 
@@ -48,13 +58,13 @@ cd ..
 
 Copiar y pegar al iniciar la sesión con Claude:
 
-> Lee `Memoria.md` y `PROGRESS.md`. Hoy vamos con la **HU-XX**. Lee sus criterios en `docs/HISTORIAS.md`. Si toca pantallas, lee `docs/diseno.md` y abre esa pantalla en `docs/prototipo/` antes de escribir código. No hagas commit ni push sin que te lo pida.
+> Lee `Memoria.md` y `PROGRESS.md`. Hoy vamos con la **HU-XX**. Lee sus criterios en `docs/HISTORIAS-2.md` (HU-51 a HU-81) o en `docs/HISTORIAS.md` (HU-38 a HU-40) y el reparto en `docs/REPARTO.md`. Si toca pantallas, lee `docs/diseno.md` y abre esa pantalla en `docs/prototipo/` antes de escribir código. No hagas commit ni push sin que te lo pida.
 
 Orden de lectura (`CLAUDE.md`, sección 0):
 
 1. `Memoria.md`: estado y decisiones.
 2. `PROGRESS.md`: qué está hecho y qué sigue.
-3. `docs/HISTORIAS.md`: criterios de la historia del día.
+3. `docs/HISTORIAS-2.md` (o `docs/HISTORIAS.md` para E7): criterios de la historia del día.
 4. `contexto.md`: solo si hace falta stack, arquitectura o despliegue.
 5. `docs/diseno.md` + `docs/prototipo/`: si la historia toca pantallas.
 
@@ -131,9 +141,9 @@ git push -u origin HU-38
 
 **Decisión del 24-oct: E7 queda de última.** Antes van las historias nuevas HU-51 a HU-75 (`docs/HISTORIAS-2.md`), repartidas en 3 rondas entre las 3 personas (`docs/REPARTO.md`). Las de E12 (HU-76 a HU-81) cuestan dinero y solo entran si se aprueban.
 
-Cuando todo eso esté en `develop`, E7 son 3 historias obligatorias, en este orden porque cada una depende de la anterior. En `docs/REPARTO.md` están asignadas: HU-38 a A, HU-39 a B y HU-40 a C.
+Cuando todo eso esté en `develop`, E7 son 3 historias obligatorias, en este orden porque cada una depende de la anterior. En `docs/REPARTO.md` están asignadas: HU-38 a A, HU-39 a V y HU-40 a J.
 
-### Sesión A · HU-38 · Base en Aiven (1 pt) · rama `HU-38`
+### A · HU-38 · Base en Aiven (1 pt) · rama `HU-38`
 
 1. **Confirmar con el equipo antes de crear la cuenta** (es un servicio en la nube).
 2. Crear cuenta en Aiven con el plan gratuito. Si en algún paso pide tarjeta o pago: **detenerse y consultar**.
@@ -152,7 +162,7 @@ Cuando todo eso esté en `develop`, E7 son 3 historias obligatorias, en este ord
 
 **Listo cuando:** las tablas existen en Aiven, no se pagó nada y la cadena no está en el repositorio.
 
-### Sesión B · HU-39 · Publicar en Vercel Hobby (3 pts) · rama `HU-39`
+### V · HU-39 · Publicar en Vercel Hobby (3 pts) · rama `HU-39`
 
 1. **Confirmar con el equipo antes de crear la cuenta en Vercel.**
 2. Rama desde `develop`: `git checkout -b HU-39`.
@@ -172,7 +182,9 @@ Cuando todo eso esté en `develop`, E7 son 3 historias obligatorias, en este ord
 
 Si falla el build: revisar los registros de Vercel y corregir en una rama `fix/…`.
 
-### Sesión C · HU-40 · Prueba de punta a punta y `v0.1` (2 pts) · rama `HU-40`
+### J · HU-40 · Prueba de punta a punta y `v0.1` (2 pts) · rama `HU-40`
+
+J dirige; los tres recorren el guion.
 
 1. Con la app publicada, recorrer el guion en **390 px y 1280 px**:
    1. Se registra un taller y el admin crea un mecánico.
@@ -216,8 +228,16 @@ Rama `docs/…` o `chore/…` desde `develop`:
 
 | Sesión | Qué | Rama | Antes de empezar |
 |---|---|---|---|
-| Rondas 1 a 3 | HU-51 a HU-75 según `docs/REPARTO.md` | `HU-<número>` | Avisar antes de crear una migración |
-| A | HU-38 · Aiven | `HU-38` | Confirmar cuenta en la nube |
-| B | HU-39 · Vercel | `HU-39` | Confirmar cuenta en la nube; HU-38 hecha |
-| C | HU-40 · Guion y `v0.1` | `HU-40` | HU-39 publicada |
+| Ronda 1 · A | HU-51 → HU-52 → HU-53 | `HU-<número>` | HU-51 es la primera migración: avisar en el grupo |
+| Ronda 1 · V | HU-57 → HU-62 → HU-66 | `HU-<número>` | Migrar después de que se una HU-51 |
+| Ronda 1 · J | HU-73 → HU-69 → HU-67 | `HU-<número>` | HU-73 primero: A y V lo necesitan |
+| Ronda 2 · A | HU-54 → HU-55 → HU-64 | `HU-<número>` | HU-73 unida |
+| Ronda 2 · V | HU-58 → HU-59 → HU-60 | `HU-<número>` | HU-73 unida |
+| Ronda 2 · J | HU-70 → HU-71 → HU-72 | `HU-<número>` | Nada |
+| Ronda 3 · A | HU-68 → HU-56 | `HU-<número>` | Entregar HU-68 al inicio (J la necesita) |
+| Ronda 3 · V | HU-61 → HU-63 → HU-65 | `HU-<número>` | Entregar HU-61 al inicio (J la necesita) |
+| Ronda 3 · J | HU-74 → HU-75 | `HU-<número>` | HU-75 espera HU-61 y HU-68 |
+| E7 · A | HU-38 · Aiven | `HU-38` | Rondas unidas; confirmar cuenta en la nube |
+| E7 · V | HU-39 · Vercel | `HU-39` | HU-38 hecha; confirmar cuenta en la nube |
+| E7 · J | HU-40 · Guion y `v0.1` | `HU-40` | HU-39 publicada |
 | Corta | Enlaces rotos y GitHub | `docs/…` / `chore/…` | Nada |
