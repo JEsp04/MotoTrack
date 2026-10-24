@@ -1,5 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HOLD_MS } from '@/components/ui';
 import { useSession } from '@/features/auth';
 import { clientesApi } from '@/features/clientes/api/clientes-api';
 import { equipoApi } from '@/features/equipo/api/equipo-api';
@@ -48,24 +49,29 @@ beforeEach(() => {
   useSession.getState().clearSession();
 });
 
+/** Nombre visible de un botón; el de mantener presionado sin la instrucción final */
+const nombre = (b: HTMLElement) =>
+  (
+    b.getAttribute('aria-label')?.replace('. Mantén presionado para confirmar.', '') ??
+    b.textContent ??
+    ''
+  ).trim();
+
 const botones = () =>
   screen
     .queryAllByRole('button')
-    .map((b) => b.textContent?.trim())
-    .filter((t) =>
-      [
-        'Enviar para aprobación',
-        'Aprobar',
-        'Rechazar',
-        'Iniciar reparación',
-        'Lista para entregar',
-        'Falta repuesto',
-        'Reanudar',
-        'Entregar moto',
-        'Cerrar orden',
-        'Cancelar orden',
-      ].includes(t ?? ''),
+    .map(nombre)
+    .filter(
+      (t) =>
+        t.startsWith('Mantén para') || ['Rechazar', 'Falta repuesto', 'Cancelar orden'].includes(t),
     );
+
+/** Mantiene presionado un HoldButton hasta que se llena y lo suelta (HU-48) */
+async function mantener(boton: HTMLElement) {
+  fireEvent.pointerDown(boton, { button: 0 });
+  await act(() => new Promise((r) => setTimeout(r, HOLD_MS + 50)));
+  fireEvent.pointerUp(boton);
+}
 
 describe('HU-28 · Estados en el frontend', () => {
   it('tiene las mismas transiciones que el backend (sin la del diagnóstico)', () => {
@@ -160,7 +166,9 @@ describe('HU-31 · Detalle', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/admin/ordenes/${orden.publicId}`);
     expect(await screen.findByRole('heading', { name: 'Orden #12' })).toBeInTheDocument();
-    expect(screen.getByText('$ 65.000')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Servicios' }));
+    expect(screen.getAllByText('$ 65.000').length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole('tab', { name: 'Historial' }));
     const historial = screen.getByRole('list', { name: 'Historial de estados' });
     expect(within(historial).getByText('Orden creada')).toBeInTheDocument();
   });
@@ -171,7 +179,7 @@ describe('HU-31 · Detalle', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
     await screen.findByRole('heading', { name: 'Orden #12' });
-    expect(botones()).toEqual(['Lista para entregar', 'Falta repuesto']);
+    expect(botones()).toEqual(['Mantén para marcar lista', 'Falta repuesto']);
   });
 
   it('el cliente no ve botones de cambio de estado en reparación', async () => {
@@ -188,9 +196,9 @@ describe('HU-31 · Detalle', () => {
     const orden = ordenDetalle({ estado: 'cerrada' });
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/admin/ordenes/${orden.publicId}`);
-    expect(await screen.findByText('Orden cerrada: solo lectura.')).toBeInTheDocument();
+    expect(await screen.findByText(/Orden cerrada · solo lectura/)).toBeInTheDocument();
     expect(botones()).toEqual([]);
-    expect(screen.queryByRole('button', { name: /Agregar servicio/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agregar' })).not.toBeInTheDocument();
   });
 
   it('una orden ajena muestra «No encontramos esta orden»', async () => {
@@ -202,16 +210,13 @@ describe('HU-31 · Detalle', () => {
 });
 
 describe('HU-34 · Aprobar o rechazar', () => {
-  it('el cliente aprueba desde una hoja que muestra el total', async () => {
+  it('el cliente aprueba manteniendo presionado', async () => {
     sesionDePrueba('cliente');
     const orden = ordenDetalle({ estado: 'esperando_aprobacion' });
     api.obtener.mockResolvedValue(orden);
     api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'aprobada' });
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Aprobar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Aprobar el diagnóstico' }));
-    expect(hoja.getByText('$ 65.000')).toBeInTheDocument();
-    await userEvent.click(hoja.getByRole('button', { name: 'Sí, aprobar' }));
+    await mantener(await screen.findByRole('button', { name: /Mantén para aprobar/ }));
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'aprobada', undefined),
     );
@@ -226,9 +231,9 @@ describe('HU-34 · Aprobar o rechazar', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Rechazar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Rechazar el diagnóstico' }));
-    await userEvent.click(hoja.getByRole('button', { name: 'Sí, rechazar' }));
-    expect(hoja.getByText(/escríbelo para continuar/)).toBeInTheDocument();
+    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
+    expect(hoja.getByText('$ 65.000')).toBeInTheDocument();
+    expect(hoja.getByRole('button', { name: /Mantén para confirmar/ })).toBeDisabled();
     expect(api.cambiarEstado).not.toHaveBeenCalled();
   });
 });
@@ -241,11 +246,11 @@ describe('HU-35 · Avanzar la reparación', () => {
     api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'pendiente_repuesto' });
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Falta repuesto' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Falta un repuesto' }));
-    await userEvent.click(hoja.getByRole('button', { name: 'Guardar' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
+    expect(hoja.getByRole('button', { name: /Mantén para confirmar/ })).toBeDisabled();
     expect(api.cambiarEstado).not.toHaveBeenCalled();
-    await userEvent.type(hoja.getByLabelText(/Qué repuesto falta/), 'Kit de arrastre');
-    await userEvent.click(hoja.getByRole('button', { name: 'Guardar' }));
+    await userEvent.type(hoja.getByLabelText(/Observación/), 'Kit de arrastre');
+    await mantener(hoja.getByRole('button', { name: /Mantén para confirmar/ }));
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(
         orden.publicId,
@@ -261,11 +266,36 @@ describe('HU-35 · Avanzar la reparación', () => {
     api.obtener.mockResolvedValue(orden);
     api.cambiarEstado.mockRejectedValue(new (await import('axios')).AxiosError('Network Error'));
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Iniciar reparación' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Iniciar reparación' }));
-    await userEvent.click(hoja.getByRole('button', { name: 'Iniciar reparación' }));
-    expect(await hoja.findByText('No pudimos conectar. Intenta de nuevo.')).toBeInTheDocument();
+    await mantener(await screen.findByRole('button', { name: /Mantén para iniciar/ }));
+    expect(await screen.findByText('No pudimos conectar. Intenta de nuevo.')).toBeInTheDocument();
     expect(screen.getAllByText('Aprobada').length).toBeGreaterThan(0);
+  });
+});
+
+describe('HU-48 · Cambiar de estado manteniendo presionado', () => {
+  it('el mecánico marca la moto lista sin abrir hoja', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'en_reparacion' });
+    api.obtener.mockResolvedValue(orden);
+    api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'lista_entrega' });
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    await mantener(await screen.findByRole('button', { name: /Mantén para marcar lista/ }));
+    await waitFor(() =>
+      expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'lista_entrega', undefined),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('si se suelta antes de tiempo no cambia nada', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'en_reparacion' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    const boton = await screen.findByRole('button', { name: /Mantén para marcar lista/ });
+    fireEvent.pointerDown(boton, { button: 0 });
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    fireEvent.pointerUp(boton);
+    expect(api.cambiarEstado).not.toHaveBeenCalled();
   });
 });
 
@@ -281,16 +311,16 @@ describe('HU-32 · Diagnóstico', () => {
     api.obtener.mockResolvedValue(orden);
     api.guardarDiagnostico.mockResolvedValue({ ...orden, estado: 'diagnosticada' });
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Diagnosticar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Diagnosticar' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Registrar diagnóstico' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Diagnóstico' }));
     await userEvent.type(hoja.getByLabelText(/Hallazgos/), 'Ruido');
-    await userEvent.type(hoja.getByLabelText(/Trabajo recomendado/), 'Cambiar cadena');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar diagnóstico' }));
+    await userEvent.type(hoja.getByLabelText(/Recomendación/), 'Cambiar cadena');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(
       await hoja.findByText('Los hallazgos debe tener al menos 10 caracteres'),
     ).toBeInTheDocument();
     await userEvent.type(hoja.getByLabelText(/Hallazgos/), ' fuerte en la cadena');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar diagnóstico' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(api.guardarDiagnostico).toHaveBeenCalledWith(orden.publicId, {
         hallazgos: 'Ruido fuerte en la cadena',
@@ -317,11 +347,12 @@ describe('HU-33 · Servicios', () => {
     ]);
     api.agregarServicio.mockResolvedValue(orden);
     abrirApp(`/admin/ordenes/${orden.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Agregar servicio' }));
+    await userEvent.click(await screen.findByRole('tab', { name: 'Servicios' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }));
     const hoja = within(await screen.findByRole('dialog', { name: 'Agregar servicio' }));
     await screen.findByRole('option', { name: 'Sincronización · $ 120.000' });
     await userEvent.selectOptions(hoja.getByLabelText(/Servicio/), 'srv-1');
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }));
+    await userEvent.click(hoja.getByRole('button', { name: 'Agregar' }));
     await waitFor(() =>
       expect(api.agregarServicio).toHaveBeenCalledWith(orden.publicId, {
         servicioPublicId: 'srv-1',

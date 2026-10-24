@@ -1,14 +1,24 @@
 import { useState } from 'react';
-import { Alert, BottomSheet, Button, Textarea } from '@/components/ui';
+import {
+  Alert,
+  BottomSheet,
+  Button,
+  HoldButton,
+  Icon,
+  StatusBadge,
+  Textarea,
+} from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
+import type { EstadoOrden } from '@/types';
 import { ETIQUETA_ESTADO } from '../textos';
 import type { Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
 
 export interface CambioEstadoSheetProps {
   ordenPublicId: string;
+  estadoActual: EstadoOrden;
   accion: Accion | null;
   /** Se muestra al aprobar o rechazar, para evitar errores (HU-34) */
   total: number;
@@ -16,8 +26,8 @@ export interface CambioEstadoSheetProps {
 }
 
 /**
- * Confirmación de un cambio de estado. Pide la observación cuando hace falta
- * (motivo, repuesto) y no cambia nada en pantalla hasta que el servidor confirme (HU-35).
+ * Hoja «Cambiar estado» del prototipo: de qué estado a cuál pasa, la observación y el botón
+ * de mantener presionado. No cambia nada en pantalla hasta que el servidor confirme (HU-35).
  */
 export function CambioEstadoSheet(props: CambioEstadoSheetProps) {
   return props.accion ? <Formulario {...props} accion={props.accion} /> : null;
@@ -25,6 +35,7 @@ export function CambioEstadoSheet(props: CambioEstadoSheetProps) {
 
 function Formulario({
   ordenPublicId,
+  estadoActual,
   accion,
   total,
   onClose,
@@ -33,12 +44,13 @@ function Formulario({
   const [observacion, setObservacion] = useState('');
   const [errorCampo, setErrorCampo] = useState<string | null>(null);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
-  const confirmar = accion.confirmar;
+  const obligatoria = Boolean(accion.observacion?.obligatoria);
+  const falta = obligatoria && !observacion.trim();
 
   async function enviar() {
     setErrorGeneral(null);
-    if (accion.observacion?.obligatoria && !observacion.trim()) {
-      setErrorCampo(`${accion.observacion.label}: escríbelo para continuar`);
+    if (falta) {
+      setErrorCampo('Escribe la observación para continuar');
       return;
     }
     try {
@@ -55,46 +67,57 @@ function Formulario({
   return (
     <BottomSheet
       open
-      title={confirmar?.titulo ?? accion.label}
+      title="Cambiar estado"
       onClose={onClose}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Volver
+            Cancelar
           </Button>
-          <Button
-            variant={accion.variante === 'danger' ? 'danger' : 'primary'}
+          <HoldButton
+            label="Mantén para confirmar"
+            doneLabel="Suelta para confirmar"
+            variant={accion.a === 'cancelada' ? 'danger' : 'primary'}
             loading={cambiar.isPending}
-            onClick={enviar}
-          >
-            {confirmar?.boton ?? accion.label}
-          </Button>
+            disabled={falta}
+            onConfirm={enviar}
+            className="min-h-[50px] flex-[1.6]! text-[15px]"
+          />
         </>
       }
     >
       {errorGeneral && <Alert>{errorGeneral}</Alert>}
-      {confirmar && <p className="text-ink-muted">{confirmar.texto}</p>}
-      {accion.mostrarTotal && (
-        <div className="flex items-center justify-between rounded-md bg-surface-sunken px-4 py-3">
-          <span className="font-semibold">Total</span>
-          <span className="font-num text-xl">{formatPesos(total)}</span>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge estado={estadoActual} />
+        <Icon name="chevronRight" className="text-ink-muted" />
+        <StatusBadge estado={accion.a} />
+      </div>
+      {accion.confirmar && (
+        <p className="text-sm leading-5 text-ink-muted">{accion.confirmar.texto}</p>
       )}
-      {accion.observacion && (
-        <Textarea
-          label={accion.observacion.label}
-          required={accion.observacion.obligatoria}
-          placeholder={accion.observacion.placeholder}
-          maxLength={1000}
-          rows={3}
-          value={observacion}
-          error={errorCampo ?? undefined}
-          onChange={(e) => {
-            setObservacion(e.target.value);
-            setErrorCampo(null);
-          }}
-        />
+      {accion.mostrarTotal && total > 0 && (
+        <p className="text-sm leading-5 text-ink-muted">
+          Total de la cotización:{' '}
+          <span className="font-semibold text-ink">{formatPesos(total)}</span>
+        </p>
       )}
+      <Textarea
+        label="Observación"
+        required={obligatoria}
+        placeholder={
+          accion.observacion?.placeholder ??
+          (accion.a === 'cancelada' ? 'Motivo del rechazo' : 'Opcional: qué se hizo, qué sigue…')
+        }
+        hint="Queda en el historial con fecha, hora y tu usuario."
+        maxLength={1000}
+        rows={3}
+        value={observacion}
+        error={errorCampo ?? undefined}
+        onChange={(e) => {
+          setObservacion(e.target.value);
+          setErrorCampo(null);
+        }}
+      />
     </BottomSheet>
   );
 }
