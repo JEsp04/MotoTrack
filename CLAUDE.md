@@ -8,6 +8,7 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 2. Leer **`PROGRESS.md`**: qué historias están hechas y cuál sigue.
 3. Consultar **`contexto.md`** cuando haga falta la visión, el stack o la arquitectura.
 4. Consultar **`docs/HISTORIAS.md`** para los criterios de aceptación de la historia que se va a trabajar.
+5. Si la historia toca pantallas: leer **`docs/diseno.md`** y abrir esa pantalla en el prototipo antes de escribir código.
 
 **Al terminar la sesión:** actualizar `Memoria.md` (estado y bitácora) y marcar en `PROGRESS.md` lo que se terminó.
 
@@ -20,8 +21,13 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 - **Autor de los commits:** el integrante que lo pida (por ejemplo `JEsp04 <Jhojan.espinosaa@comunidad.iush.edu.co>`). **Sin** líneas `Co-Authored-By` ni `Claude-Session` en los mensajes.
 - **No tocar cambios sin commit de otra persona.** Si hay archivos modificados que no son de la tarea, preguntar.
 - **No reescribir historia ya subida** (`push --force`, `rebase` de ramas publicadas) sin aprobación explícita.
-- **Explicar en lenguaje sencillo.** El equipo está aprendiendo Prisma y TypeScript. Cuando se pidan comandos, darlos completos y en orden, para Windows (PowerShell).
+- **Explicar en lenguaje sencillo.** El equipo está aprendiendo Prisma y TypeScript. Cuando se pidan comandos, darlos completos y en orden, para Git Bash en Windows (no PowerShell).
 - **Mobile first:** toda pantalla se diseña primero para 390 px y luego para 1280 px.
+- **El diseño es idéntico al prototipo.** Toda pantalla nueva o modificada se construye igual a su pantalla en el prototipo (https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w, copia en `docs/prototipo/`): mismo orden, textos, tamaños, componentes y animaciones. No basta con «parecerse». Guía: `docs/diseno.md`.
+  - Lo único que se omite es lo que la app todavía no tiene datos o funciones para mostrar (por ejemplo, fecha estimada de entrega, citas, inventario, IA, WhatsApp). No se inventan datos para llenarlo.
+  - Si la pantalla no existe en el prototipo, primero se diseña ahí y se aprueba; después se programa.
+  - No se inventan colores, fuentes ni componentes que el prototipo no tenga.
+  - Si se ve una diferencia entre el prototipo y lo pedido, se pregunta antes de elegir.
 
 ## 2. Comandos
 
@@ -116,9 +122,14 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
   - **Prohibido:** colores escritos a mano (`#fff`, `rgb()`, `hsl()`, `oklch()`, también dentro de un SVG en `url()`), la paleta por defecto de Tailwind (`bg-red-500`, `text-gray-700`), colores arbitrarios (`bg-[#0b1f33]`) y colores con nombre en `style` (`color: 'red'`).
   - **Antes de entregar un componente** se corre `npm run check:tokens` en `frontend`: revisa todo `src/` y falla si hay un color fuera de los tokens, un token que no existe (`text-primary-txt`) o si se borró o renombró un token de `index.css`. También corre dentro de `npm test` y en la revisión automática de GitHub.
   - ¿Hace falta un color nuevo? Se agrega como `--color-…` en `index.css` y su nombre en `TOKENS_BASE` (`frontend/scripts/tokens.test.ts`). Una excepción justificada lleva `tokens-permitido` en la línea, con el motivo.
-  - Texto sobre `bg-primary` va en `text-brand-navy`.
-  - Texto cian sobre blanco va en `text-primary-text`.
-- **Componentes:** reutilizar `components/ui` (Button, Input, Select, Textarea, Card, Badge, StatusBadge, Plate, AppBar, BottomSheet, Tabs, EmptyState, Skeleton, Toaster). Un componente con lógica de negocio va en `features/<f>/components`, no en `ui`.
+  - **Un solo fondo (blanco) y un solo acento (amarillo de la placa).** No hay cian ni naranja. El rojo es solo para peligro y el verde solo para el chip de «hecho».
+  - Texto sobre `bg-primary` (tinta) va en `text-on-primary`.
+  - Sobre `bg-accent` (amarillo) el texto va en `text-ink`; texto amarillo sobre blanco va en `text-accent-text`.
+  - **Fuentes:** Geist para todo el texto (`font-sans`); Michroma (`font-num`) solo para marca, placas, números y montos.
+  - **Animaciones:** solo con las curvas de `index.css`; los botones se encogen a `scale(.97)` al presionarlos; *hover* solo con `(hover: hover) and (pointer: fine)`; siempre respetar `prefers-reduced-motion`.
+  - **Formularios en computador:** 760 px de ancho como máximo; el botón de guardar mide lo mismo que el formulario.
+- **Componentes:** reutilizar `components/ui` (Button, HoldButton, Input, Select, Textarea, Card, Badge, StatusBadge, Plate, Arc, Dial, AppBar, BottomSheet, Tabs, EmptyState, Skeleton, Toaster). Un componente con lógica de negocio va en `features/<f>/components`, no en `ui`.
+  - **Cambiar el estado de una orden** se confirma con `HoldButton` (mantener presionado). Si la acción pide un texto obligatorio, primero se abre la hoja y su botón de confirmar es `HoldButton` (`docs/diseno.md`, sección 7).
 - **Accesibilidad:**
   - Zona de toque mínima de 48 px (`min-h-touch`).
   - Etiqueta en todo campo.
@@ -161,7 +172,7 @@ Una historia está terminada cuando:
 
 1. Cumple **todos** sus criterios de aceptación (`docs/HISTORIAS.md`).
 2. Se ve y funciona en **390 px y 1280 px**, sin desplazamiento horizontal.
-3. Usa los tokens del sistema de diseño y los componentes `ui`; `npm run check:tokens` pasa.
+3. Es idéntica a su pantalla del prototipo (`docs/diseno.md`, sección 8), usa los tokens y los componentes `ui`, y `npm run check:tokens` pasa.
 4. Valida datos en frontend **y** backend; los permisos se revisan en el backend.
 5. Tiene al menos una prueba, y `lint`, `typecheck`, `test` y `build` pasan.
 6. Está en un PR hacia `develop`, revisado por otra persona.

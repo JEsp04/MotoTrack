@@ -75,9 +75,9 @@ function Formulario({
       {errorGeneral && <Alert>{errorGeneral}</Alert>}
       {confirmar && <p className="text-ink-muted">{confirmar.texto}</p>}
       {accion.mostrarTotal && (
-        <div className="flex items-center justify-between rounded-md bg-neutral-soft px-4 py-3">
+        <div className="flex items-center justify-between rounded-md bg-surface-sunken px-4 py-3">
           <span className="font-semibold">Total</span>
-          <span className="font-display text-xl font-bold">{formatPesos(total)}</span>
+          <span className="font-num text-xl">{formatPesos(total)}</span>
         </div>
       )}
       {accion.observacion && (

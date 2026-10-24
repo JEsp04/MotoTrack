@@ -14,7 +14,7 @@ export function Plate({
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap rounded-sm border-2 border-brand-navy bg-plate font-display font-bold tracking-wider text-brand-navy',
+        'inline-flex items-center justify-center whitespace-nowrap rounded-sm border-2 border-ink bg-plate font-num tracking-wider text-ink',
         size === 'sm' ? 'px-1.5 py-0.5 text-xs' : 'px-2.5 py-1 text-sm',
         className,
       )}

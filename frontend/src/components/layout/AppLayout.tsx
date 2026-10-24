@@ -33,7 +33,7 @@ export function AppLayout({ items, user, onLogout }: AppLayoutProps) {
       </a>
 
       {/* Menú lateral (computador) */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-sidebar flex-col bg-brand-navy text-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-sidebar flex-col bg-ink text-white lg:flex">
         <div className="px-6 pt-6 pb-8">
           <Logo tone="light" />
         </div>
@@ -48,7 +48,7 @@ export function AppLayout({ items, user, onLogout }: AppLayoutProps) {
                     cn(
                       'flex min-h-touch items-center gap-3 rounded-md px-3 font-medium transition-colors',
                       isActive
-                        ? 'bg-primary text-brand-navy'
+                        ? 'bg-primary text-on-primary'
                         : 'text-white/80 hover:bg-white/10 hover:text-white',
                     )
                   }
@@ -97,7 +97,7 @@ export function AppLayout({ items, user, onLogout }: AppLayoutProps) {
                 className={({ isActive }) =>
                   cn(
                     'flex h-full flex-col items-center justify-center gap-0.5 text-xs font-semibold transition-colors',
-                    isActive ? 'text-primary-text' : 'text-ink-muted hover:text-ink',
+                    isActive ? 'text-ink' : 'text-ink-muted hover:text-ink',
                   )
                 }
               >
@@ -106,7 +106,7 @@ export function AppLayout({ items, user, onLogout }: AppLayoutProps) {
                     <span
                       className={cn(
                         'flex h-7 w-12 items-center justify-center rounded-full',
-                        isActive && 'bg-primary-soft',
+                        isActive && 'bg-surface-sunken',
                       )}
                     >
                       <Icon name={item.icon} size={22} />

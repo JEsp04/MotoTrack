@@ -21,26 +21,24 @@ const INDEX_CSS = join(SRC, 'styles', 'index.css');
 
 /** Tokens de color que ya usa la app. Borrarlos o renombrarlos rompe componentes. */
 const TOKENS_BASE = [
-  'brand-navy',
   'primary',
-  'primary-hover',
-  'primary-text',
-  'primary-soft',
+  'on-primary',
   'accent',
   'accent-text',
   'accent-soft',
+  'plate',
   'success',
   'success-text',
   'success-soft',
   'danger',
-  'danger-hover',
+  'danger-text',
   'danger-soft',
-  'plate',
   'bg',
   'surface',
+  'surface-sunken',
+  'surface-2',
   'ink',
   'ink-muted',
-  'neutral-soft',
   'border',
   'border-strong',
 ];
@@ -171,8 +169,8 @@ describe('Tokens del sistema de diseño (src/styles/index.css)', () => {
     expect(revisar('border-[var(--color-inventado)]')).toMatch(/no existe/);
     for (const ok of [
       'bg-primary',
-      'lg:hover:bg-primary-hover',
-      'text-brand-navy',
+      'lg:hover:bg-primary/90',
+      'text-on-primary',
       'border-border-strong/40',
       'ring-primary/40',
       'text-white/80',

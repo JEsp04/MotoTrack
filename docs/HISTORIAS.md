@@ -75,12 +75,25 @@ Cada historia trae:
 | HU-35 | Avanzar la reparación | 5 | 16 oct | Obligatoria | 2 |
 | HU-36 | Entregar y cerrar la orden | 5 | 16 oct | Obligatoria | 1 |
 | HU-37 | Cancelar una orden con motivo | 5 | 16 oct | Obligatoria | 1 |
+| **E6.5 · Migración al diseño nuevo** |||||
+| HU-41 | Colores y fuentes nuevos | 6.5 | Por definir | Obligatoria | 2 |
+| HU-42 | Componentes base con el diseño nuevo | 6.5 | Por definir | Obligatoria | 3 |
+| HU-43 | Botón de mantener presionado y arco de progreso | 6.5 | Por definir | Obligatoria | 2 |
+| HU-44 | Navegación nueva | 6.5 | Por definir | Obligatoria | 3 |
+| HU-45 | Ingreso y registro con el diseño nuevo | 6.5 | Por definir | Obligatoria | 2 |
+| HU-46 | Panel del taller, clientes y equipo | 6.5 | Por definir | Obligatoria | 3 |
+| HU-47 | Lista de órdenes y recibir moto | 6.5 | Por definir | Obligatoria | 2 |
+| HU-48 | Detalle de la orden con mantener presionado | 6.5 | Por definir | Obligatoria | 3 |
+| HU-49 | Seguimiento del cliente | 6.5 | Por definir | Obligatoria | 3 |
+| HU-50 | Perfil, páginas de error y revisión final | 6.5 | Por definir | Obligatoria | 1 |
 | **E7 · Despliegue y entrega** |||||
 | HU-38 | Base de datos en la nube (Aiven) | — | 15 oct | Obligatoria | 1 |
 | HU-39 | Publicar la app en Vercel | — | 16 oct | Obligatoria | 3 |
 | HU-40 | Prueba de punta a punta y versión v0.1 | — | 16 oct | Obligatoria | 2 |
 
 **Total:** 40 historias, 88 puntos (alrededor de 29 por integrante). Es justo para 7 días; por eso HU-33 es *deseable* y se aplica el plan de riesgo de CONTEXTO.md (sección 14).
+
+**E6.5 (migración al diseño, agregada el 17-oct):** 10 historias más (HU-41 a HU-50), 24 puntos. Se hace antes de E7.
 
 **Ruta crítica:** HU-01 → HU-02 → HU-06 → HU-13/15/16 → HU-21 → HU-29 → HU-28 → HU-34/35 → HU-39 → HU-40.
 
@@ -983,6 +996,241 @@ Cada historia trae:
 - **Dado** una orden abierta, **cuando** se cancela con motivo, **entonces** el historial guarda el motivo como observación.
 - **Dado** una orden `entregada`, **cuando** se intenta cancelar, **entonces** responde 409.
 - **Dado** el botón «Cancelar orden», **cuando** se muestra, **entonces** usa el estilo de peligro y pide confirmación.
+
+---
+
+## E6.5 · Migración al diseño nuevo
+
+Se hace **antes de E7**, para que la versión desplegada ya tenga el diseño nuevo.
+
+**Alcance:** solo cambia cómo se ven las pantallas que ya existen (E2 a E6), más la landing. No se agregan reglas del negocio, rutas de la API ni tablas. Las funciones que el prototipo muestra y el repositorio todavía no tiene (citas, inventario, IA, suscripción, notificaciones, modo oscuro) quedan para sus propias HU.
+
+**Referencia:** `docs/diseno.md` y el prototipo (`docs/prototipo/mototrack-prototipo.html`, https://claude.ai/artifact/M2oVJGvZ6oAqGJKattY41w).
+
+**Criterios comunes a todas las historias de esta etapa.** Además de los propios, cada una cumple:
+- **Dado** cada pantalla tocada, **cuando** se pone al lado de su pantalla del prototipo en 390 px y 1440 px, **entonces** es idéntica: colores, fuentes, tamaños, textos, componentes y orden del contenido. Solo falta lo que la app aún no tiene datos para mostrar.
+- **Dado** el código, **cuando** se corre `npm run check:tokens`, **entonces** pasa y no hay colores fuera de `index.css`.
+- **Dado** 360, 390 y 1440 px, **cuando** se recorre la pantalla, **entonces** no hay desplazamiento horizontal y los toques miden al menos 48 px.
+- **Dado** «reducir movimiento» activo en el sistema, **cuando** se usa la pantalla, **entonces** no hay animaciones y todo sigue funcionando.
+- **Dado** el backend, **cuando** se revisa el PR, **entonces** no tiene cambios. Las pruebas que ya existían siguen pasando; solo se ajustan textos o roles de botón si el diseño los cambió.
+
+---
+
+### HU-41 · Colores y fuentes nuevos
+
+**Historia:** Como **equipo de frontend**, quiero los colores y las fuentes del diseño nuevo como tokens de Tailwind, para que todas las pantallas cambien desde un solo lugar.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-base` | Obligatoria | 2 | — |
+
+**Casos de uso**
+- *Principal:*
+  1. En `src/styles/index.css` se cambian los valores de los tokens por los de `docs/diseno.md` (sección 2) y se agregan `surface-sunken`, `surface-2`, `on-primary` y `danger-text`.
+  2. Se quitan `brand-navy`, `primary-text`, `primary-soft`, `primary-hover`, `danger-hover` y `neutral-soft`, y se reemplazan en los componentes que los usan.
+  3. Se actualiza `TOKENS_BASE` en `scripts/tokens.test.ts` con la lista nueva.
+  4. Se instalan `@fontsource/geist` y `@fontsource/michroma`, y se desinstalan `@fontsource/inter` y `@fontsource/montserrat`.
+  5. Se agregan `--font-num`, los radios nuevos y las curvas de animación (`ease-out`, `ease-in-out`, `drawer`).
+- *Alterno, un componente queda con poco contraste:* se usa el par de texto del token (`accent-text` sobre blanco, `ink` sobre amarillo, `on-primary` sobre tinta).
+
+**Criterios de aceptación**
+- **Dado** la app, **cuando** se abre, **entonces** el fondo es blanco, el texto usa Geist y no queda nada en cian ni en naranja.
+- **Dado** el código, **cuando** se buscan `brand-navy`, `primary-text`, `Inter` o `Montserrat`, **entonces** no aparecen.
+- **Dado** `npm run check:tokens`, **cuando** se corre, **entonces** pasa con la lista nueva.
+
+---
+
+### HU-42 · Componentes base con el diseño nuevo
+
+**Historia:** Como **equipo de frontend**, quiero los componentes de `ui` con el estilo del prototipo, para armar las pantallas sin estilos sueltos.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-base` | Obligatoria | 3 | HU-41 |
+
+**Casos de uso**
+- *Principal:* se ajustan `Button`, `Input`, `Select`, `Textarea`, `Card`, `Badge`, `StatusBadge`, `Plate`, `Tabs`, `BottomSheet`, `AppBar`, `EmptyState`, `Skeleton`, `Toaster`, `Alert` y `Logo` según `docs/diseno.md` (sección 6). Se actualiza `/dev/ui`.
+- *Alterno, hover en el celular:* los efectos de *hover* solo se aplican con `(hover: hover) and (pointer: fine)`.
+
+**Criterios de aceptación**
+- **Dado** un `Button` principal, **cuando** se muestra, **entonces** es tinta con texto blanco y radio píldora, y al presionarlo se encoge a `scale(.97)`.
+- **Dado** `Plate` y cualquier monto, **cuando** se muestran, **entonces** usan Michroma.
+- **Dado** `StatusBadge` con cualquiera de los 10 estados, **cuando** se muestra, **entonces** el color sigue el prototipo: amarillo si espera algo (aprobación o repuesto), verde si está lista o entregada, tinta si está cerrada, rojo si está cancelada y gris en el resto.
+- **Dado** `BottomSheet`, **cuando** se abre, **entonces** sube con la curva `drawer` y sigue cerrando con Escape y devolviendo el foco (HU-09).
+
+---
+
+### HU-43 · Botón de mantener presionado y arco de progreso
+
+**Historia:** Como **equipo de frontend**, quiero un botón que se confirma manteniéndolo presionado y un arco que muestre el paso de la orden, para usarlos en el detalle y en el seguimiento.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-base` | Obligatoria | 2 | HU-42 |
+
+**Casos de uso**
+- *Principal:*
+  - `HoldButton` en `components/ui`: se llena en 1,2 s, dice «Suelta para …» cuando está lleno y llama `onConfirm` al soltar (`docs/diseno.md`, sección 7). Variantes principal y peligro, y estado de carga.
+  - `Arc` y `Dial` en `components/ui`: reciben el paso (1 a 6) y lo dibujan en SVG con los tokens.
+- *Alterno, suelta antes de tiempo:* el relleno se devuelve y no se llama `onConfirm`.
+- *Alterno, teclado:* mantener Enter o Espacio funciona igual.
+
+**Criterios de aceptación**
+- **Dado** un `HoldButton`, **cuando** se suelta antes de 1,2 s, **entonces** no se ejecuta la acción.
+- **Dado** un `HoldButton`, **cuando** se mantiene 1,2 s y se suelta, **entonces** se ejecuta una sola vez.
+- **Dado** un lector de pantalla, **cuando** llega al botón, **entonces** escucha qué hace y que hay que mantenerlo presionado.
+- **Dado** las pruebas, **cuando** se corren, **entonces** `HoldButton` tiene prueba con Testing Library (usando relojes falsos de Vitest).
+
+---
+
+### HU-44 · Navegación nueva
+
+**Historia:** Como **usuario de cualquier rol**, quiero la barra superior en el computador y la barra inferior en el celular del prototipo, para moverme igual en los dos.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-navegacion` | Obligatoria | 3 | HU-42 |
+
+**Casos de uso**
+- *Principal:*
+  - En computador, `AppLayout` cambia el menú lateral por la barra superior: marca, pestañas del rol (`router/nav.ts`), botón principal (admin: «Recibir moto») y menú del avatar con «Perfil» y «Cerrar sesión».
+  - En celular se mantiene la barra inferior con el estilo nuevo.
+  - `AuthLayout` con fondo blanco y el logo nuevo.
+- *Alterno, mecánico:* sigue sin ver «Clientes» (HU-10).
+
+**Criterios de aceptación**
+- **Dado** 1440 px, **cuando** se abre la app con sesión, **entonces** se ve la barra superior y «Cerrar sesión» está en el menú del avatar. *(Reemplaza el criterio del menú lateral de HU-10.)*
+- **Dado** 390 px, **cuando** se abre la app con sesión, **entonces** se ve la barra inferior.
+- **Dado** la opción de la página actual, **cuando** se muestra, **entonces** queda resaltada y tiene `aria-current="page"`.
+- **Dado** cualquier opción que existe en el celular, **cuando** se busca en el computador, **entonces** también está (y al revés).
+
+---
+
+### HU-45 · Landing, ingreso y registro con el diseño nuevo
+
+**Historia:** Como **persona que llega a MotoTrack**, quiero la landing del prototipo y entrar o crear mi cuenta desde ella, para que la primera impresión sea la del producto final.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-acceso` | Obligatoria | 2 | HU-44 |
+
+**Casos de uso**
+- *Principal:*
+  - `/` muestra la landing del prototipo: encabezado de vidrio, «El taller, en vivo.», cinta de placas, recorrido de 6 pasos, celulares de cliente y mecánico, planes y cierre «Enciende tu taller».
+  - Ingreso y registro se abren como panel encima de la landing, igual que en el prototipo (`/login`, `/registro`, `/registro/taller` y `/registro/cliente` siguen funcionando y abren su panel).
+  - El ingreso tiene «Soy del taller / Soy cliente»; los dos entran con correo y contraseña (el código por WhatsApp es de la segunda entrega).
+- *Alterno, error de la API:* el mensaje se sigue mostrando debajo del campo (HU-19 y HU-20).
+
+**Criterios de aceptación**
+- **Dado** la landing y los cuatro paneles, **cuando** se comparan con el prototipo, **entonces** son idénticos (criterios comunes).
+- **Dado** el panel abierto, **cuando** se cierra con la X o con Escape, **entonces** queda la landing en `/`.
+- **Dado** los flujos de HU-19 y HU-20, **cuando** se prueban, **entonces** funcionan igual que antes.
+
+---
+
+### HU-46 · Panel del taller, clientes y equipo
+
+**Historia:** Como **admin**, quiero el panel del taller y las pantallas de clientes y equipo con el diseño nuevo, para ver de un vistazo cómo va el taller.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-admin` | Obligatoria | 3 | HU-44 |
+
+**Casos de uso**
+- *Principal:*
+  - `InicioPage`: lecturas (motos adentro, esperando al cliente, sin repuesto) y una tarjeta por moto abierta con su arco, armadas con la lista de órdenes que ya da `GET /api/ordenes`.
+  - `ClientesPage`, `ClienteDetallePage` y `EquipoPage` con el estilo nuevo.
+  - Formularios y hojas con un ancho máximo de 760 px en computador; el botón de guardar mide lo mismo que el formulario.
+- *Alterno, taller sin órdenes:* el panel muestra un estado vacío con el botón «Recibir moto».
+- *Alterno, lo que el prototipo tiene y la API no:* «Equipo hoy», «Lo que pasó hoy» y la sugerencia de IA **no** se hacen ahora; necesitan datos nuevos y van en una HU futura.
+
+**Criterios de aceptación**
+- **Dado** un admin con órdenes abiertas, **cuando** abre Inicio, **entonces** ve una tarjeta por moto con su placa, estado y arco, y al tocarla va al detalle.
+- **Dado** un formulario en 1440 px, **cuando** se mide el botón de guardar, **entonces** tiene el mismo ancho que los campos.
+- **Dado** el backend, **cuando** se revisa el PR, **entonces** no tiene cambios.
+
+---
+
+### HU-47 · Lista de órdenes y recibir moto
+
+**Historia:** Como **admin o mecánico**, quiero la lista de órdenes y el formulario para recibir una moto con el diseño nuevo.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-ordenes` | Obligatoria | 2 | HU-44 |
+
+**Casos de uso**
+- *Principal:* se ajustan `OrdenesLista`, `OrdenCard` (placa, estado y arco pequeño) y `NuevaOrdenForm` (3 pasos), con pestañas segmentadas y buscador.
+- *Alterno, crear cliente o moto dentro del formulario:* sigue funcionando (HU-26 alterno B, HU-29 alterno A).
+
+**Criterios de aceptación**
+- **Dado** los flujos de HU-29 y HU-30, **cuando** se prueban, **entonces** funcionan igual que antes.
+- **Dado** el formulario en 1440 px, **cuando** se muestra, **entonces** mide 760 px como máximo.
+
+---
+
+### HU-48 · Detalle de la orden con mantener presionado
+
+**Historia:** Como **admin o mecánico**, quiero ver el avance de la orden en un dial y cambiar su estado manteniendo presionado, para no equivocarme con un toque.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-ordenes` | Obligatoria | 3 | HU-43, HU-47 |
+
+**Casos de uso**
+- *Principal:*
+  - `OrdenDetalleVista`: encabezado con el dial de 6 pasos, placa y cliente; línea de tiempo con el estilo nuevo.
+  - Las acciones sin texto obligatorio (enviar para aprobación, iniciar reparación, lista, reanudar, entregar, cerrar) se hacen con `HoldButton` directo, sin hoja.
+  - Las acciones con texto obligatorio (falta repuesto, cancelar) abren `CambioEstadoSheet`; su botón de confirmar es `HoldButton`.
+  - `DiagnosticoSheet` y `ServicioSheet` con el estilo nuevo.
+- *Alterno, el servidor rechaza el cambio (409):* se muestra el error y el estado no cambia en pantalla (HU-35).
+
+**Criterios de aceptación**
+- **Dado** una orden en reparación, **cuando** el mecánico mantiene «Lista para entregar» y suelta, **entonces** la orden pasa a «Lista para entregar» y el historial lo registra.
+- **Dado** «Falta repuesto», **cuando** se abre la hoja, **entonces** no deja confirmar sin escribir el repuesto.
+- **Dado** el mismo rol y estado, **cuando** se comparan con antes, **entonces** se ven las mismas acciones (`estados.ts` no cambia).
+
+---
+
+### HU-49 · Seguimiento del cliente
+
+**Historia:** Como **cliente**, quiero ver mis motos y el avance de mi orden como en el prototipo, y aprobar o rechazar el trabajo manteniendo presionado.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-cliente` | Obligatoria | 3 | HU-43, HU-44 |
+
+**Casos de uso**
+- *Principal:*
+  - `MotosPage` y `MotoCard` con el estilo nuevo.
+  - `cliente/OrdenesPage` y el detalle del cliente: isla oscura con 6 segmentos, monto grande en Michroma y mensaje del estado.
+  - Esperando aprobación: barra inferior con «Mantén para aprobar $ …» (directo) y «Mantén para rechazar» (abre la hoja del motivo, que es obligatorio).
+- *Alterno, orden sin costo todavía:* no se muestra el monto ni los botones.
+
+**Criterios de aceptación**
+- **Dado** a Juan con la orden #2 esperando aprobación, **cuando** mantiene «Mantén para aprobar» y suelta, **entonces** la orden queda «Aprobada».
+- **Dado** «Mantén para rechazar», **cuando** se abre la hoja, **entonces** no deja confirmar sin motivo.
+- **Dado** el flujo de HU-34, **cuando** se prueba, **entonces** funciona igual que antes.
+
+---
+
+### HU-50 · Perfil, páginas de error y revisión final
+
+**Historia:** Como **equipo**, quiero que las pantallas que faltan tengan el diseño nuevo y revisar la app completa, para entregar una versión pareja.
+
+| Etapa | Fecha | Rama | Prioridad | Pts | Depende de |
+|---|---|---|---|---|---|
+| 6.5 | Por definir | `feature/diseno-cierre` | Obligatoria | 1 | HU-45 a HU-49 |
+
+**Casos de uso**
+- *Principal:*
+  - Se ajustan `PerfilPage`, `NotFoundPage`, `RouteErrorPage` y `Proximamente`.
+  - Se recorre la app con los 3 roles en 360, 390 y 1440 px.
+  - Se actualizan `contexto.md` (sección 9) y `docs/diseno.md` si algo cambió.
+
+**Criterios de aceptación**
+- **Dado** el guion de HU-40, **cuando** se recorre completo, **entonces** cada pantalla coincide con el prototipo y todo funciona.
+- **Dado** el código, **cuando** se busca algo del diseño anterior (cian, naranja, `brand-navy`, Inter, Montserrat), **entonces** no queda nada.
 
 ---
 

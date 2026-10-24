@@ -3,7 +3,7 @@ import { useToastStore, type TonoToast } from '@/lib/toast';
 import { Icon, type IconName } from './Icon';
 
 const ESTILOS: Record<TonoToast, { clase: string; icono: IconName }> = {
-  info: { clase: 'bg-brand-navy text-white', icono: 'info' },
+  info: { clase: 'bg-ink text-white', icono: 'info' },
   success: { clase: 'bg-success-text text-white', icono: 'check' },
   danger: { clase: 'bg-danger text-white', icono: 'alert' },
 };

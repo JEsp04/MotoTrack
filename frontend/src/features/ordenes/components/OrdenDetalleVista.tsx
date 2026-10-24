@@ -307,7 +307,7 @@ function Servicios({ orden, editable }: { orden: OrdenDetalle; editable: boolean
       </ul>
       <div className="flex items-center justify-between border-t border-border px-4 py-3">
         <span className="font-semibold">Total</span>
-        <span className="font-display text-xl font-bold">{formatPesos(orden.costoTotal)}</span>
+        <span className="font-num text-xl">{formatPesos(orden.costoTotal)}</span>
       </div>
     </Card>
   );

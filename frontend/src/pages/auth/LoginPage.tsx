@@ -18,7 +18,7 @@ export default function LoginPage() {
       />
       <p className="text-center text-ink-muted">
         ¿No tienes cuenta?{' '}
-        <Link to="/registro" className="font-semibold text-primary-text hover:underline">
+        <Link to="/registro" className="font-semibold text-ink hover:underline">
           Regístrate
         </Link>
       </p>

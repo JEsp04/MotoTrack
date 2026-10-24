@@ -28,7 +28,7 @@ export default function InicioPage() {
         {ACCESOS.map((a) => (
           <Link key={a.to} to={a.to} className="group rounded-md focus-visible:outline-offset-4">
             <Card className="flex h-full items-center gap-4 transition-colors group-hover:border-primary">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-text">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-surface-sunken text-ink">
                 <Icon name={a.icon} />
               </span>
               <span className="min-w-0 flex-1">
