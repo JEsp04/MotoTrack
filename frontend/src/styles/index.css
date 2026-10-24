@@ -1412,3 +1412,69 @@
     text-decoration: line-through;
   }
 }
+
+/* Isla del seguimiento del cliente (.mt-isla del prototipo, HU-49) */
+@layer components {
+  .isla {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border-radius: 28px;
+    background: var(--color-ink);
+    color: var(--color-on-primary);
+    animation: isla-in 520ms var(--ease-out) both;
+  }
+  .isla .p {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--color-plate);
+    color: var(--color-ink);
+    font-family: var(--font-num);
+    font-size: 10px;
+  }
+  .isla b {
+    display: block;
+    font-weight: 600;
+  }
+  .isla small {
+    display: block;
+    color: #a9b1ba;
+    font-size: 13px;
+  }
+  .isla .segs {
+    display: flex;
+    gap: 3px;
+    margin-top: 8px;
+  }
+  .isla .segs i {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: #3a4048;
+  }
+  .isla .segs i.ok {
+    background: var(--color-on-primary);
+  }
+  .isla .segs i.now {
+    background: var(--color-plate);
+  }
+  @keyframes isla-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(-6px);
+      filter: blur(4px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .isla {
+      animation: none;
+    }
+  }
+}

@@ -1,58 +1,105 @@
 import { useState } from 'react';
-import { Alert, AppBar, Button, EmptyState, SkeletonList } from '@/components/ui';
-import { MotoCard, MotoSheet, useMotos } from '@/features/motos';
+import { Alert, EmptyState, List, ListItem, Plate, SkeletonList } from '@/components/ui';
+import { useSession } from '@/features/auth';
+import { MotoSheet, useMotos } from '@/features/motos';
+import { OrdenClienteCard, useMisOrdenesActivas } from '@/features/ordenes';
 import { parseApiError } from '@/lib/api-error';
 import type { Moto } from '@/types';
 
-/** HU-26 y HU-27 · El cliente ve sus motos, en qué va cada una y puede agregar más. */
+const km = new Intl.NumberFormat('es-CO');
+
+/**
+ * HU-26, HU-27, HU-49 · Inicio del cliente (ClientHomeScreen del prototipo): sus órdenes
+ * abiertas arriba, con la que espera su respuesta resaltada, y sus motos.
+ */
 export default function MotosPage() {
+  const usuario = useSession((s) => s.usuario);
   const motos = useMotos();
+  const ordenes = useMisOrdenesActivas();
   const [sheet, setSheet] = useState<{ open: boolean; moto: Moto | null }>({
     open: false,
     moto: null,
   });
-  const agregar = (
-    <Button icon="plus" size="sm" onClick={() => setSheet({ open: true, moto: null })}>
-      Agregar moto
-    </Button>
-  );
   const lista = motos.data?.data ?? [];
+  const activas = ordenes.data ?? [];
+  const taller = usuario?.taller.nombre ?? '';
+  const error = motos.error ?? ordenes.error;
 
   return (
     <>
-      <AppBar title="Mis motos" actions={lista.length > 0 ? agregar : undefined} />
-      <div className="flex flex-col gap-3 p-4 lg:px-0">
-        {motos.isPending && <SkeletonList rows={2} />}
-        {motos.isError && (
-          <Alert>
-            {parseApiError(motos.error).message}{' '}
-            <button type="button" className="underline" onClick={() => motos.refetch()}>
-              Intentar de nuevo
-            </button>
-          </Alert>
-        )}
-        {motos.isSuccess && lista.length === 0 && (
-          <EmptyState
-            icon="moto"
-            title="Aún no tienes motos registradas"
-            text="Agrégalas para tenerlas listas cuando llegues al taller."
-            action={agregar}
-          />
-        )}
-        {lista.length > 0 && (
-          <ul className="grid gap-3 md:grid-cols-2" aria-label="Mis motos">
-            {lista.map((m) => (
-              <li key={m.publicId}>
-                <MotoCard
-                  moto={m}
-                  onEditar={(moto) => setSheet({ open: true, moto })}
-                  enlaceOrden={(id) => `/cliente/ordenes/${id}`}
+      {/* Saludo (.mt-hero) */}
+      <header className="border-b border-border px-4 pt-4 pb-14 lg:px-8 lg:pt-6 lg:pb-16">
+        <div className="mx-auto w-full max-w-[1200px]">
+          <p className="text-sm leading-5 text-ink-muted">Portal del cliente</p>
+          <h1 className="mt-1 text-[26px] leading-[30px] font-semibold tracking-[-0.03em]">
+            Hola, {usuario?.nombre.split(' ')[0]}
+          </h1>
+        </div>
+      </header>
+
+      <div className="mx-auto -mt-11 w-full max-w-[1200px] px-4 pb-[calc(var(--spacing-bottom-nav)+24px)] lg:px-8 lg:pb-8">
+        <div className="grid gap-4 lg:grid-cols-[2fr_1fr] lg:items-start">
+          <div className="flex min-w-0 flex-col gap-4">
+            {error && (
+              <Alert>
+                {parseApiError(error).message}{' '}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => {
+                    void motos.refetch();
+                    void ordenes.refetch();
+                  }}
+                >
+                  Intentar de nuevo
+                </button>
+              </Alert>
+            )}
+            {ordenes.isPending && <SkeletonList rows={1} />}
+            {ordenes.isSuccess &&
+              (activas.length > 0 ? (
+                activas.map((o) => <OrdenClienteCard key={o.publicId} orden={o} taller={taller} />)
+              ) : (
+                <div className="rounded-[22px] bg-surface-sunken">
+                  <EmptyState
+                    icon="moto"
+                    title="Sin órdenes activas"
+                    text={
+                      lista.length
+                        ? 'Cuando dejes tu moto en el taller, verás aquí su estado y la cotización.'
+                        : 'Agrega tu moto para empezar.'
+                    }
+                  />
+                </div>
+              ))}
+
+            <h2 className="text-lg leading-6 font-semibold">Mis motos</h2>
+            {motos.isPending && <SkeletonList rows={1} />}
+            {motos.isSuccess && lista.length === 0 && (
+              <p className="text-sm leading-5 text-ink-muted">Aún no tienes motos registradas.</p>
+            )}
+            {motos.isSuccess && (
+              <List label="Mis motos">
+                {lista.map((m) => (
+                  <ListItem
+                    key={m.publicId}
+                    leading={<Plate placa={m.placa} />}
+                    title={`${m.marca} ${m.referencia}`}
+                    subtitle={`${km.format(m.kilometraje)} km`}
+                    onClick={() => setSheet({ open: true, moto: m })}
+                  />
+                ))}
+                <ListItem
+                  icon="plus"
+                  title={lista.length ? 'Agregar otra moto' : 'Agregar mi moto'}
+                  onClick={() => setSheet({ open: true, moto: null })}
                 />
-              </li>
-            ))}
-          </ul>
-        )}
+              </List>
+            )}
+          </div>
+        </div>
       </div>
+
       <MotoSheet
         open={sheet.open}
         moto={sheet.moto}

@@ -143,3 +143,21 @@ export function useQuitarServicio(publicId: string) {
     onSuccess: alGuardar,
   });
 }
+
+/**
+ * HU-49 · Órdenes abiertas del cliente para su inicio (las que esperan su respuesta primero).
+ * Usa la misma lista de la API, que ya filtra por las motos del cliente.
+ */
+export function useMisOrdenesActivas() {
+  return useQuery({
+    queryKey: ['ordenes', 'lista', 'mis-activas'],
+    queryFn: async () => {
+      const grupos = await Promise.all(
+        (['por_aprobar', 'listas', 'en_proceso'] as const).map((grupo) =>
+          ordenesApi.listar({ grupo, page: 1, limit: 20 }),
+        ),
+      );
+      return grupos.flatMap((g) => g.data);
+    },
+  });
+}

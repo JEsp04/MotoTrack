@@ -13,7 +13,6 @@ import {
   HoldButton,
   Icon,
   IconButton,
-  Note,
   Page,
   Plate,
   Skeleton,
@@ -31,9 +30,10 @@ import { toast } from '@/lib/toast';
 import type { OrdenDetalle, Rol } from '@/types';
 import { accionesPara, actorDe, ESTADOS_EDITABLES, type Accion, type Actor } from '../estados';
 import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-ordenes';
-import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, textoHold } from '../textos';
+import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
+import { SeguimientoCliente } from './SeguimientoCliente';
 import { ServicioSheet } from './ServicioSheet';
 
 const km = new Intl.NumberFormat('es-CO');
@@ -112,6 +112,9 @@ export function OrdenDetalleVista({ publicId }: { publicId: string }) {
     );
   }
 
+  if (usuario.rol === 'cliente') {
+    return <SeguimientoCliente orden={orden.data} taller={usuario.taller.nombre} />;
+  }
   return <Contenido orden={orden.data} actor={actorDe(usuario, orden.data)} rol={usuario.rol} />;
 }
 
@@ -134,7 +137,6 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   const puedeEditarServicios = editable && (actor === 'admin' || actor === 'mecanico_asignado');
   // registrada → diagnosticada ocurre al guardar el diagnóstico, como en el prototipo
   const registrarDiagnostico = puedeDiagnosticar && orden.estado === 'registrada';
-  const mensaje = rol === 'cliente' ? MENSAJE_CLIENTE[orden.estado] : undefined;
   const { paso, label } = ESTADOS_ORDEN[orden.estado];
 
   /** Las acciones sin texto obligatorio se confirman manteniendo presionado, sin hoja (HU-48) */
@@ -202,8 +204,6 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
       </div>
 
       <Page narrow pb="actionbar">
-        {mensaje && <Note icon="info">{mensaje.texto}</Note>}
-
         {pestana === 'resumen' && <Resumen orden={orden} rol={rol} />}
 
         {pestana === 'diagnostico' &&
