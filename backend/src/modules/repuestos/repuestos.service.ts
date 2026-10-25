@@ -8,10 +8,12 @@ import type {
   ActualizarRepuestoInput,
   CrearRepuestoInput,
   ListarRepuestosQuery,
+  RegistrarMovimientoInput,
 } from './repuestos.schemas.js';
 
 const NOMBRE_REPETIDO = 'Ya existe un repuesto con este nombre en el taller';
 const NO_ENCONTRADO = 'No encontramos ese repuesto';
+const SIN_UNIDADES = 'No hay suficientes unidades';
 
 /** Lo que se muestra de un repuesto. Nunca los Int. */
 const repuestoSelect = {
@@ -191,5 +193,60 @@ export async function actualizarRepuesto(
     if (esDuplicado(error, 'nombre')) throw errorNombre();
     throw error;
   }
+  return detalle(repuestoId);
+}
+
+// ─── HU-53 · Movimientos de stock ──────────────────────────────────────────
+
+/** Stock que queda después del movimiento y la cantidad que se guarda en el historial */
+function calcularMovimiento(stockAnterior: number, input: RegistrarMovimientoInput) {
+  if (input.tipo === 'entrada') {
+    return { stockNuevo: stockAnterior + input.cantidad, cantidad: input.cantidad };
+  }
+  if (input.tipo === 'salida') {
+    if (input.cantidad > stockAnterior) {
+      throw new HttpError(409, SIN_UNIDADES, [
+        { field: 'cantidad', message: `${SIN_UNIDADES}: hay ${stockAnterior}` },
+      ]);
+    }
+    return { stockNuevo: stockAnterior - input.cantidad, cantidad: input.cantidad };
+  }
+  // Ajuste: el stock queda en el valor contado y se guarda la diferencia
+  return { stockNuevo: input.cantidad, cantidad: input.cantidad - stockAnterior };
+}
+
+/**
+ * POST /api/repuestos/:id/movimientos (HU-53).
+ * Entrada suma, salida resta y ajuste deja el stock en el valor dado.
+ * La fila del repuesto queda bloqueada (SELECT … FOR UPDATE) hasta que termina la transacción:
+ * dos salidas al mismo tiempo se hacen una después de la otra y el stock nunca queda negativo.
+ */
+export async function registrarMovimiento(
+  usuario: UsuarioAutenticado,
+  publicId: string,
+  input: RegistrarMovimientoInput,
+) {
+  const repuestoId = await buscarRepuesto(usuario.tallerId, publicId);
+
+  await prisma.$transaction(async (tx) => {
+    const [fila] = await tx.$queryRaw<Array<{ stock: number }>>`
+      SELECT stock FROM repuestos WHERE repuestoId = ${repuestoId} FOR UPDATE`;
+    if (!fila) throw HttpError.notFound(NO_ENCONTRADO);
+    const { stockNuevo, cantidad } = calcularMovimiento(Number(fila.stock), input);
+
+    await tx.repuesto.update({ where: { repuestoId }, data: { stock: stockNuevo } });
+    await tx.movimientoStock.create({
+      data: {
+        tallerId: usuario.tallerId,
+        repuestoId,
+        tipo: input.tipo,
+        cantidad,
+        stockResultante: stockNuevo,
+        referencia: input.referencia,
+        usuarioId: usuario.usuarioId,
+      },
+    });
+  });
+
   return detalle(repuestoId);
 }

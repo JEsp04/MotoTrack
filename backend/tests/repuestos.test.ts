@@ -280,3 +280,123 @@ describe('HU-52 · API de repuestos y stock crítico', () => {
     expect(lista.body.meta.total).toBe(0);
   });
 });
+
+describe('HU-53 · Entradas, salidas y ajustes de stock', () => {
+  async function conRepuesto(stock: number) {
+    const datos = await escenario();
+    const repuesto = await crearRepuesto(datos.taller.tallerId, {
+      nombre: 'Aceite',
+      stock,
+      stockMinimo: 10,
+    });
+    const url = `/api/repuestos/${repuesto.publicId}/movimientos`;
+    return { ...datos, repuesto, url };
+  }
+
+  it('una entrada de 24 sube el stock y guarda el stock resultante y el usuario', async () => {
+    const { admin, repuesto, url } = await conRepuesto(3);
+    const res = await request(app)
+      .post(url)
+      .set(auth(admin))
+      .send({ tipo: 'entrada', cantidad: 24, referencia: 'Compra Lubricantes S.A.' });
+    expect(res.status).toBe(201);
+    expect(res.body.data.stock).toBe(27);
+    expect(res.body.data.movimientos[0]).toMatchObject({
+      tipo: 'entrada',
+      cantidad: 24,
+      stockResultante: 27,
+      referencia: 'Compra Lubricantes S.A.',
+      usuario: { publicId: admin.publicId, nombre: admin.nombre },
+    });
+    const movimiento = await prisma.movimientoStock.findFirstOrThrow({
+      where: { repuestoId: repuesto.repuestoId },
+    });
+    expect(movimiento).toMatchObject({ usuarioId: admin.usuarioId, stockResultante: 27 });
+  });
+
+  it('una salida resta y un ajuste deja el stock en el valor contado', async () => {
+    const { admin, url } = await conRepuesto(10);
+    const salida = await request(app)
+      .post(url)
+      .set(auth(admin))
+      .send({ tipo: 'salida', cantidad: 4 });
+    expect(salida.body.data.stock).toBe(6);
+
+    const ajuste = await request(app)
+      .post(url)
+      .set(auth(admin))
+      .send({ tipo: 'ajuste', cantidad: 2, referencia: 'Conteo físico' });
+    expect(ajuste.status).toBe(201);
+    expect(ajuste.body.data.stock).toBe(2);
+    // El ajuste guarda la diferencia: de 6 a 2 son −4
+    expect(ajuste.body.data.movimientos[0]).toMatchObject({
+      tipo: 'ajuste',
+      cantidad: -4,
+      stockResultante: 2,
+    });
+  });
+
+  it('una salida mayor al stock responde 409 y no cambia nada', async () => {
+    const { admin, repuesto, url } = await conRepuesto(3);
+    const res = await request(app).post(url).set(auth(admin)).send({ tipo: 'salida', cantidad: 4 });
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe('No hay suficientes unidades');
+    const guardado = await prisma.repuesto.findUniqueOrThrow({
+      where: { repuestoId: repuesto.repuestoId },
+    });
+    expect(guardado.stock).toBe(3);
+    expect(await prisma.movimientoStock.count()).toBe(0);
+  });
+
+  it('con salidas al mismo tiempo, el stock nunca queda negativo', async () => {
+    const { admin, repuesto, url } = await conRepuesto(5);
+    const respuestas = await Promise.all(
+      Array.from({ length: 8 }, () =>
+        request(app).post(url).set(auth(admin)).send({ tipo: 'salida', cantidad: 1 }),
+      ),
+    );
+    const codigos = respuestas.map((r) => r.status);
+    expect(codigos.filter((c) => c === 201)).toHaveLength(5);
+    expect(codigos.filter((c) => c === 409)).toHaveLength(3);
+    const guardado = await prisma.repuesto.findUniqueOrThrow({
+      where: { repuestoId: repuesto.repuestoId },
+    });
+    expect(guardado.stock).toBe(0);
+    const resultantes = await prisma.movimientoStock.findMany({
+      where: { repuestoId: repuesto.repuestoId },
+      select: { stockResultante: true },
+    });
+    expect(resultantes.map((m) => m.stockResultante).sort()).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('cantidad 0 en una salida o un tipo desconocido responde 400', async () => {
+    const { admin, url } = await conRepuesto(5);
+    const cero = await request(app)
+      .post(url)
+      .set(auth(admin))
+      .send({ tipo: 'salida', cantidad: 0 });
+    expect(cero.status).toBe(400);
+    expect(cero.body.errors).toEqual([expect.objectContaining({ field: 'cantidad' })]);
+    const tipo = await request(app)
+      .post(url)
+      .set(auth(admin))
+      .send({ tipo: 'regalo', cantidad: 1 });
+    expect(tipo.status).toBe(400);
+  });
+
+  it('un mecánico recibe 403 y un repuesto de otro taller responde 404', async () => {
+    const { mecanico, url } = await conRepuesto(5);
+    const res = await request(app)
+      .post(url)
+      .set(auth(mecanico))
+      .send({ tipo: 'entrada', cantidad: 1 });
+    expect(res.status).toBe(403);
+
+    const otro = await escenario('Otro Taller');
+    const ajeno = await request(app)
+      .post(url)
+      .set(auth(otro.admin))
+      .send({ tipo: 'entrada', cantidad: 1 });
+    expect(ajeno.status).toBe(404);
+  });
+});
