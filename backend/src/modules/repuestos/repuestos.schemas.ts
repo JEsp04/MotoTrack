@@ -87,6 +87,24 @@ export const listarRepuestosSchema = paginacionSchema.extend({
   activo: booleanoQuery.transform((v) => v ?? true),
 });
 
+/**
+ * POST /api/repuestos/:id/movimientos (HU-53).
+ * Entrada y salida: unidades que entran o salen. Ajuste: el stock que quedó en el conteo.
+ */
+export const registrarMovimientoSchema = z
+  .object({
+    tipo: z.enum(['entrada', 'salida', 'ajuste'], {
+      error: 'El tipo debe ser entrada, salida o ajuste',
+    }),
+    cantidad: unidades('La cantidad'),
+    referencia: textoOpcional('La referencia', 150),
+  })
+  .refine((d) => d.tipo === 'ajuste' || d.cantidad > 0, {
+    path: ['cantidad'],
+    message: 'La cantidad debe ser al menos 1',
+  });
+
 export type CrearRepuestoInput = z.infer<typeof crearRepuestoSchema>;
 export type ActualizarRepuestoInput = z.infer<typeof actualizarRepuestoSchema>;
 export type ListarRepuestosQuery = z.infer<typeof listarRepuestosSchema>;
+export type RegistrarMovimientoInput = z.infer<typeof registrarMovimientoSchema>;
