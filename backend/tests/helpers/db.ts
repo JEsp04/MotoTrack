@@ -4,6 +4,8 @@ import type { Rol } from '../../src/generated/prisma/client.js';
 import { firmarAccessToken } from '../../src/modules/auth/auth.tokens.js';
 
 const TABLAS = [
+  'movimientos_stock',
+  'repuestos',
   'detalle_servicios',
   'historial_orden',
   'diagnosticos',

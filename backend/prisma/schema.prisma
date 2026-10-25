@@ -50,6 +50,23 @@ enum PrioridadDiagnostico {
   urgente
 }
 
+/// Categorías del inventario (prototipo, pantalla Inventario)
+enum CategoriaRepuesto {
+  aceites
+  frenos
+  filtros
+  transmision
+  electrico
+  llantas
+  otros
+}
+
+enum TipoMovimiento {
+  entrada
+  salida
+  ajuste
+}
+
 // ─── Talleres y usuarios ──────────────────────────────────────────────────
 
 model Taller {
@@ -66,11 +83,13 @@ model Taller {
   creadoEn        DateTime       @default(now())
   actualizadoEn   DateTime       @updatedAt
 
-  usuarios  Usuario[]
-  clientes  Cliente[]
-  motos     Moto[]
-  ordenes   OrdenServicio[]
-  servicios Servicio[]
+  usuarios         Usuario[]
+  clientes         Cliente[]
+  motos            Moto[]
+  ordenes          OrdenServicio[]
+  servicios        Servicio[]
+  repuestos        Repuesto[]
+  movimientosStock MovimientoStock[]
 
   @@map("talleres")
 }
@@ -90,13 +109,14 @@ model Usuario {
   creadoEn      DateTime       @default(now())
   actualizadoEn DateTime       @updatedAt
 
-  taller           Taller           @relation(fields: [tallerId], references: [tallerId])
+  taller           Taller            @relation(fields: [tallerId], references: [tallerId])
   cliente          Cliente?
   refreshTokens    RefreshToken[]
-  ordenesAsignadas OrdenServicio[]  @relation("MecanicoAsignado")
-  ordenesCreadas   OrdenServicio[]  @relation("CreadaPor")
+  ordenesAsignadas OrdenServicio[]   @relation("MecanicoAsignado")
+  ordenesCreadas   OrdenServicio[]   @relation("CreadaPor")
   diagnosticos     Diagnostico[]
   historialOrdenes HistorialOrden[]
+  movimientosStock MovimientoStock[]
 
   @@index([tallerId, rol])
   @@map("usuarios")
@@ -195,13 +215,14 @@ model OrdenServicio {
   creadoEn           DateTime    @default(now())
   actualizadoEn      DateTime    @updatedAt
 
-  taller      Taller            @relation(fields: [tallerId], references: [tallerId])
-  moto        Moto              @relation(fields: [motocicletaId], references: [motocicletaId])
-  mecanico    Usuario           @relation("MecanicoAsignado", fields: [mecanicoId], references: [usuarioId])
-  creadoPor   Usuario           @relation("CreadaPor", fields: [creadoPorId], references: [usuarioId])
-  diagnostico Diagnostico?
-  servicios   DetalleServicio[]
-  historial   HistorialOrden[]
+  taller           Taller            @relation(fields: [tallerId], references: [tallerId])
+  moto             Moto              @relation(fields: [motocicletaId], references: [motocicletaId])
+  mecanico         Usuario           @relation("MecanicoAsignado", fields: [mecanicoId], references: [usuarioId])
+  creadoPor        Usuario           @relation("CreadaPor", fields: [creadoPorId], references: [usuarioId])
+  diagnostico      Diagnostico?
+  servicios        DetalleServicio[]
+  historial        HistorialOrden[]
+  movimientosStock MovimientoStock[]
 
   @@unique([tallerId, numero])
   @@index([tallerId, estado])
@@ -286,5 +307,72 @@ model DetalleServicio {
   @@map("detalle_servicios")
 }
 
-// Fuera de esta entrega (se agregan en la segunda): citas, repuestos,
-// movimientos de inventario, recomendaciones de IA y notificaciones.
+// ─── Inventario de repuestos (HU-51) ──────────────────────────────────────
+
+/// Repuesto del taller. El stock solo cambia con un MovimientoStock (HU-53).
+/// No se borra: se marca inactivo.
+model Repuesto {
+  repuestoId       Int               @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId         String            @unique @default(uuid(7)) @db.Char(36)
+  tallerId         Int
+  nombre           String            @db.VarChar(150)
+  /// Código del fabricante o del proveedor, por ejemplo CR7HSA
+  referencia       String?           @db.VarChar(80)
+  categoria        CategoriaRepuesto @default(otros)
+  /// Precio de venta en pesos
+  precioVenta      Int
+  /// Lo que le cuesta al taller, en pesos. Vacío si no se sabe.
+  costo            Int?
+  /// Unidades disponibles. Nunca negativo.
+  stock            Int               @default(0)
+  /// Con stock menor o igual a este valor, el repuesto está en stock crítico
+  stockMinimo      Int               @default(1)
+  proveedor        String?           @db.VarChar(150)
+  /// Texto libre, por ejemplo «Pulsar 180, Pulsar NS 200»
+  motosCompatibles String?           @db.VarChar(255)
+  activo           Boolean           @default(true)
+  creadoEn         DateTime          @default(now())
+  actualizadoEn    DateTime          @updatedAt
+
+  taller      Taller            @relation(fields: [tallerId], references: [tallerId])
+  movimientos MovimientoStock[]
+
+  @@unique([tallerId, nombre])
+  @@index([tallerId, categoria])
+  @@index([tallerId, activo])
+  @@map("repuestos")
+}
+
+/// Cada cambio de stock de un repuesto. Se escribe en la misma transacción que el cambio.
+model MovimientoStock {
+  movimientoStockId Int            @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId          String         @unique @default(uuid(7)) @db.Char(36)
+  tallerId          Int
+  repuestoId        Int
+  tipo              TipoMovimiento
+  /// Unidades que entran o salen (siempre positivas). En un ajuste es la diferencia
+  /// entre el stock nuevo y el anterior (puede ser negativa).
+  cantidad          Int
+  /// Stock del repuesto después de este movimiento
+  stockResultante   Int
+  /// Por qué cambió: factura de compra, «Conteo físico», etc.
+  referencia        String?        @db.VarChar(150)
+  /// Orden en la que se usó el repuesto (salidas desde una orden)
+  ordenServicioId   Int?
+  usuarioId         Int
+  creadoEn          DateTime       @default(now())
+
+  taller   Taller         @relation(fields: [tallerId], references: [tallerId])
+  repuesto Repuesto       @relation(fields: [repuestoId], references: [repuestoId])
+  orden    OrdenServicio? @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: SetNull)
+  usuario  Usuario        @relation(fields: [usuarioId], references: [usuarioId])
+
+  @@index([repuestoId, creadoEn])
+  @@index([tallerId, creadoEn])
+  @@index([ordenServicioId])
+  @@map("movimientos_stock")
+}
+
+// Fuera de esta entrega (se agregan después): citas, recomendaciones de IA y notificaciones.

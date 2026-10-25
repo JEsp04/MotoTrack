@@ -5,12 +5,14 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../src/config/prisma.js';
 import { env } from '../src/config/env.js';
-import type { EstadoOrden } from '../src/generated/prisma/client.js';
+import type { CategoriaRepuesto, EstadoOrden } from '../src/generated/prisma/client.js';
 
 export const CLAVE_DE_PRUEBA = 'MotoTrack2026';
 
 async function limpiar() {
   // Orden inverso a las dependencias
+  await prisma.movimientoStock.deleteMany();
+  await prisma.repuesto.deleteMany();
   await prisma.detalleServicio.deleteMany();
   await prisma.historialOrden.deleteMany();
   await prisma.diagnostico.deleteMany();
@@ -330,6 +332,141 @@ async function main() {
     });
   }
 
+  // Inventario del prototipo (HU-51). Cuatro quedan en stock crítico (stock <= mínimo).
+  const repuestos: Array<{
+    nombre: string;
+    referencia?: string;
+    categoria: CategoriaRepuesto;
+    precioVenta: number;
+    costo: number;
+    stockMinimo: number;
+    proveedor: string;
+    motosCompatibles?: string;
+    /** Movimientos en orden: entradas suman, salidas restan */
+    movimientos: Array<{ tipo: 'entrada' | 'salida'; cantidad: number; referencia: string }>;
+  }> = [
+    {
+      nombre: 'Aceite Motul 20W-50 1L',
+      categoria: 'aceites',
+      precioVenta: 32000,
+      costo: 24000,
+      stockMinimo: 10,
+      proveedor: 'Lubricantes S.A.',
+      motosCompatibles: 'Motos 4 tiempos',
+      movimientos: [
+        { tipo: 'entrada', cantidad: 25, referencia: 'Compra Lubricantes S.A.' },
+        { tipo: 'salida', cantidad: 1, referencia: 'Orden #1' },
+      ],
+    },
+    {
+      nombre: 'Pastillas freno del. Pulsar',
+      categoria: 'frenos',
+      precioVenta: 68000,
+      costo: 45000,
+      stockMinimo: 6,
+      proveedor: 'Distrimotos',
+      motosCompatibles: 'Pulsar NS 200, Pulsar 180',
+      movimientos: [
+        { tipo: 'entrada', cantidad: 5, referencia: 'Compra Distrimotos' },
+        { tipo: 'salida', cantidad: 2, referencia: 'Venta en mostrador' },
+      ],
+    },
+    {
+      nombre: 'Kit de arrastre FZ 2.0',
+      categoria: 'transmision',
+      precioVenta: 185000,
+      costo: 140000,
+      stockMinimo: 3,
+      proveedor: 'Repuestos Yamaha Medellín',
+      motosCompatibles: 'Yamaha FZ 2.0',
+      movimientos: [
+        { tipo: 'entrada', cantidad: 3, referencia: 'Compra Repuestos Yamaha Medellín' },
+        { tipo: 'salida', cantidad: 1, referencia: 'Orden #4' },
+      ],
+    },
+    {
+      nombre: 'Filtro de aceite Honda CB190',
+      categoria: 'filtros',
+      precioVenta: 22000,
+      costo: 14000,
+      stockMinimo: 5,
+      proveedor: 'Distrimotos',
+      motosCompatibles: 'Honda CB190R',
+      movimientos: [{ tipo: 'entrada', cantidad: 8, referencia: 'Inventario inicial' }],
+    },
+    {
+      nombre: 'Bujía NGK CR7HSA',
+      referencia: 'CR7HSA',
+      categoria: 'electrico',
+      precioVenta: 18000,
+      costo: 9000,
+      stockMinimo: 10,
+      proveedor: 'Distrimotos',
+      motosCompatibles: 'Boxer CT 100, AKT NKD 125',
+      movimientos: [{ tipo: 'entrada', cantidad: 4, referencia: 'Inventario inicial' }],
+    },
+    {
+      nombre: 'Llanta 100/80-17',
+      categoria: 'llantas',
+      precioVenta: 210000,
+      costo: 165000,
+      stockMinimo: 2,
+      proveedor: 'Distrimotos',
+      movimientos: [
+        { tipo: 'entrada', cantidad: 1, referencia: 'Inventario inicial' },
+        { tipo: 'salida', cantidad: 1, referencia: 'Venta en mostrador' },
+      ],
+    },
+    {
+      nombre: 'Cable de clutch AKT NKD',
+      categoria: 'transmision',
+      precioVenta: 16000,
+      costo: 9500,
+      stockMinimo: 3,
+      proveedor: 'Distrimotos',
+      motosCompatibles: 'AKT NKD 125',
+      movimientos: [{ tipo: 'entrada', cantidad: 6, referencia: 'Inventario inicial' }],
+    },
+    {
+      nombre: 'Batería 12V 5Ah',
+      categoria: 'electrico',
+      precioVenta: 145000,
+      costo: 110000,
+      stockMinimo: 2,
+      proveedor: 'Auteco repuestos',
+      movimientos: [{ tipo: 'entrada', cantidad: 5, referencia: 'Inventario inicial' }],
+    },
+  ];
+
+  const ordenPorNumero = async (numero: number) =>
+    (
+      await prisma.ordenServicio.findUniqueOrThrow({
+        where: { tallerId_numero: { tallerId, numero } },
+      })
+    ).ordenServicioId;
+
+  for (const { movimientos, ...datos } of repuestos) {
+    let stock = 0;
+    const historial = [];
+    for (const [j, m] of movimientos.entries()) {
+      stock += m.tipo === 'entrada' ? m.cantidad : -m.cantidad;
+      const orden = /^Orden #(\d+)$/.exec(m.referencia);
+      historial.push({
+        tallerId,
+        tipo: m.tipo,
+        cantidad: m.cantidad,
+        stockResultante: stock,
+        referencia: m.referencia,
+        ordenServicioId: orden ? await ordenPorNumero(Number(orden[1])) : null,
+        usuarioId: admin.usuarioId,
+        creadoEn: new Date(Date.now() - (movimientos.length - j) * 24 * 60 * 60 * 1000),
+      });
+    }
+    await prisma.repuesto.create({
+      data: { ...datos, tallerId, stock, movimientos: { create: historial } },
+    });
+  }
+
   const resumen = {
     talleres: await prisma.taller.count(),
     usuarios: await prisma.usuario.count(),
@@ -338,6 +475,8 @@ async function main() {
     servicios: await prisma.servicio.count(),
     ordenes: await prisma.ordenServicio.count(),
     historial: await prisma.historialOrden.count(),
+    repuestos: await prisma.repuesto.count(),
+    movimientosStock: await prisma.movimientoStock.count(),
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(
