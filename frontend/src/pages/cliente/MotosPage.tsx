@@ -29,15 +29,15 @@ export default function MotosPage() {
     <>
       {/* Saludo (.mt-hero) */}
       <header className="border-b border-border px-4 pt-4 pb-14 lg:px-8 lg:pt-6 lg:pb-16">
-        <div className="mx-auto w-full max-w-[1200px]">
+        <div className="mx-auto w-full max-w-300">
           <p className="text-sm leading-5 text-ink-muted">Portal del cliente</p>
-          <h1 className="mt-1 text-[26px] leading-[30px] font-semibold tracking-[-0.03em]">
+          <h1 className="mt-1 text-[26px] leading-7 font-semibold tracking-[-0.03em]">
             Hola, {usuario?.nombre.split(' ')[0]}
           </h1>
         </div>
       </header>
 
-      <div className="mx-auto -mt-11 w-full max-w-[1200px] px-4 pb-[calc(var(--spacing-bottom-nav)+24px)] lg:px-8 lg:pb-8">
+      <div className="mx-auto -mt-11 w-full max-w-300 px-4 pb-[calc(var(--spacing-bottom-nav)+24px)] lg:px-8 lg:pb-8">
         <div className="grid gap-4 lg:grid-cols-[2fr_1fr] lg:items-start">
           <div className="flex min-w-0 flex-col gap-4">
             {error && (
@@ -60,7 +60,7 @@ export default function MotosPage() {
               (activas.length > 0 ? (
                 activas.map((o) => <OrdenClienteCard key={o.publicId} orden={o} taller={taller} />)
               ) : (
-                <div className="rounded-[22px] bg-surface-sunken">
+                <div className="rounded-md bg-surface-sunken">
                   <EmptyState
                     icon="moto"
                     title="Sin órdenes activas"

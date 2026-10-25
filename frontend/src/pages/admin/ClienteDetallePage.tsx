@@ -39,7 +39,7 @@ export default function ClienteDetallePage() {
       <>
         <AppBar title="Cliente" onBack={volver} />
         <div
-          className="mx-auto flex w-full max-w-[1200px] flex-col gap-4 p-4 lg:p-8"
+          className="mx-auto flex w-full max-w-300 flex-col gap-4 p-4 lg:p-8"
           role="status"
           aria-label="Cargando"
         >
@@ -55,7 +55,7 @@ export default function ClienteDetallePage() {
     return (
       <>
         <AppBar title="Cliente" onBack={volver} />
-        <div className="mx-auto w-full max-w-[1200px] p-4 lg:p-8">
+        <div className="mx-auto w-full max-w-300 p-4 lg:p-8">
           {e.status === 404 ? (
             <EmptyState
               icon="users"

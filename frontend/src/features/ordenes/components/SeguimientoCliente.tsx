@@ -243,7 +243,7 @@ function RechazoSheet({
             disabled={!motivo}
             loading={cambiar.isPending}
             onConfirm={enviar}
-            className="min-h-[50px] flex-[1.6]! text-[15px]"
+            className="min-h-13 flex-[1.6]! text-[15px]"
           />
         </>
       }

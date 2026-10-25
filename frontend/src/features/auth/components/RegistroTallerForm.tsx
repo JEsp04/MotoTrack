@@ -90,7 +90,7 @@ export function RegistroTallerForm({
   return (
     <form onSubmit={onSubmit} noValidate className="flex min-h-full flex-1 flex-col">
       {/* Encabezado y barra de pasos, como RegisterWorkshopScreen del prototipo */}
-      <div className="flex min-h-[60px] items-center gap-1 border-b border-border py-1 pr-1 pl-2">
+      <div className="flex min-h-15 items-center gap-1 border-b border-border py-1 pr-1 pl-2">
         <IconButton
           icon="back"
           label="Volver"

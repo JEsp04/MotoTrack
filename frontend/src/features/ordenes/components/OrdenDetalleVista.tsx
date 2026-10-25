@@ -160,7 +160,7 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
 
       {/* Encabezado: moto, placa y dial (.mt-od-hero) */}
       <section aria-label="Avance de la orden" className="border-b border-border">
-        <div className="mx-auto w-full max-w-form px-4 pt-3.5 pb-[18px] lg:px-8">
+        <div className="mx-auto w-full max-w-form px-4 pt-3.5 pb-5 lg:px-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xl leading-6 font-semibold tracking-[-0.02em]">

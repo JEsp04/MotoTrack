@@ -15,7 +15,7 @@ export default function PerfilPage() {
 
 function Perfil({ nombre, detalle }: { nombre: string; detalle: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[22px] bg-surface-sunken p-4">
+    <div className="flex items-center gap-3 rounded-md bg-surface-sunken p-4">
       <Initials nombre={nombre} className="size-12!" />
       <div className="min-w-0">
         <p className="truncate font-semibold">{nombre}</p>
