@@ -14,11 +14,11 @@ export function OrdenClienteCard({ orden, taller }: { orden: OrdenResumen; talle
       to={`/cliente/ordenes/${orden.publicId}`}
       aria-label={`Orden #${orden.numero}: ${orden.moto.marca} ${orden.moto.referencia}`}
       className={cn(
-        'flex w-full flex-col gap-3 rounded-[22px] text-left text-ink transition-transform duration-150 ease-out active:scale-[0.99]',
+        'flex w-full flex-col gap-3 rounded-md text-left text-ink transition-transform duration-150 ease-out active:scale-[0.99]',
         espera
-          ? 'border-2 border-ink bg-bg p-[15px]'
+          ? 'border-2 border-ink bg-bg p-4'
           : lista
-            ? 'border-2 border-success bg-surface-sunken p-[15px]'
+            ? 'border-2 border-success bg-surface-sunken p-4'
             : 'bg-surface-sunken p-4',
       )}
     >

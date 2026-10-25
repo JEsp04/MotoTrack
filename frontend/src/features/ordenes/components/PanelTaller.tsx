@@ -41,7 +41,7 @@ export function PanelTaller() {
   const { data, isPending, isError, refetch } = usePanelTaller();
 
   return (
-    <div className="flex flex-col gap-[18px] px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
+    <div className="flex flex-col gap-4 px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
       <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
         <div>
           <p className="text-sm leading-5 text-ink-muted">{hoy()}</p>
@@ -117,7 +117,7 @@ export function PanelTaller() {
                   to={rutaOrden('admin', o.publicId)}
                   className="grid grid-cols-[86px_minmax(0,1fr)_auto] items-center gap-4 px-1 py-3 text-[15px] md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 >
-                  <span className="justify-self-start rounded-[6px] border-[1.5px] border-border-strong bg-surface-sunken px-2 pt-1 pb-[3px] font-num text-xs leading-none tracking-[0.12em] text-ink-muted">
+                  <span className="justify-self-start rounded-[6px] border-[1.5px] border-border-strong bg-surface-sunken px-2 pt-1 pb-1 font-num text-xs leading-none tracking-[0.12em] text-ink-muted">
                     {o.moto.placa}
                   </span>
                   <span className="truncate">
@@ -203,7 +203,7 @@ function Bahia({ orden: o }: { orden: OrdenResumen }) {
     <Link
       to={rutaOrden('admin', o.publicId)}
       className={cn(
-        'flex h-full flex-col gap-3.5 rounded-md p-[18px] text-ink transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]',
+        'flex h-full flex-col gap-3.5 rounded-md p-4 text-ink transition-[transform,background-color] duration-150 ease-out active:scale-[0.985]',
         espera
           ? 'bg-surface shadow-[0_24px_40px_-28px_var(--color-ink)] ring-[1.5px] ring-ink ring-inset'
           : 'bg-surface-sunken hover:bg-surface-2',
@@ -214,7 +214,7 @@ function Bahia({ orden: o }: { orden: OrdenResumen }) {
         <span className="text-sm leading-5 text-ink-muted">#{o.numero}</span>
       </span>
       <span className="flex items-center gap-3.5">
-        <span className="relative size-[78px] shrink-0">
+        <span className="relative size-20 shrink-0">
           <Arc paso={paso} espera={espera} alerta={repuesto} className="size-full" />
           <span className="absolute inset-0 flex items-center justify-center pt-1 font-num text-2xl">
             {paso}
@@ -282,9 +282,9 @@ function EquipoHoy({ abiertas }: { abiertas: OrdenResumen[] }) {
           return (
             <li
               key={id}
-              className="flex items-center gap-3.5 rounded-md px-[18px] py-4 ring-1 ring-border ring-inset"
+              className="flex items-center gap-3.5 rounded-md px-4 py-4 ring-1 ring-border ring-inset"
             >
-              <Initials nombre={m.nombre} className="size-[46px] rounded-[14px]" />
+              <Initials nombre={m.nombre} className="size-12 rounded-[14px]" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{m.nombre}</span>
                 <span className="block truncate text-sm leading-5 text-ink-muted">
@@ -296,7 +296,7 @@ function EquipoHoy({ abiertas }: { abiertas: OrdenResumen[] }) {
                     <i
                       key={k}
                       className={cn(
-                        'h-[5px] flex-1 rounded-[3px]',
+                        'h-1 flex-1 rounded-[3px]',
                         k < espera ? 'bg-accent' : k < m.ordenes.length ? 'bg-ink' : 'bg-surface-2',
                       )}
                     />

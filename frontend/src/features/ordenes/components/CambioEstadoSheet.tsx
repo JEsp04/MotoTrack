@@ -81,7 +81,7 @@ function Formulario({
             loading={cambiar.isPending}
             disabled={falta}
             onConfirm={enviar}
-            className="min-h-[50px] flex-[1.6]! text-[15px]"
+            className="min-h-13 flex-[1.6]! text-[15px]"
           />
         </>
       }

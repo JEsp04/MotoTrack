@@ -48,7 +48,7 @@ export function AccesoTitulo({
   return (
     <div>
       {antes && <p className="text-sm leading-5 text-ink-muted">{antes}</p>}
-      <h1 className="mt-1 text-[26px] leading-[30px] font-semibold tracking-[-0.03em] first:mt-0">
+      <h1 className="mt-1 text-[26px] leading-8 font-semibold tracking-[-0.03em] first:mt-0">
         {titulo}
       </h1>
       {texto && <p className="mt-1 text-sm leading-5 text-ink-muted">{texto}</p>}

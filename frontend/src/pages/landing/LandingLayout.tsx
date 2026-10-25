@@ -39,7 +39,7 @@ export default function LandingLayout() {
       />
       {titulo && (
         <div
-          className="fixed inset-x-0 top-[72px] bottom-0 z-50 flex items-start justify-end bg-ink/22"
+          className="fixed inset-x-0 top-18 bottom-0 z-50 flex items-start justify-end bg-ink/22"
           onClick={(e) => {
             if (e.target === e.currentTarget) cerrar();
           }}
@@ -48,7 +48,7 @@ export default function LandingLayout() {
             role="dialog"
             aria-modal="true"
             aria-label={titulo}
-            className="auth-in flex size-full flex-col overflow-hidden bg-bg text-ink sm:mt-2 sm:mr-5 sm:h-[min(720px,calc(100%-16px))] sm:w-[440px] sm:rounded-lg sm:shadow-sheet sm:ring-1 sm:ring-ink/6"
+            className="auth-in flex size-full flex-col overflow-hidden bg-bg text-ink sm:mt-2 sm:mr-5 sm:h-[min(720px,calc(100%-16px))] sm:w-110 sm:rounded-lg sm:shadow-sheet sm:ring-1 sm:ring-ink/6"
           >
             <div className="flex shrink-0 items-center gap-2.5 border-b border-border py-1.5 pr-1.5 pl-4">
               <LogoMark className="size-7 rounded-lg" />

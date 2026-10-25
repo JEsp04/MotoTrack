@@ -209,7 +209,7 @@ function CelularCliente() {
                 <HoldButton
                   demo
                   fullWidth
-                  className="min-h-[50px] rounded-2xl text-[15px]"
+                  className="min-h-13 rounded-2xl text-[15px]"
                   label="Mantén para aprobar"
                   doneLabel="Suelta para aprobar"
                   onConfirm={() => setEstado('aprobada')}
@@ -317,7 +317,7 @@ function CelularMecanico() {
                 <HoldButton
                   demo
                   fullWidth
-                  className="min-h-[50px] rounded-2xl text-[15px]"
+                  className="min-h-13 rounded-2xl text-[15px]"
                   label="Mantén para marcar lista"
                   doneLabel="Suelta para confirmar"
                   onConfirm={() => setEstado('lista')}
@@ -427,7 +427,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
             onClick={() => ir('top')}
             aria-label="MotoTrack, ir arriba"
           >
-            <LogoMark className="size-[26px]" />
+            <LogoMark className="size-7" />
             <span>MOTOTRACK</span>
           </button>
           <nav className="lp-links" aria-label="Secciones">
