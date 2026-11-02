@@ -3,7 +3,7 @@
 Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct) y `docs/HISTORIAS-2.md` (segunda etapa, HU-51 a HU-81). Reparto: `docs/REPARTO.md`. Guía de cada sesión: `docs/FLUJO.md`. Diseño: `docs/diseno.md` y `docs/prototipo/`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: sábado 24 de octubre de 2026.
+Última actualización: lunes 2 de noviembre de 2026.
 
 Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
@@ -20,7 +20,7 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E6 · Órdenes de servicio | HU-28 a HU-37 | 21 | ✅ En `develop` (12-oct, PR #13) |
 | E6.5 · Migración al diseño nuevo | HU-41 a HU-50 | 24 | ✅ En `develop` (24-oct, PR #16 a #25) |
 | E8 · Inventario de repuestos | HU-51 a HU-56 | 16 | ⏳ A · `docs/HISTORIAS-2.md` |
-| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V |
+| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V · HU-57 en `develop` (PR #30) |
 | E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ V (61, 62, 63, 65, 66), A (64, 68), J (67) |
 | E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J |
 | E12 · Funciones con costo | HU-76 a HU-81 | 21 | ⛔ Solo si se aprueba el gasto |
@@ -172,7 +172,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 
 ### E9 · Citas y agenda · 11 pts
 
-- [ ] HU-57 · Tabla y API de citas · 3 pts · [V, ronda 1]
+- [x] HU-57 · Tabla y API de citas · 3 pts · [V, ronda 1] · PR #30
 - [ ] HU-58 · Agenda de citas del taller · 3 pts · [V, ronda 2, necesita HU-73]
 - [ ] HU-59 · Pedir una cita como cliente · 3 pts · [V, ronda 2]
 - [ ] HU-60 · Ver, reprogramar y cancelar mis citas · 2 pts · [V, ronda 2]

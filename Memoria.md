@@ -6,14 +6,14 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`; los criterios de aceptación del entregable, en `docs/HISTORIAS.md`; el diseño, en `docs/diseno.md` y `docs/prototipo/`.
 
-Última actualización: sábado 24 de octubre de 2026.
+Última actualización: lunes 2 de noviembre de 2026.
 
 ---
 
 ## Estado actual
 
 - **Avance del entregable (`docs/HISTORIAS.md`):** 47 de 50 historias en `develop` (106 de 112 puntos, ≈ 95 %). Falta **E7 · Despliegue y entrega (HU-38 a HU-40, 6 pts)**, que desde el 24-oct queda de última.
-- **Segunda etapa (`docs/HISTORIAS-2.md`):** HU-51 a HU-75 (E8 a E11, 25 historias, 59 pts, sin costo) más HU-76 a HU-81 (E12, con costo, solo si se aprueban). Repartidas entre A, V y J en `docs/REPARTO.md`. Ninguna empezada.
+- **Segunda etapa (`docs/HISTORIAS-2.md`):** HU-51 a HU-75 (E8 a E11, 25 historias, 59 pts, sin costo) más HU-76 a HU-81 (E12, con costo, solo si se aprueban). Repartidas entre A, V y J en `docs/REPARTO.md`. HU-51 a HU-53 (A) unidas en `develop` (PR #27 a #29). HU-57 (V) unida en `develop` (PR #30). HU-62 (V) en la rama `HU-62`, PR por abrir.
 - **Rama `develop`:** E0 a E6.5 unidas (HU-01 a HU-50), PR #4 a #25. Último commit: `e50feda Merge pull request #25 from JEsp04/HU-50` (24-oct).
   - PR #13: E6 · órdenes de servicio (`feature/ordenes`).
   - PR #14: guardián de tokens de color (`npm run check:tokens`).
@@ -92,6 +92,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 17-oct | Ramas `HU-<número>`, una por historia. Comandos para Git Bash en Windows (no PowerShell) |
 | 24-oct | Segunda etapa: HU-51 a HU-81 en `docs/HISTORIAS-2.md`. **E7 queda de última**, después de HU-51 a HU-75. E12 (HU-76 a HU-81) solo con aprobación de gasto |
 | 24-oct | Reparto por tema (`docs/REPARTO.md`): A inventario + HU-38, V citas y cliente + HU-39, J avisos y taller + HU-40. Revisiones cruzadas: A→V, V→J, J→A. Se puede cambiar si alguien prefiere front o back |
+| 2-nov | Citas (HU-57): bloques de 30 minutos; una sola cita programada o confirmada por hora; horario por defecto L-V 8:00-18:00, sábado 8:00-12:00, domingo cerrado. Si `horarioAtencion` del taller se entiende («Lunes a viernes, 8:00 a. m. a 6:00 p. m.; sábado, 8:00 a. m. a 12:00 m.»), se usa ese. El horario del seed se cambió a ese texto para que el sábado sea hasta las 12. El cliente solo reprograma o cancela; confirmar y marcar atendida es del admin; el mecánico solo consulta |
 
 ## Cosas a tener en cuenta
 
@@ -117,4 +118,5 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 17-oct | Prototipo nuevo aprobado, `docs/diseno.md` y E6.5 (HU-41 a HU-50) en `docs/HISTORIAS.md`. Desarrollo de E6.5 (17 y 18-oct) |
 | 24-oct | PR #16 a #25 (E6.5) unidos en `develop`. `PROGRESS.md` y `Memoria.md` alineados con `docs/HISTORIAS.md`: E6 y E6.5 marcadas como unidas, avance 47/50 (106/112 pts), E7 desglosada por criterios de aceptación y fecha nueva pendiente |
 | 24-oct (tarde) | Nuevas historias HU-51 a HU-81 (`docs/HISTORIAS-2.md`), reparto entre A, V y J (`docs/REPARTO.md`) y guía de sesión (`docs/FLUJO.md`). `PROGRESS.md` y `Memoria.md` sincronizados con el reparto; siguiente: Ronda 1 |
+| 2-nov | V: HU-57 · tabla `citas` (migración `20261102172435_citas`), API `/api/citas` (listar, horas libres, ver, crear, reprogramar y cambiar estado), 7 citas en el seed y 21 pruebas. Backend: 133 pruebas en verde. Siguiente de V: HU-62 |
 | 2-nov | V: HU-62 · columna `fechaEstimadaEntrega` (migración `20261102174934_fecha_estimada_entrega`), `PATCH /api/ordenes/:id/entrega` (solo admin), `atrasada` calculada por el backend, y la fecha en la tarjeta, el panel, el detalle, «Nueva orden» y el seguimiento del cliente. Atrasada se pinta con `text-accent-text` como en el prototipo (la HU decía color de peligro: confirmar con el equipo) |

@@ -67,6 +67,14 @@ enum TipoMovimiento {
   ajuste
 }
 
+/// Estados de una cita (HU-57). atendida y cancelada son finales.
+enum EstadoCita {
+  programada
+  confirmada
+  atendida
+  cancelada
+}
+
 // ─── Talleres y usuarios ──────────────────────────────────────────────────
 
 model Taller {
@@ -90,6 +98,7 @@ model Taller {
   servicios        Servicio[]
   repuestos        Repuesto[]
   movimientosStock MovimientoStock[]
+  citas            Cita[]
 
   @@map("talleres")
 }
@@ -117,6 +126,7 @@ model Usuario {
   diagnosticos     Diagnostico[]
   historialOrdenes HistorialOrden[]
   movimientosStock MovimientoStock[]
+  citasCreadas     Cita[]
 
   @@index([tallerId, rol])
   @@map("usuarios")
@@ -158,6 +168,7 @@ model Cliente {
   taller  Taller   @relation(fields: [tallerId], references: [tallerId])
   usuario Usuario? @relation(fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
   motos   Moto[]
+  citas   Cita[]
 
   @@unique([tallerId, documentoIdentidad])
   @@index([tallerId, nombre])
@@ -185,6 +196,7 @@ model Moto {
   taller  Taller          @relation(fields: [tallerId], references: [tallerId])
   cliente Cliente         @relation(fields: [clienteId], references: [clienteId])
   ordenes OrdenServicio[]
+  citas   Cita[]
 
   @@unique([tallerId, placa])
   @@index([clienteId])
@@ -225,6 +237,7 @@ model OrdenServicio {
   servicios        DetalleServicio[]
   historial        HistorialOrden[]
   movimientosStock MovimientoStock[]
+  cita             Cita?
 
   @@unique([tallerId, numero])
   @@index([tallerId, estado])
@@ -377,4 +390,42 @@ model MovimientoStock {
   @@map("movimientos_stock")
 }
 
-// Fuera de esta entrega (se agregan después): citas, recomendaciones de IA y notificaciones.
+// ─── Citas (HU-57) ────────────────────────────────────────────────────────
+
+/// Cita de un cliente para traer su moto. Una hora del taller solo puede tener una cita
+/// programada o confirmada (se revisa en citas.service.ts, no con un índice único,
+/// porque las canceladas liberan la hora).
+model Cita {
+  citaId          Int        @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId        String     @unique @default(uuid(7)) @db.Char(36)
+  tallerId        Int
+  motocicletaId   Int
+  clienteId       Int
+  /// Día y hora de la cita, en UTC. Se muestra en hora de Colombia.
+  fechaHora       DateTime
+  /// Lo que necesita el cliente, por ejemplo «Cambio de aceite»
+  motivo          String     @db.VarChar(150)
+  detalle         String?    @db.VarChar(500)
+  estado          EstadoCita @default(programada)
+  /// El cliente quiere un recordatorio un día antes (el envío real llega con E12)
+  recordatorio    Boolean    @default(false)
+  /// Orden que se abrió cuando llegó la moto (HU-58)
+  ordenServicioId Int?       @unique
+  creadoPorId     Int
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+
+  taller    Taller         @relation(fields: [tallerId], references: [tallerId])
+  moto      Moto           @relation(fields: [motocicletaId], references: [motocicletaId])
+  cliente   Cliente        @relation(fields: [clienteId], references: [clienteId])
+  orden     OrdenServicio? @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: SetNull)
+  creadoPor Usuario        @relation(fields: [creadoPorId], references: [usuarioId])
+
+  @@index([tallerId, fechaHora])
+  @@index([clienteId, fechaHora])
+  @@index([motocicletaId])
+  @@map("citas")
+}
+
+// Fuera de esta entrega (se agregan después): recomendaciones de IA y notificaciones.
