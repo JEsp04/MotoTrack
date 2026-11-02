@@ -5,6 +5,7 @@ import {
   cambiarEstadoSchema,
   crearOrdenSchema,
   diagnosticoSchema,
+  fechaEntregaSchema,
   listarOrdenesSchema,
   retiroSchema,
 } from './ordenes.schemas.js';
@@ -30,6 +31,13 @@ export async function cambiarEstado(req: ConId, res: Response) {
   const input = cambiarEstadoSchema.parse(req.body);
   res.json({
     data: await ordenesService.cambiarEstado(usuarioActual(req), req.params.id, input),
+  });
+}
+
+export async function fechaEntrega(req: ConId, res: Response) {
+  const input = fechaEntregaSchema.parse(req.body);
+  res.json({
+    data: await ordenesService.cambiarFechaEntrega(usuarioActual(req), req.params.id, input),
   });
 }
 

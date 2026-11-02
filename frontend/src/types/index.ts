@@ -110,6 +110,10 @@ export interface OrdenResumen {
   retiroPendiente: boolean;
   /** HU-66: solo llega al admin y al cliente dueño mientras el retiro está pendiente */
   codigoRetiro: string | null;
+  /** HU-62 · Día «AAAA-MM-DD» o null si no se ha puesto */
+  fechaEstimadaEntrega: string | null;
+  /** HU-62 · La fecha ya pasó y la moto no está lista (lo calcula el backend) */
+  atrasada: boolean;
   moto: {
     publicId: string;
     placa: string;

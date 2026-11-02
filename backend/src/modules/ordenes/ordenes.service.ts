@@ -9,6 +9,7 @@ import {
   actorDe,
   ESTADOS_CERRADOS,
   ESTADOS_EDITABLES,
+  ESTADOS_SIN_ATRASO,
   ETIQUETAS,
   GRUPOS,
   TRANSICIONES,
@@ -19,6 +20,7 @@ import type {
   CambiarEstadoInput,
   CrearOrdenInput,
   DiagnosticoInput,
+  FechaEntregaInput,
   ListarOrdenesQuery,
   RetiroInput,
 } from './ordenes.schemas.js';
@@ -38,6 +40,7 @@ const ordenResumen = {
   fechaIngreso: true,
   fechaEntrega: true,
   codigoRetiro: true,
+  fechaEstimadaEntrega: true,
   moto: {
     select: {
       publicId: true,
@@ -133,6 +136,42 @@ function exigirCodigo(esperado: string | null, codigo: string | undefined) {
   }
 }
 
+// ─── HU-62 · Fecha estimada de entrega ─────────────────────────────────────
+
+const DESFASE_COLOMBIA_MS = 5 * 60 * 60 * 1000;
+
+/** Día (AAAA-MM-DD) en hora de Colombia */
+export function diaColombia(fecha: Date) {
+  return new Date(fecha.getTime() - DESFASE_COLOMBIA_MS).toISOString().slice(0, 10);
+}
+
+/**
+ * Cambia la fecha estimada (Date a medianoche UTC) por «AAAA-MM-DD» y agrega `atrasada`:
+ * la fecha ya pasó (en hora de Colombia) y la moto todavía no está lista.
+ */
+function conEntrega<T extends { estado: EstadoOrden; fechaEstimadaEntrega: Date | null }>(
+  orden: T,
+) {
+  const dia = orden.fechaEstimadaEntrega?.toISOString().slice(0, 10) ?? null;
+  return {
+    ...orden,
+    fechaEstimadaEntrega: dia,
+    atrasada:
+      dia !== null && !ESTADOS_SIN_ATRASO.includes(orden.estado) && dia < diaColombia(new Date()),
+  };
+}
+
+/** La fecha estimada no puede ser anterior al día de ingreso (400) */
+function exigirEntregaValida(dia: string | null, fechaIngreso: Date) {
+  if (dia === null) return null;
+  const ingreso = diaColombia(fechaIngreso);
+  if (dia < ingreso) {
+    const msg = 'La fecha estimada de entrega no puede ser anterior a la fecha de ingreso';
+    throw HttpError.badRequest(msg, [{ field: 'fechaEstimadaEntrega', message: msg }]);
+  }
+  return new Date(`${dia}T00:00:00Z`);
+}
+
 // ─── Acceso ────────────────────────────────────────────────────────────────
 
 /** Qué órdenes puede ver cada rol (HU-30). */
@@ -188,7 +227,7 @@ async function detalle(usuario: UsuarioAutenticado, ordenServicioId: number) {
     where: { ordenServicioId },
     select: ordenDetalle,
   });
-  return conRetiro(usuario, orden);
+  return conRetiro(usuario, conEntrega(orden));
 }
 
 // ─── HU-30 · Lista ─────────────────────────────────────────────────────────
@@ -220,7 +259,7 @@ export async function listarOrdenes(usuario: UsuarioAutenticado, query: ListarOr
     prisma.ordenServicio.count({ where }),
   ]);
   return {
-    data: ordenes.map((o) => conRetiro(usuario, o)),
+    data: ordenes.map((o) => conRetiro(usuario, conEntrega(o))),
     meta: { page: query.page, limit: query.limit, total },
   };
 }
@@ -270,6 +309,8 @@ export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenI
     ]);
   }
 
+  const fechaEstimadaEntrega = exigirEntregaValida(input.fechaEstimadaEntrega, new Date());
+
   // El número es consecutivo por taller. Si dos órdenes se crean a la vez y chocan,
   // la llave única (tallerId, numero) lo detecta y se reintenta.
   for (let intento = 0; ; intento++) {
@@ -289,6 +330,7 @@ export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenI
             motivoIngreso: input.motivoIngreso,
             kilometrajeIngreso: input.kilometrajeIngreso,
             observaciones: input.observaciones,
+            fechaEstimadaEntrega,
             historial: {
               create: {
                 usuarioId: usuario.usuarioId,
@@ -387,6 +429,36 @@ async function aplicarCambio(
   await tx.historialOrden.create({
     data: { ordenServicioId, usuarioId, estadoAnterior: de, estadoNuevo: a, observacion },
   });
+}
+
+// ─── HU-62 · Cambiar la fecha estimada de entrega ──────────────────────────
+
+/**
+ * PATCH /api/ordenes/:id/entrega. Solo el admin, mientras la moto siga en el taller.
+ * Se usa al recibir la moto, al aprobar la cotización o cuando hay que moverla.
+ */
+export async function cambiarFechaEntrega(
+  usuario: UsuarioAutenticado,
+  publicId: string,
+  input: FechaEntregaInput,
+) {
+  const orden = await buscarOrden(usuario, publicId);
+  exigirActor(orden.actor, ['admin']);
+  if (ESTADOS_CERRADOS.includes(orden.estado)) {
+    throw HttpError.conflict(
+      `La fecha estimada ya no se puede cambiar: la orden está ${ETIQUETAS[orden.estado]}`,
+    );
+  }
+  const { fechaIngreso } = await prisma.ordenServicio.findUniqueOrThrow({
+    where: { ordenServicioId: orden.id },
+    select: { fechaIngreso: true },
+  });
+  const fechaEstimadaEntrega = exigirEntregaValida(input.fechaEstimadaEntrega, fechaIngreso);
+  await prisma.ordenServicio.update({
+    where: { ordenServicioId: orden.id },
+    data: { fechaEstimadaEntrega },
+  });
+  return detalle(usuario, orden.id);
 }
 
 // ─── HU-32 · Diagnóstico ───────────────────────────────────────────────────

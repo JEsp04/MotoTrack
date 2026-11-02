@@ -2,7 +2,7 @@ import { Link } from 'react-router';
 import { Arc, Button, EmptyState, Fab, Initials, Plate, Skeleton } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
-import { formatPesos } from '@/lib/format';
+import { formatDia, formatPesos } from '@/lib/format';
 import type { OrdenResumen } from '@/types';
 import { rutaOrden } from '../estados';
 import { usePanelTaller } from '../hooks/use-ordenes';
@@ -180,7 +180,7 @@ function Lecturas({
   );
 }
 
-/** Pie de la tarjeta, como foot() del prototipo (sin la fecha de entrega, que aún no existe) */
+/** Pie de la tarjeta, como foot() del prototipo: «Andrés, entrega 5 nov» (HU-62) */
 function Pie({ orden: o }: { orden: OrdenResumen }) {
   const primer = o.mecanico.nombre.split(' ')[0];
   if (o.estado === 'esperando_aprobacion')
@@ -190,6 +190,12 @@ function Pie({ orden: o }: { orden: OrdenResumen }) {
     return <span className="min-w-0 truncate">{primer} debe diagnosticar</span>;
   if (o.estado === 'lista_entrega')
     return <span className="min-w-0 truncate">Lista para entregar</span>;
+  if (o.fechaEstimadaEntrega)
+    return (
+      <span className="min-w-0 truncate">
+        {primer}, entrega {formatDia(o.fechaEstimadaEntrega)}
+      </span>
+    );
   return <span className="min-w-0 truncate">Con {primer}</span>;
 }
 

@@ -83,6 +83,12 @@ export const ETIQUETAS: Record<EstadoOrden, string> = {
 /** Una orden está abierta mientras la moto sigue en el taller */
 export const ESTADOS_CERRADOS: EstadoOrden[] = ['entregada', 'cerrada', 'cancelada'];
 
+/**
+ * Estados en los que una orden ya no puede estar atrasada (HU-62):
+ * la moto está lista, ya salió del taller o la orden se canceló.
+ */
+export const ESTADOS_SIN_ATRASO: EstadoOrden[] = ['lista_entrega', ...ESTADOS_CERRADOS];
+
 /** Estados en los que todavía se puede editar el diagnóstico y los servicios */
 export const ESTADOS_EDITABLES: EstadoOrden[] = ['registrada', 'diagnosticada'];
 

@@ -18,6 +18,8 @@ export interface NuevaOrdenBody {
   motivoIngreso: string;
   kilometrajeIngreso: number;
   observaciones?: string;
+  /** HU-62 · «AAAA-MM-DD» */
+  fechaEstimadaEntrega?: string;
 }
 
 export interface DiagnosticoBody {
@@ -86,6 +88,11 @@ export const ordenesApi = {
         params: { estado: 'cancelada', page: 1, limit: POR_PAGINA },
       })
       .then((r) => r.data.data.filter((o) => o.retiroPendiente)),
+  /** HU-62 · Solo el admin. null la borra. */
+  cambiarEntrega: (publicId: string, fechaEstimadaEntrega: string | null) =>
+    http
+      .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/entrega`, { fechaEstimadaEntrega })
+      .then(detalle),
 
   guardarDiagnostico: (publicId: string, body: DiagnosticoBody) =>
     http.post<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/diagnostico`, body).then(detalle),

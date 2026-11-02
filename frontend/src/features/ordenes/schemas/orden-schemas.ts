@@ -42,6 +42,18 @@ export const nuevaOrdenSchema = z.object({
     .refine((v) => v === undefined || v <= 2_000_000, 'Revisa el kilometraje')
     .transform((v) => v!),
   observaciones: z.string().trim().max(2000, 'Máximo 2000 caracteres'),
+  /** HU-62 · Opcional. No puede ser antes de hoy (el día de ingreso) */
+  fechaEstimadaEntrega: z
+    .string()
+    .refine((v) => v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v), 'Elige una fecha válida'),
 });
+
+/** HU-62 · Cambiar la fecha estimada (vacío = quitarla) */
+export const entregaSchema = z.object({
+  fechaEstimadaEntrega: z
+    .string()
+    .refine((v) => v === '' || /^\d{4}-\d{2}-\d{2}$/.test(v), 'Elige una fecha válida'),
+});
+export type EntregaForm = z.infer<typeof entregaSchema>;
 export type NuevaOrdenValues = z.input<typeof nuevaOrdenSchema>;
 export type NuevaOrdenOutput = z.output<typeof nuevaOrdenSchema>;
