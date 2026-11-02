@@ -180,7 +180,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 ### E10 · El día a día del taller · 16 pts
 
 - [ ] HU-61 · Ficha de la moto con su historial · 2 pts · [V, ronda 3, al inicio: J la necesita]
-- [ ] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1]
+- [~] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1] · rama `HU-62`, por abrir PR
 - [ ] HU-63 · Reasignar el mecánico de una orden *(deseable)* · 1 pt · [V, ronda 3]
 - [ ] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2]
 - [ ] HU-65 · Inicio del cliente · 2 pts · [V, ronda 3]

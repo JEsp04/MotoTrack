@@ -1,12 +1,14 @@
 import { Link } from 'react-router';
 import { Icon, Plate, StatusBadge } from '@/components/ui';
-import { formatFecha } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { formatDia, formatFecha } from '@/lib/format';
 import type { OrdenResumen, Rol } from '@/types';
 import { rutaOrden } from '../estados';
 
 /**
  * Tarjeta de una orden (OrderCard del prototipo): placa, moto y cliente; estado y número;
- * abajo el mecánico y la fecha de ingreso (la fecha estimada de entrega llega con su HU).
+ * abajo el mecánico y la entrega estimada («Atrasada · 5 nov» si ya pasó, HU-62).
+ * Sin fecha estimada, muestra el día de ingreso.
  */
 export function OrdenCard({ orden, rol }: { orden: OrdenResumen; rol: Rol }) {
   return (
@@ -37,10 +39,23 @@ export function OrdenCard({ orden, rol }: { orden: OrdenResumen; rol: Rol }) {
           <Icon name="wrench" size={16} />
           <span className="truncate">{orden.mecanico.nombre}</span>
         </span>
-        <span className="inline-flex shrink-0 items-center gap-1">
-          <Icon name="clock" size={16} />
-          Ingresó {formatFecha(orden.fechaIngreso).replace(/ de \d{4}$/, '')}
-        </span>
+        {orden.fechaEstimadaEntrega ? (
+          <span
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1',
+              orden.atrasada && 'font-semibold text-accent-text',
+            )}
+          >
+            <Icon name={orden.atrasada ? 'alert' : 'clock'} size={16} />
+            {orden.atrasada ? 'Atrasada · ' : 'Entrega '}
+            {formatDia(orden.fechaEstimadaEntrega)}
+          </span>
+        ) : (
+          <span className="inline-flex shrink-0 items-center gap-1">
+            <Icon name="clock" size={16} />
+            Ingresó {formatFecha(orden.fechaIngreso).replace(/ de \d{4}$/, '')}
+          </span>
+        )}
       </span>
     </Link>
   );

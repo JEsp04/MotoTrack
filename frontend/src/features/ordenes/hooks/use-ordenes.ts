@@ -120,6 +120,14 @@ export function useCambiarEstado(publicId: string) {
   });
 }
 
+export function useCambiarEntrega(publicId: string) {
+  const alGuardar = useAlGuardar();
+  return useMutation({
+    mutationFn: (dia: string | null) => ordenesApi.cambiarEntrega(publicId, dia),
+    onSuccess: alGuardar,
+  });
+}
+
 export function useGuardarDiagnostico(publicId: string) {
   const alGuardar = useAlGuardar();
   return useMutation({

@@ -25,6 +25,17 @@ const textoLargo = (campo: string, min: number, max: number) =>
     )
     .max(max, `${campo} admite máximo ${max} caracteres`);
 
+/** Día AAAA-MM-DD (fecha estimada de entrega, HU-62). Se valida contra el ingreso en el servicio. */
+const diaEntrega = z
+  .string({ error: 'Escribe la fecha estimada de entrega' })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha estimada debe tener el formato AAAA-MM-DD')
+  .refine(
+    (v) =>
+      !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) &&
+      new Date(`${v}T00:00:00Z`).toISOString().startsWith(v),
+    'La fecha estimada no es válida',
+  );
+
 /** POST /api/ordenes (HU-29) */
 export const crearOrdenSchema = z.object({
   motoPublicId: z.uuid({ error: 'Elige la moto' }),
@@ -36,6 +47,18 @@ export const crearOrdenSchema = z.object({
     .min(0, 'El kilometraje no puede ser negativo')
     .max(2_000_000, 'Revisa el kilometraje'),
   observaciones: textoOpcional('Las observaciones', 2000),
+  /** HU-62 · Opcional al recibir la moto */
+  fechaEstimadaEntrega: z
+    .union([z.literal(''), z.null(), diaEntrega])
+    .optional()
+    .transform((v) => v || null),
+});
+
+/** PATCH /api/ordenes/:id/entrega (HU-62). null la borra. */
+export const fechaEntregaSchema = z.object({
+  fechaEstimadaEntrega: z.union([z.null(), diaEntrega], {
+    error: 'Escribe la fecha estimada de entrega',
+  }),
 });
 
 /** GET /api/ordenes (HU-30) */
@@ -92,4 +115,5 @@ export type CrearOrdenInput = z.infer<typeof crearOrdenSchema>;
 export type ListarOrdenesQuery = z.infer<typeof listarOrdenesSchema>;
 export type CambiarEstadoInput = z.infer<typeof cambiarEstadoSchema>;
 export type DiagnosticoInput = z.infer<typeof diagnosticoSchema>;
+export type FechaEntregaInput = z.infer<typeof fechaEntregaSchema>;
 export type AgregarServicioInput = z.infer<typeof agregarServicioSchema>;
