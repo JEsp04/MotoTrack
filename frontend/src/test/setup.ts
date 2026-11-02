@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+
+// En equipos lentos las páginas que se cargan con lazy tardan más de 1 s en aparecer
+configure({ asyncUtilTimeout: 5000 });
 
 afterEach(() => cleanup());
 
