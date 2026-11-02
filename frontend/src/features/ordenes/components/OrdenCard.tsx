@@ -43,7 +43,7 @@ export function OrdenCard({ orden, rol }: { orden: OrdenResumen; rol: Rol }) {
           <span
             className={cn(
               'inline-flex shrink-0 items-center gap-1',
-              orden.atrasada && 'font-semibold text-accent-text',
+              orden.atrasada && 'font-semibold text-danger-text',
             )}
           >
             <Icon name={orden.atrasada ? 'alert' : 'clock'} size={16} />

@@ -466,7 +466,7 @@ function Resumen({
             orden.fechaEstimadaEntrega
               ? [
                   'Entrega estimada',
-                  <span className={orden.atrasada ? 'text-accent-text' : undefined}>
+                  <span className={orden.atrasada ? 'text-danger-text' : undefined}>
                     {formatDia(orden.fechaEstimadaEntrega)}
                     {orden.atrasada ? ' · atrasada' : ''}
                   </span>,
