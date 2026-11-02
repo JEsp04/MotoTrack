@@ -206,26 +206,28 @@ model Moto {
 // ─── Órdenes de servicio ──────────────────────────────────────────────────
 
 model OrdenServicio {
-  ordenServicioId    Int         @id @default(autoincrement())
+  ordenServicioId      Int         @id @default(autoincrement())
   /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
-  publicId           String      @unique @default(uuid(7)) @db.Char(36)
-  tallerId           Int
+  publicId             String      @unique @default(uuid(7)) @db.Char(36)
+  tallerId             Int
   /// Consecutivo dentro del taller (#1, #2, ...)
-  numero             Int
-  motocicletaId      Int
-  mecanicoId         Int
-  creadoPorId        Int
-  estado             EstadoOrden @default(registrada)
-  motivoIngreso      String      @db.Text
-  kilometrajeIngreso Int
+  numero               Int
+  motocicletaId        Int
+  mecanicoId           Int
+  creadoPorId          Int
+  estado               EstadoOrden @default(registrada)
+  motivoIngreso        String      @db.Text
+  kilometrajeIngreso   Int
   /// Suma de los subtotales de detalle_servicios, en pesos
-  costoTotal         Int         @default(0)
-  observaciones      String?     @db.Text
-  fechaIngreso       DateTime    @default(now())
-  fechaEntrega       DateTime?
-  fechaCierre        DateTime?
-  creadoEn           DateTime    @default(now())
-  actualizadoEn      DateTime    @updatedAt
+  costoTotal           Int         @default(0)
+  observaciones        String?     @db.Text
+  fechaIngreso         DateTime    @default(now())
+  /// Día en que se espera entregar la moto (HU-62). Solo el día, sin hora.
+  fechaEstimadaEntrega DateTime?   @db.Date
+  fechaEntrega         DateTime?
+  fechaCierre          DateTime?
+  creadoEn             DateTime    @default(now())
+  actualizadoEn        DateTime    @updatedAt
 
   taller           Taller            @relation(fields: [tallerId], references: [tallerId])
   moto             Moto              @relation(fields: [motocicletaId], references: [motocicletaId])

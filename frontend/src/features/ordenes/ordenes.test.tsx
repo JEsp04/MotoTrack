@@ -26,6 +26,7 @@ vi.mock('./api/ordenes-api', () => ({
     obtener: vi.fn(),
     crear: vi.fn(),
     cambiarEstado: vi.fn(),
+    cambiarEntrega: vi.fn(),
     guardarDiagnostico: vi.fn(),
     agregarServicio: vi.fn(),
     quitarServicio: vi.fn(),
@@ -437,5 +438,56 @@ describe('HU-29 · Crear una orden', () => {
       kilometrajeIngreso: 34500,
       observaciones: undefined,
     });
+  });
+});
+
+describe('HU-62 · Fecha estimada de entrega', () => {
+  it('la tarjeta muestra la entrega y marca la atrasada', async () => {
+    sesionDePrueba('mecanico');
+    api.listar.mockResolvedValue(
+      lista([
+        ordenResumen({ numero: 12, fechaEstimadaEntrega: '2026-11-01', atrasada: true }),
+        ordenResumen({ numero: 13, fechaEstimadaEntrega: '2026-11-05' }),
+      ]),
+    );
+    abrirApp('/mecanico');
+    const ul = await screen.findByRole('list', { name: 'Órdenes' });
+    expect(within(ul).getByText(/Atrasada · 1 nov/)).toBeInTheDocument();
+    expect(within(ul).getByText(/Entrega 5 nov/)).toBeInTheDocument();
+  });
+
+  it('el admin ve «atrasada» en el detalle y cambia la fecha', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({ fechaEstimadaEntrega: '2026-11-01', atrasada: true });
+    api.obtener.mockResolvedValue(orden);
+    api.cambiarEntrega.mockResolvedValue({ ...orden, fechaEstimadaEntrega: '2026-11-20' });
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('1 nov · atrasada')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar entrega' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Entrega estimada' }));
+    const campo = hoja.getByLabelText(/Entrega estimada/);
+    fireEvent.change(campo, { target: { value: '2026-11-20' } });
+    await userEvent.click(hoja.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() =>
+      expect(api.cambiarEntrega).toHaveBeenCalledWith(orden.publicId, '2026-11-20'),
+    );
+  });
+
+  it('el mecánico no puede cambiarla', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ fechaEstimadaEntrega: '2026-11-05' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('5 nov')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cambiar entrega' })).not.toBeInTheDocument();
+  });
+
+  it('el cliente la ve en el seguimiento', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({ estado: 'en_reparacion', fechaEstimadaEntrega: '2026-11-05' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('Entrega estimada: 5 nov')).toBeInTheDocument();
   });
 });
