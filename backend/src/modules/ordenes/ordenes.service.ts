@@ -4,6 +4,7 @@ import type { UsuarioAutenticado } from '../../types/express.js';
 import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
+import { nuevoCodigoRetiro } from './codigo-retiro.js';
 import {
   actorDe,
   ESTADOS_CERRADOS,
@@ -19,6 +20,7 @@ import type {
   CrearOrdenInput,
   DiagnosticoInput,
   ListarOrdenesQuery,
+  RetiroInput,
 } from './ordenes.schemas.js';
 
 const NO_ENCONTRADA = 'No encontramos esta orden';
@@ -34,6 +36,8 @@ const ordenResumen = {
   motivoIngreso: true,
   costoTotal: true,
   fechaIngreso: true,
+  fechaEntrega: true,
+  codigoRetiro: true,
   moto: {
     select: {
       publicId: true,
@@ -51,7 +55,6 @@ const ordenDetalle = {
   ...ordenResumen,
   kilometrajeIngreso: true,
   observaciones: true,
-  fechaEntrega: true,
   fechaCierre: true,
   moto: {
     select: {
@@ -98,6 +101,38 @@ const ordenDetalle = {
   },
 } satisfies Prisma.OrdenServicioSelect;
 
+// ─── HU-66 · Código de retiro ──────────────────────────────────────────────
+
+/**
+ * La moto espera que la recojan: lista para entregar, o cancelada y aún sin retirar.
+ * El código solo lo reciben el admin y el cliente dueño (a un cliente solo le llegan sus
+ * órdenes); el mecánico nunca.
+ */
+function conRetiro<
+  T extends { estado: EstadoOrden; fechaEntrega: Date | null; codigoRetiro: string | null },
+>(usuario: UsuarioAutenticado, orden: T) {
+  const retiroPendiente =
+    orden.estado === 'lista_entrega' ||
+    (orden.estado === 'cancelada' && orden.fechaEntrega === null && orden.codigoRetiro !== null);
+  const codigoRetiro = retiroPendiente && usuario.rol !== 'mecanico' ? orden.codigoRetiro : null;
+  return { ...orden, codigoRetiro, retiroPendiente };
+}
+
+/** 400 si falta el código o no coincide. Una orden sin código (anterior a HU-66) no lo pide. */
+function exigirCodigo(esperado: string | null, codigo: string | undefined) {
+  if (!esperado) return;
+  if (!codigo) {
+    throw HttpError.badRequest('Datos inválidos', [
+      { field: 'codigo', message: 'Escribe el código de retiro que tiene el cliente' },
+    ]);
+  }
+  if (codigo !== esperado) {
+    throw HttpError.badRequest('El código de retiro no coincide', [
+      { field: 'codigo', message: 'El código no coincide. Pídele al cliente que lo revise' },
+    ]);
+  }
+}
+
 // ─── Acceso ────────────────────────────────────────────────────────────────
 
 /** Qué órdenes puede ver cada rol (HU-30). */
@@ -123,6 +158,8 @@ async function buscarOrden(usuario: UsuarioAutenticado, publicId: string) {
       ordenServicioId: true,
       estado: true,
       mecanicoId: true,
+      fechaEntrega: true,
+      codigoRetiro: true,
       moto: { select: { cliente: { select: { usuarioId: true } } } },
     },
   });
@@ -132,7 +169,13 @@ async function buscarOrden(usuario: UsuarioAutenticado, publicId: string) {
     throw HttpError.notFound(NO_ENCONTRADA);
   }
   const actor = actorDe(usuario, { mecanicoId: orden.mecanicoId, clienteUsuarioId });
-  return { id: orden.ordenServicioId, estado: orden.estado, actor };
+  return {
+    id: orden.ordenServicioId,
+    estado: orden.estado,
+    fechaEntrega: orden.fechaEntrega,
+    codigoRetiro: orden.codigoRetiro,
+    actor,
+  };
 }
 
 function exigirActor(actor: Actor | null, permitidos: Actor[]) {
@@ -140,11 +183,12 @@ function exigirActor(actor: Actor | null, permitidos: Actor[]) {
 }
 
 /** Respuesta del detalle, sin los Int */
-async function detalle(ordenServicioId: number) {
-  return prisma.ordenServicio.findUniqueOrThrow({
+async function detalle(usuario: UsuarioAutenticado, ordenServicioId: number) {
+  const orden = await prisma.ordenServicio.findUniqueOrThrow({
     where: { ordenServicioId },
     select: ordenDetalle,
   });
+  return conRetiro(usuario, orden);
 }
 
 // ─── HU-30 · Lista ─────────────────────────────────────────────────────────
@@ -175,14 +219,17 @@ export async function listarOrdenes(usuario: UsuarioAutenticado, query: ListarOr
     }),
     prisma.ordenServicio.count({ where }),
   ]);
-  return { data: ordenes, meta: { page: query.page, limit: query.limit, total } };
+  return {
+    data: ordenes.map((o) => conRetiro(usuario, o)),
+    meta: { page: query.page, limit: query.limit, total },
+  };
 }
 
 // ─── HU-31 · Detalle ───────────────────────────────────────────────────────
 
 export async function obtenerOrden(usuario: UsuarioAutenticado, publicId: string) {
   const orden = await buscarOrden(usuario, publicId);
-  return detalle(orden.id);
+  return detalle(usuario, orden.id);
 }
 
 // ─── HU-29 · Crear ─────────────────────────────────────────────────────────
@@ -258,7 +305,7 @@ export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenI
         });
         return orden.ordenServicioId;
       });
-      return detalle(id);
+      return detalle(usuario, id);
     } catch (error) {
       if (intento < 3 && esDuplicado(error, 'numero')) continue;
       throw error;
@@ -293,6 +340,8 @@ export async function cambiarEstado(
       { field: 'observacion', message: transicion.observacionObligatoria },
     ]);
   }
+  // HU-66: entregar la moto pide el código que tiene el cliente
+  if (input.estado === 'entregada') exigirCodigo(orden.codigoRetiro, input.codigo);
 
   // HU-34 alterno B: el admin registra la decisión que el cliente dio por teléfono
   let observacion = input.observacion ?? null;
@@ -306,7 +355,7 @@ export async function cambiarEstado(
   await prisma.$transaction((tx) =>
     aplicarCambio(tx, orden.id, usuario.usuarioId, orden.estado, input.estado, observacion),
   );
-  return detalle(orden.id);
+  return detalle(usuario, orden.id);
 }
 
 /** Cambia el estado y escribe el historial. Siempre dentro de una transacción. */
@@ -325,6 +374,10 @@ async function aplicarCambio(
     data: {
       estado: a,
       ...(a === 'entregada' ? { fechaEntrega: ahora } : {}),
+      // HU-66: la moto queda esperando retiro. Si ya estaba lista, se conserva el mismo código.
+      ...(a === 'lista_entrega' || (a === 'cancelada' && de !== 'lista_entrega')
+        ? { codigoRetiro: nuevoCodigoRetiro() }
+        : {}),
       ...(a === 'cerrada' || a === 'cancelada' ? { fechaCierre: ahora } : {}),
     },
   });
@@ -366,7 +419,7 @@ export async function guardarDiagnostico(
       await aplicarCambio(tx, orden.id, usuario.usuarioId, 'registrada', 'diagnosticada', null);
     }
   });
-  return { creado: orden.estado === 'registrada', orden: await detalle(orden.id) };
+  return { creado: orden.estado === 'registrada', orden: await detalle(usuario, orden.id) };
 }
 
 // ─── HU-33 · Servicios y costo ─────────────────────────────────────────────
@@ -423,7 +476,7 @@ export async function agregarServicio(
     });
     await recalcularTotal(tx, orden.id);
   });
-  return detalle(orden.id);
+  return detalle(usuario, orden.id);
 }
 
 export async function quitarServicio(
@@ -440,5 +493,49 @@ export async function quitarServicio(
     if (count === 0) throw HttpError.notFound('Ese servicio no está en la orden');
     await recalcularTotal(tx, orden.id);
   });
-  return detalle(orden.id);
+  return detalle(usuario, orden.id);
+}
+
+// ─── HU-66 · Retiro sin reparación ─────────────────────────────────────────
+
+/**
+ * El cliente recoge la moto de una orden cancelada (por ejemplo, rechazó la cotización).
+ * Pide el mismo código de retiro, guarda la fecha y lo deja en el historial.
+ */
+export async function registrarRetiro(
+  usuario: UsuarioAutenticado,
+  publicId: string,
+  input: RetiroInput,
+) {
+  const orden = await buscarOrden(usuario, publicId);
+  exigirActor(orden.actor, ['admin']);
+  if (orden.estado !== 'cancelada') {
+    throw HttpError.conflict(
+      `El retiro sin reparación es solo para órdenes canceladas: esta está ${ETIQUETAS[orden.estado]}`,
+    );
+  }
+  if (orden.fechaEntrega || !orden.codigoRetiro) {
+    throw HttpError.conflict('Esta moto ya se retiró del taller');
+  }
+  exigirCodigo(orden.codigoRetiro, input.codigo);
+
+  await prisma.$transaction(async (tx) => {
+    const { count } = await tx.ordenServicio.updateMany({
+      where: { ordenServicioId: orden.id, estado: 'cancelada', fechaEntrega: null },
+      data: { fechaEntrega: new Date() },
+    });
+    if (count === 0) {
+      throw HttpError.conflict('La orden cambió mientras tanto. Recarga e intenta de nuevo.');
+    }
+    await tx.historialOrden.create({
+      data: {
+        ordenServicioId: orden.id,
+        usuarioId: usuario.usuarioId,
+        estadoAnterior: 'cancelada',
+        estadoNuevo: 'cancelada',
+        observacion: 'Moto retirada sin reparación',
+      },
+    });
+  });
+  return detalle(usuario, orden.id);
 }

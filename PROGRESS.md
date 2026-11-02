@@ -184,7 +184,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 - [ ] HU-63 · Reasignar el mecánico de una orden *(deseable)* · 1 pt · [V, ronda 3]
 - [ ] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2]
 - [ ] HU-65 · Inicio del cliente · 2 pts · [V, ronda 3]
-- [ ] HU-66 · Código de retiro para entregar la moto · 2 pts · [V, ronda 1]
+- [~] HU-66 · Código de retiro para entregar la moto · 2 pts · [V, ronda 1] · rama `HU-66`, por abrir PR
 - [ ] HU-67 · Invitar usuarios al taller con un código · 3 pts · [J, ronda 1]
 - [ ] HU-68 · Contactar al cliente por WhatsApp sin costo *(deseable)* · 1 pt · [A, ronda 3, al inicio: J la necesita]
 

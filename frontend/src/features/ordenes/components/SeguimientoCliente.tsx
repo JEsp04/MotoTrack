@@ -17,11 +17,12 @@ import {
 import { parseApiError } from '@/lib/api-error';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
-import { formatPesos } from '@/lib/format';
+import { formatFecha, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import type { OrdenDetalle } from '@/types';
 import { accionesPara, type Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
+import { TarjetaRetiro } from './TarjetaRetiro';
 import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, MOTIVOS_RECHAZO } from '../textos';
 
 /** «$ 132.000» → «$132.000», como el monto grande del prototipo */
@@ -99,6 +100,12 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
       </section>
 
       <Page narrow pb={esperando ? 'actionbar' : undefined}>
+        {orden.retiroPendiente && <TarjetaRetiro orden={orden} />}
+        {cancelada && orden.fechaEntrega && (
+          <Note icon="check">
+            Retiraste tu moto el {formatFecha(orden.fechaEntrega).replace(/ de \d{4}$/, '')}.
+          </Note>
+        )}
         {esperando && (
           <Note icon="clock" tono="accent">
             El taller espera tu respuesta para empezar. Si tienes dudas, escríbele antes de decidir.

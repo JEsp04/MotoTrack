@@ -10,7 +10,7 @@ vi.mock('./api/motos-api', () => ({
   motosApi: { listar: vi.fn(), crear: vi.fn(), actualizar: vi.fn() },
 }));
 vi.mock('@/features/ordenes/api/ordenes-api', () => ({
-  ordenesApi: { listar: vi.fn() },
+  ordenesApi: { listar: vi.fn(), canceladasPorRetirar: vi.fn() },
 }));
 const api = vi.mocked(motosApi);
 const ordenes = vi.mocked(ordenesApi);
@@ -20,6 +20,7 @@ beforeEach(() => {
   useSession.getState().clearSession();
   sesionDePrueba('cliente');
   ordenes.listar.mockResolvedValue(lista([]));
+  ordenes.canceladasPorRetirar.mockResolvedValue([]);
 });
 
 describe('HU-27 · Mis motos', () => {

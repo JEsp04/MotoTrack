@@ -224,6 +224,9 @@ model OrdenServicio {
   fechaIngreso       DateTime    @default(now())
   fechaEntrega       DateTime?
   fechaCierre        DateTime?
+  /// Código de 4 dígitos para retirar la moto (HU-66). Se crea al pasar a lista_entrega
+  /// o al cancelar. Solo lo ven el admin y el cliente dueño.
+  codigoRetiro       String?     @db.Char(4)
   creadoEn           DateTime    @default(now())
   actualizadoEn      DateTime    @updatedAt
 

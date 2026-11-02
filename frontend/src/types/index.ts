@@ -104,6 +104,12 @@ export interface OrdenResumen {
   /** Pesos enteros */
   costoTotal: number;
   fechaIngreso: string;
+  /** Cuándo salió la moto del taller (entregada, o retirada sin reparación) */
+  fechaEntrega: string | null;
+  /** HU-66: la moto espera que la recojan (lista, o cancelada y sin retirar) */
+  retiroPendiente: boolean;
+  /** HU-66: solo llega al admin y al cliente dueño mientras el retiro está pendiente */
+  codigoRetiro: string | null;
   moto: {
     publicId: string;
     placa: string;

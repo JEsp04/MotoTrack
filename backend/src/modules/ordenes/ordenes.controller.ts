@@ -6,6 +6,7 @@ import {
   crearOrdenSchema,
   diagnosticoSchema,
   listarOrdenesSchema,
+  retiroSchema,
 } from './ordenes.schemas.js';
 import * as ordenesService from './ordenes.service.js';
 
@@ -59,5 +60,12 @@ export async function quitarServicio(
       req.params.id,
       req.params.detalleId,
     ),
+  });
+}
+
+export async function retiro(req: ConId, res: Response) {
+  const input = retiroSchema.parse(req.body);
+  res.json({
+    data: await ordenesService.registrarRetiro(usuarioActual(req), req.params.id, input),
   });
 }

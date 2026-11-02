@@ -14,7 +14,9 @@ import { toast } from '@/lib/toast';
 import type { EstadoOrden } from '@/types';
 import { ETIQUETA_ESTADO } from '../textos';
 import type { Accion } from '../estados';
+import { CODIGO_COMPLETO, FALTA_CODIGO } from '../codigo-retiro';
 import { useCambiarEstado } from '../hooks/use-ordenes';
+import { CampoCodigo } from './CampoCodigo';
 
 export interface CambioEstadoSheetProps {
   ordenPublicId: string;
@@ -44,23 +46,34 @@ function Formulario({
   const [observacion, setObservacion] = useState('');
   const [errorCampo, setErrorCampo] = useState<string | null>(null);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [codigo, setCodigo] = useState('');
+  const [errorCodigo, setErrorCodigo] = useState<string | null>(null);
   const obligatoria = Boolean(accion.observacion?.obligatoria);
-  const falta = obligatoria && !observacion.trim();
+  const pideCodigo = Boolean(accion.pideCodigo);
+  const falta =
+    (obligatoria && !observacion.trim()) || (pideCodigo && !CODIGO_COMPLETO.test(codigo));
 
   async function enviar() {
     setErrorGeneral(null);
     if (falta) {
-      setErrorCampo('Escribe la observación para continuar');
+      if (obligatoria && !observacion.trim())
+        setErrorCampo('Escribe la observación para continuar');
+      if (pideCodigo && !CODIGO_COMPLETO.test(codigo)) setErrorCodigo(FALTA_CODIGO);
       return;
     }
     try {
-      await cambiar.mutateAsync({ estado: accion.a, observacion: observacion.trim() || undefined });
+      await cambiar.mutateAsync({
+        estado: accion.a,
+        observacion: observacion.trim() || undefined,
+        codigo: pideCodigo ? codigo : undefined,
+      });
       toast(`Orden: ${ETIQUETA_ESTADO[accion.a]}`, 'success');
       onClose();
     } catch (error) {
       const e = parseApiError(error);
+      if (e.fields.codigo) setErrorCodigo(e.fields.codigo);
       if (e.fields.observacion) setErrorCampo(e.fields.observacion);
-      else setErrorGeneral(e.message);
+      if (!e.fields.codigo && !e.fields.observacion) setErrorGeneral(e.message);
     }
   }
 
@@ -100,6 +113,16 @@ function Formulario({
           Total de la cotización:{' '}
           <span className="font-semibold text-ink">{formatPesos(total)}</span>
         </p>
+      )}
+      {pideCodigo && (
+        <CampoCodigo
+          valor={codigo}
+          error={errorCodigo}
+          onChange={(v) => {
+            setCodigo(v);
+            setErrorCodigo(null);
+          }}
+        />
       )}
       <Textarea
         label="Observación"

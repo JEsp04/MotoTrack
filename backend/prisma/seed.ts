@@ -282,6 +282,18 @@ async function main() {
       },
       servicios: ['Revisión del sistema eléctrico'],
     },
+    {
+      // HU-66: lista para entregar; Sofía no tiene cuenta, el admin le da el código por teléfono
+      moto: boxer,
+      mecanico: andres,
+      motivo: 'Cambio de aceite y ajuste de cadena.',
+      estados: hasta('lista_entrega'),
+      diagnostico: {
+        hallazgos: 'Aceite vencido y cadena destensionada.',
+        trabajoRecomendado: 'Cambio de aceite con filtro y ajuste de cadena.',
+      },
+      servicios: ['Cambio de aceite y filtro', 'Ajuste y lubricación de cadena'],
+    },
   ];
 
   for (const [i, o] of ordenes.entries()) {
@@ -309,6 +321,8 @@ async function main() {
         costoTotal: detalles.reduce((total, d) => total + d.subtotal, 0),
         fechaEntrega: o.estados.includes('entregada') ? new Date() : null,
         fechaCierre: estadoFinal === 'cerrada' ? new Date() : null,
+        // HU-66: código fijo en los datos de ejemplo para probar la entrega
+        codigoRetiro: estadoFinal === 'lista_entrega' ? '4821' : null,
         diagnostico: o.diagnostico
           ? { create: { usuarioId: o.mecanico.usuarioId, ...o.diagnostico } }
           : undefined,

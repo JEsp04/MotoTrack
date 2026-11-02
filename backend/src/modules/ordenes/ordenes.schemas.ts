@@ -25,6 +25,12 @@ const textoLargo = (campo: string, min: number, max: number) =>
     )
     .max(max, `${campo} admite máximo ${max} caracteres`);
 
+/** Código de retiro de 4 dígitos (HU-66) */
+const codigoRetiro = z
+  .string({ error: 'Escribe el código de retiro' })
+  .trim()
+  .regex(/^\d{4}$/, 'El código de retiro tiene 4 dígitos');
+
 /** POST /api/ordenes (HU-29) */
 export const crearOrdenSchema = z.object({
   motoPublicId: z.uuid({ error: 'Elige la moto' }),
@@ -59,6 +65,13 @@ export const cambiarEstadoSchema = z.object({
     .max(1000, 'La observación admite máximo 1000 caracteres')
     .optional()
     .transform((v) => v || undefined),
+  /** HU-66: obligatorio para pasar a entregada */
+  codigo: codigoRetiro.optional(),
+});
+
+/** POST /api/ordenes/:id/retiro (HU-66) */
+export const retiroSchema = z.object({
+  codigo: codigoRetiro,
 });
 
 /** POST /api/ordenes/:id/diagnostico (HU-32) */
@@ -92,4 +105,5 @@ export type CrearOrdenInput = z.infer<typeof crearOrdenSchema>;
 export type ListarOrdenesQuery = z.infer<typeof listarOrdenesSchema>;
 export type CambiarEstadoInput = z.infer<typeof cambiarEstadoSchema>;
 export type DiagnosticoInput = z.infer<typeof diagnosticoSchema>;
+export type RetiroInput = z.infer<typeof retiroSchema>;
 export type AgregarServicioInput = z.infer<typeof agregarServicioSchema>;

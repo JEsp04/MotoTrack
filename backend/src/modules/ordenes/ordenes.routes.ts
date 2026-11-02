@@ -13,6 +13,7 @@ router.get('/', ordenes.listar);
 router.get('/:id', ordenes.obtener);
 router.post('/', requireRole('admin'), ordenes.crear);
 router.patch('/:id/estado', ordenes.cambiarEstado);
+router.post('/:id/retiro', requireRole('admin'), ordenes.retiro);
 router.post('/:id/diagnostico', requireRole('mecanico'), ordenes.diagnostico);
 router.post('/:id/servicios', requireRole('admin', 'mecanico'), ordenes.agregarServicio);
 router.delete(

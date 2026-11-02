@@ -20,6 +20,8 @@ export interface Accion {
   observacion?: { label: string; obligatoria: boolean; placeholder?: string };
   /** Muestra el total en la confirmación (aprobar o rechazar, HU-34) */
   mostrarTotal?: boolean;
+  /** HU-66: pide el código de retiro del cliente en la hoja de confirmación */
+  pideCodigo?: boolean;
   /** Si se confirma en una hoja inferior antes de enviar */
   confirmar?: { titulo: string; texto: string; boton: string };
 }
@@ -119,7 +121,13 @@ export const ACCIONES: Record<EstadoOrden, Accion[]> = {
     cancelar,
   ],
   lista_entrega: [
-    { a: 'entregada', actores: ['admin'], label: 'Entregar moto', variante: 'primary' },
+    {
+      a: 'entregada',
+      actores: ['admin'],
+      label: 'Entregar moto',
+      variante: 'primary',
+      pideCodigo: true,
+    },
     cancelar,
   ],
   entregada: [{ a: 'cerrada', actores: ['admin'], label: 'Cerrar orden', variante: 'primary' }],

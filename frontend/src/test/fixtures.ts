@@ -86,6 +86,9 @@ export function ordenResumen(extra: Partial<OrdenResumen> = {}): OrdenResumen {
     motivoIngreso: 'Ruido en el motor',
     costoTotal: 65000,
     fechaIngreso: '2026-10-10T15:00:00.000Z',
+    fechaEntrega: null,
+    retiroPendiente: false,
+    codigoRetiro: null,
     moto: {
       publicId: uuid(),
       placa: 'KLM45F',

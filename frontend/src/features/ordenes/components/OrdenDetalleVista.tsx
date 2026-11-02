@@ -33,6 +33,7 @@ import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-orde
 import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
+import { RetiroSheet } from './RetiroSheet';
 import { SeguimientoCliente } from './SeguimientoCliente';
 import { ServicioSheet } from './ServicioSheet';
 
@@ -128,6 +129,7 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   const [accion, setAccion] = useState<Accion | null>(null);
   const [diagnosticando, setDiagnosticando] = useState(false);
   const [agregandoServicio, setAgregandoServicio] = useState(false);
+  const [retirando, setRetirando] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const cambiar = useCambiarEstado(orden.publicId);
 
@@ -138,6 +140,9 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   // registrada → diagnosticada ocurre al guardar el diagnóstico, como en el prototipo
   const registrarDiagnostico = puedeDiagnosticar && orden.estado === 'registrada';
   const { paso, label } = ESTADOS_ORDEN[orden.estado];
+  // HU-66: orden cancelada con la moto aún en el taller
+  const retiroSinReparacion =
+    actor === 'admin' && orden.estado === 'cancelada' && orden.retiroPendiente;
 
   /** Las acciones sin texto obligatorio se confirman manteniendo presionado, sin hoja (HU-48) */
   async function cambiarDirecto(a: Accion) {
@@ -330,8 +335,8 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
           )}
           {acciones.map((a, i) => {
             const clave = `${a.a}-${a.label}`;
-            // Las que piden escribir algo (motivo, repuesto) abren la hoja «Cambiar estado»
-            if (a.observacion) {
+            // Las que piden escribir algo (motivo, repuesto, código de retiro) abren la hoja
+            if (a.observacion || a.pideCodigo) {
               return (
                 <Button
                   key={clave}
@@ -361,6 +366,12 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
             );
           })}
         </ActionBar>
+      ) : retiroSinReparacion ? (
+        <ActionBar label="Acciones de la orden">
+          <Button fullWidth variant="secondary" icon="moto" onClick={() => setRetirando(true)}>
+            Registrar retiro sin reparación
+          </Button>
+        </ActionBar>
       ) : (
         (orden.estado === 'cerrada' || orden.estado === 'cancelada') && (
           <ActionBar label="Estado de la orden">
@@ -368,7 +379,9 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
               <Icon name="lock" size={16} />
               {orden.estado === 'cerrada'
                 ? 'Orden cerrada · solo lectura'
-                : 'Orden cancelada · solo lectura'}
+                : orden.fechaEntrega
+                  ? 'Orden cancelada · moto retirada'
+                  : 'Orden cancelada · solo lectura'}
             </p>
           </ActionBar>
         )
@@ -385,6 +398,11 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
         open={diagnosticando}
         orden={orden}
         onClose={() => setDiagnosticando(false)}
+      />
+      <RetiroSheet
+        open={retirando}
+        ordenPublicId={orden.publicId}
+        onClose={() => setRetirando(false)}
       />
       <ServicioSheet
         open={agregandoServicio}
@@ -421,6 +439,21 @@ function Resumen({ orden, rol }: { orden: OrdenDetalle; rol: Rol }) {
         <Card title="Cliente">
           <p className="font-semibold">{orden.moto.cliente.nombre}</p>
           <p className="text-sm leading-5 text-ink-muted">{orden.moto.cliente.telefono}</p>
+          {orden.codigoRetiro && (
+            <div className="mt-3">
+              {/* HU-66: si el cliente no tiene cuenta, el admin le da el código por teléfono */}
+              <DataList
+                items={[
+                  [
+                    'Código de retiro',
+                    <span key="c" className="font-num tracking-[.2em]">
+                      {orden.codigoRetiro}
+                    </span>,
+                  ],
+                ]}
+              />
+            </div>
+          )}
         </Card>
       )}
       <Card title="Ingreso">
@@ -430,7 +463,12 @@ function Resumen({ orden, rol }: { orden: OrdenDetalle; rol: Rol }) {
             ['Ingreso', formatFecha(orden.fechaIngreso)],
             ['Kilometraje', `${km.format(orden.kilometrajeIngreso)} km`],
             ['Mecánico', orden.mecanico.nombre],
-            orden.fechaEntrega ? ['Entregada', formatFecha(orden.fechaEntrega)] : null,
+            orden.fechaEntrega
+              ? [
+                  orden.estado === 'cancelada' ? 'Retirada' : 'Entregada',
+                  formatFecha(orden.fechaEntrega),
+                ]
+              : null,
             orden.observaciones ? ['Observaciones', orden.observaciones] : null,
           ]}
         />
