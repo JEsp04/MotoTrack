@@ -5,12 +5,14 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../src/config/prisma.js';
 import { env } from '../src/config/env.js';
+import { desdeColombia, enColombia, horarioDelTaller } from '../src/modules/citas/horario.js';
 import type { CategoriaRepuesto, EstadoOrden } from '../src/generated/prisma/client.js';
 
 export const CLAVE_DE_PRUEBA = 'MotoTrack2026';
 
 async function limpiar() {
   // Orden inverso a las dependencias
+  await prisma.cita.deleteMany();
   await prisma.movimientoStock.deleteMany();
   await prisma.repuesto.deleteMany();
   await prisma.detalleServicio.deleteMany();
@@ -40,7 +42,7 @@ async function main() {
       direccion: 'Cra. 76 #33-20, Laureles, Medellín',
       telefono: '6044441234',
       email: 'contacto@motoexpress.co',
-      horarioAtencion: 'Lunes a sábado, 8:00 a. m. a 6:00 p. m.',
+      horarioAtencion: 'Lunes a viernes, 8:00 a. m. a 6:00 p. m.; sábado, 8:00 a. m. a 12:00 m.',
     },
   });
   const tallerId = taller.tallerId;
@@ -467,6 +469,100 @@ async function main() {
     });
   }
 
+  // Citas de ejemplo (HU-57): los próximos días hábiles a partir de mañana, y una atendida
+  // y una cancelada de días pasados. Las horas están dentro del horario del taller.
+  const horario = horarioDelTaller(taller.horarioAtencion);
+  const hoy = enColombia(new Date()).fecha;
+  const diaMas = (dias: number) =>
+    new Date(Date.parse(`${hoy}T00:00:00Z`) + dias * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+  const abre = (dia: string) => horario[new Date(`${dia}T00:00:00Z`).getUTCDay()] !== null;
+  const diasHabiles: string[] = [];
+  for (let d = 1; diasHabiles.length < 4; d++) if (abre(diaMas(d))) diasHabiles.push(diaMas(d));
+  const diasPasados: string[] = [];
+  for (let d = -1; diasPasados.length < 2; d--) if (abre(diaMas(d))) diasPasados.push(diaMas(d));
+  const hora = (h: number, m = 0) => h * 60 + m;
+  const citas = [
+    {
+      dia: diasHabiles[0]!,
+      min: hora(8),
+      moto: nmax,
+      cliente: laura,
+      motivo: 'Cambio de aceite',
+      estado: 'confirmada' as const,
+      recordatorio: true,
+    },
+    {
+      dia: diasHabiles[0]!,
+      min: hora(9, 30),
+      moto: pulsar,
+      cliente: juan,
+      motivo: 'Revisión de frenos',
+      detalle: 'Chillan al frenar en bajada',
+      estado: 'programada' as const,
+      recordatorio: true,
+    },
+    {
+      dia: diasHabiles[1]!,
+      min: hora(11),
+      moto: boxer,
+      cliente: sofia,
+      motivo: 'Mantenimiento 20.000 km',
+      estado: 'programada' as const,
+      recordatorio: false,
+    },
+    {
+      dia: diasHabiles[2]!,
+      min: hora(8, 30),
+      moto: fz,
+      cliente: juan,
+      motivo: 'Ajuste kit de arrastre',
+      estado: 'programada' as const,
+      recordatorio: false,
+    },
+    {
+      dia: diasHabiles[3]!,
+      min: hora(10),
+      moto: nmax,
+      cliente: laura,
+      motivo: 'Revisión de luces',
+      estado: 'programada' as const,
+      recordatorio: true,
+    },
+    {
+      dia: diasPasados[1]!,
+      min: hora(9),
+      moto: pulsar,
+      cliente: juan,
+      motivo: 'Ruido en la dirección',
+      estado: 'atendida' as const,
+      recordatorio: false,
+    },
+    {
+      dia: diasPasados[0]!,
+      min: hora(10, 30),
+      moto: boxer,
+      cliente: sofia,
+      motivo: 'Revisión general',
+      estado: 'cancelada' as const,
+      recordatorio: false,
+    },
+  ];
+  await prisma.cita.createMany({
+    data: citas.map((c) => ({
+      tallerId,
+      motocicletaId: c.moto.motocicletaId,
+      clienteId: c.cliente.clienteId,
+      fechaHora: desdeColombia(c.dia, c.min),
+      motivo: c.motivo,
+      detalle: 'detalle' in c ? c.detalle : null,
+      estado: c.estado,
+      recordatorio: c.recordatorio,
+      creadoPorId: c.cliente.usuarioId ?? admin.usuarioId,
+    })),
+  });
+
   const resumen = {
     talleres: await prisma.taller.count(),
     usuarios: await prisma.usuario.count(),
@@ -477,6 +573,7 @@ async function main() {
     historial: await prisma.historialOrden.count(),
     repuestos: await prisma.repuesto.count(),
     movimientosStock: await prisma.movimientoStock.count(),
+    citas: await prisma.cita.count(),
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(
