@@ -26,6 +26,9 @@ vi.mock('./api/ordenes-api', () => ({
     obtener: vi.fn(),
     crear: vi.fn(),
     cambiarEstado: vi.fn(),
+    registrarRetiro: vi.fn(),
+    canceladasPorRetirar: vi.fn(),
+    cambiarEntrega: vi.fn(),
     guardarDiagnostico: vi.fn(),
     agregarServicio: vi.fn(),
     quitarServicio: vi.fn(),
@@ -218,7 +221,12 @@ describe('HU-34 · Aprobar o rechazar', () => {
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     await mantener(await screen.findByRole('button', { name: /Mantén para aprobar/ }));
     await waitFor(() =>
-      expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'aprobada', undefined),
+      expect(api.cambiarEstado).toHaveBeenCalledWith(
+        orden.publicId,
+        'aprobada',
+        undefined,
+        undefined,
+      ),
     );
     expect(
       await screen.findByText('Aprobaste la cotización. El mecánico empieza pronto.'),
@@ -242,6 +250,7 @@ describe('HU-34 · Aprobar o rechazar', () => {
         orden.publicId,
         'cancelada',
         'Lo haré más adelante. Vuelvo en enero',
+        undefined,
       ),
     );
   });
@@ -265,6 +274,7 @@ describe('HU-35 · Avanzar la reparación', () => {
         orden.publicId,
         'pendiente_repuesto',
         'Kit de arrastre',
+        undefined,
       ),
     );
   });
@@ -290,7 +300,12 @@ describe('HU-48 · Cambiar de estado manteniendo presionado', () => {
     abrirApp(`/mecanico/ordenes/${orden.publicId}`);
     await mantener(await screen.findByRole('button', { name: /Mantén para marcar lista/ }));
     await waitFor(() =>
-      expect(api.cambiarEstado).toHaveBeenCalledWith(orden.publicId, 'lista_entrega', undefined),
+      expect(api.cambiarEstado).toHaveBeenCalledWith(
+        orden.publicId,
+        'lista_entrega',
+        undefined,
+        undefined,
+      ),
     );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -437,5 +452,182 @@ describe('HU-29 · Crear una orden', () => {
       kilometrajeIngreso: 34500,
       observaciones: undefined,
     });
+  });
+});
+
+describe('HU-66 · Código de retiro', () => {
+  it('el cliente ve «Lista para recoger» con su código', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({
+      estado: 'lista_entrega',
+      retiroPendiente: true,
+      codigoRetiro: '4821',
+    });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    const tarjeta = within(await screen.findByRole('region', { name: 'Lista para recoger' }));
+    expect(tarjeta.getByText('Reparación terminada y probada en ruta.')).toBeInTheDocument();
+    expect(tarjeta.getByLabelText('Código 4 8 2 1')).toHaveTextContent('4821');
+    expect(tarjeta.getByText('Muéstralo al llegar')).toBeInTheDocument();
+  });
+
+  it('si rechazó la cotización, ve «Recoge tu moto» sin reparación', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({
+      estado: 'cancelada',
+      retiroPendiente: true,
+      codigoRetiro: '0427',
+    });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    const tarjeta = within(await screen.findByRole('region', { name: 'Recoge tu moto' }));
+    expect(tarjeta.getByText('No se hizo ninguna reparación.')).toBeInTheDocument();
+    expect(tarjeta.getByLabelText('Código 0 4 2 7')).toBeInTheDocument();
+  });
+
+  it('para entregar, el admin escribe el código en la hoja', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({
+      estado: 'lista_entrega',
+      retiroPendiente: true,
+      codigoRetiro: '4821',
+    });
+    api.obtener.mockResolvedValue(orden);
+    api.cambiarEstado.mockResolvedValue({ ...orden, estado: 'entregada', retiroPendiente: false });
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    // Si el cliente no tiene cuenta, el admin ve el código para dárselo por teléfono
+    expect(await screen.findByText('Código de retiro')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Entregar moto' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
+    const confirmar = hoja.getByRole('button', { name: /Mantén para confirmar/ });
+    expect(confirmar).toBeDisabled();
+    await userEvent.type(hoja.getByLabelText(/Código de retiro/), '48a21');
+    expect(hoja.getByLabelText(/Código de retiro/)).toHaveValue('4821');
+    await mantener(confirmar);
+    await waitFor(() =>
+      expect(api.cambiarEstado).toHaveBeenCalledWith(
+        orden.publicId,
+        'entregada',
+        undefined,
+        '4821',
+      ),
+    );
+  });
+
+  it('un código errado se muestra bajo el campo y la hoja sigue abierta', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({
+      estado: 'lista_entrega',
+      retiroPendiente: true,
+      codigoRetiro: '4821',
+    });
+    api.obtener.mockResolvedValue(orden);
+    api.cambiarEstado.mockRejectedValue(
+      errorApi(400, {
+        message: 'El código de retiro no coincide',
+        errors: [
+          { field: 'codigo', message: 'El código no coincide. Pídele al cliente que lo revise' },
+        ],
+      }),
+    );
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    await userEvent.click(await screen.findByRole('button', { name: 'Entregar moto' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Cambiar estado' }));
+    await userEvent.type(hoja.getByLabelText(/Código de retiro/), '1234');
+    await mantener(hoja.getByRole('button', { name: /Mantén para confirmar/ }));
+    expect(
+      await hoja.findByText('El código no coincide. Pídele al cliente que lo revise'),
+    ).toBeInTheDocument();
+    expect(hoja.getByLabelText(/Código de retiro/)).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('el mecánico no ve el código', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({
+      estado: 'lista_entrega',
+      retiroPendiente: true,
+      codigoRetiro: null,
+    });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    await screen.findByRole('heading', { name: 'Orden #12' });
+    expect(screen.queryByText('Código de retiro')).not.toBeInTheDocument();
+  });
+
+  it('el admin registra el retiro sin reparación de una orden cancelada', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({
+      estado: 'cancelada',
+      retiroPendiente: true,
+      codigoRetiro: '0427',
+    });
+    api.obtener.mockResolvedValue(orden);
+    api.registrarRetiro.mockResolvedValue({
+      ...orden,
+      retiroPendiente: false,
+      codigoRetiro: null,
+      fechaEntrega: '2026-11-02T20:00:00.000Z',
+    });
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Registrar retiro sin reparación' }),
+    );
+    const hoja = within(
+      await screen.findByRole('dialog', { name: 'Registrar retiro sin reparación' }),
+    );
+    await userEvent.type(hoja.getByLabelText(/Código de retiro/), '0427');
+    await mantener(hoja.getByRole('button', { name: /Mantén para confirmar/ }));
+    await waitFor(() => expect(api.registrarRetiro).toHaveBeenCalledWith(orden.publicId, '0427'));
+  });
+});
+
+describe('HU-62 · Fecha estimada de entrega', () => {
+  it('la tarjeta muestra la entrega y marca la atrasada', async () => {
+    sesionDePrueba('mecanico');
+    api.listar.mockResolvedValue(
+      lista([
+        ordenResumen({ numero: 12, fechaEstimadaEntrega: '2026-11-01', atrasada: true }),
+        ordenResumen({ numero: 13, fechaEstimadaEntrega: '2026-11-05' }),
+      ]),
+    );
+    abrirApp('/mecanico');
+    const ul = await screen.findByRole('list', { name: 'Órdenes' });
+    expect(within(ul).getByText(/Atrasada · 1 nov/)).toBeInTheDocument();
+    expect(within(ul).getByText(/Entrega 5 nov/)).toBeInTheDocument();
+  });
+
+  it('el admin ve «atrasada» en el detalle y cambia la fecha', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({ fechaEstimadaEntrega: '2026-11-01', atrasada: true });
+    api.obtener.mockResolvedValue(orden);
+    api.cambiarEntrega.mockResolvedValue({ ...orden, fechaEstimadaEntrega: '2026-11-20' });
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('1 nov · atrasada')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar entrega' }));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Entrega estimada' }));
+    const campo = hoja.getByLabelText(/Entrega estimada/);
+    fireEvent.change(campo, { target: { value: '2026-11-20' } });
+    await userEvent.click(hoja.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() =>
+      expect(api.cambiarEntrega).toHaveBeenCalledWith(orden.publicId, '2026-11-20'),
+    );
+  });
+
+  it('el mecánico no puede cambiarla', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ fechaEstimadaEntrega: '2026-11-05' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('5 nov')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cambiar entrega' })).not.toBeInTheDocument();
+  });
+
+  it('el cliente la ve en el seguimiento', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({ estado: 'en_reparacion', fechaEstimadaEntrega: '2026-11-05' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('Entrega estimada: 5 nov')).toBeInTheDocument();
   });
 });

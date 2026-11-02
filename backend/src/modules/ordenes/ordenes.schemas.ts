@@ -25,6 +25,22 @@ const textoLargo = (campo: string, min: number, max: number) =>
     )
     .max(max, `${campo} admite máximo ${max} caracteres`);
 
+/** Código de retiro de 4 dígitos (HU-66) */
+const codigoRetiro = z
+  .string({ error: 'Escribe el código de retiro' })
+  .trim()
+  .regex(/^\d{4}$/, 'El código de retiro tiene 4 dígitos');
+/** Día AAAA-MM-DD (fecha estimada de entrega, HU-62). Se valida contra el ingreso en el servicio. */
+const diaEntrega = z
+  .string({ error: 'Escribe la fecha estimada de entrega' })
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha estimada debe tener el formato AAAA-MM-DD')
+  .refine(
+    (v) =>
+      !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) &&
+      new Date(`${v}T00:00:00Z`).toISOString().startsWith(v),
+    'La fecha estimada no es válida',
+  );
+
 /** POST /api/ordenes (HU-29) */
 export const crearOrdenSchema = z.object({
   motoPublicId: z.uuid({ error: 'Elige la moto' }),
@@ -36,6 +52,18 @@ export const crearOrdenSchema = z.object({
     .min(0, 'El kilometraje no puede ser negativo')
     .max(2_000_000, 'Revisa el kilometraje'),
   observaciones: textoOpcional('Las observaciones', 2000),
+  /** HU-62 · Opcional al recibir la moto */
+  fechaEstimadaEntrega: z
+    .union([z.literal(''), z.null(), diaEntrega])
+    .optional()
+    .transform((v) => v || null),
+});
+
+/** PATCH /api/ordenes/:id/entrega (HU-62). null la borra. */
+export const fechaEntregaSchema = z.object({
+  fechaEstimadaEntrega: z.union([z.null(), diaEntrega], {
+    error: 'Escribe la fecha estimada de entrega',
+  }),
 });
 
 /** GET /api/ordenes (HU-30) */
@@ -59,6 +87,13 @@ export const cambiarEstadoSchema = z.object({
     .max(1000, 'La observación admite máximo 1000 caracteres')
     .optional()
     .transform((v) => v || undefined),
+  /** HU-66: obligatorio para pasar a entregada */
+  codigo: codigoRetiro.optional(),
+});
+
+/** POST /api/ordenes/:id/retiro (HU-66) */
+export const retiroSchema = z.object({
+  codigo: codigoRetiro,
 });
 
 /** POST /api/ordenes/:id/diagnostico (HU-32) */
@@ -92,4 +127,6 @@ export type CrearOrdenInput = z.infer<typeof crearOrdenSchema>;
 export type ListarOrdenesQuery = z.infer<typeof listarOrdenesSchema>;
 export type CambiarEstadoInput = z.infer<typeof cambiarEstadoSchema>;
 export type DiagnosticoInput = z.infer<typeof diagnosticoSchema>;
+export type RetiroInput = z.infer<typeof retiroSchema>;
+export type FechaEntregaInput = z.infer<typeof fechaEntregaSchema>;
 export type AgregarServicioInput = z.infer<typeof agregarServicioSchema>;
