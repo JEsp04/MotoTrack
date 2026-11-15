@@ -114,8 +114,32 @@ export function useCrearOrden() {
 export function useCambiarEstado(publicId: string) {
   const alGuardar = useAlGuardar();
   return useMutation({
-    mutationFn: ({ estado, observacion }: { estado: EstadoOrden; observacion?: string }) =>
-      ordenesApi.cambiarEstado(publicId, estado, observacion),
+    mutationFn: ({
+      estado,
+      observacion,
+      codigo,
+    }: {
+      estado: EstadoOrden;
+      observacion?: string;
+      codigo?: string;
+    }) => ordenesApi.cambiarEstado(publicId, estado, observacion, codigo),
+    onSuccess: alGuardar,
+  });
+}
+
+/** HU-66 · Retiro sin reparación */
+export function useRegistrarRetiro(publicId: string) {
+  const alGuardar = useAlGuardar();
+  return useMutation({
+    mutationFn: (codigo: string) => ordenesApi.registrarRetiro(publicId, codigo),
+    onSuccess: alGuardar,
+  });
+}
+
+export function useCambiarEntrega(publicId: string) {
+  const alGuardar = useAlGuardar();
+  return useMutation({
+    mutationFn: (dia: string | null) => ordenesApi.cambiarEntrega(publicId, dia),
     onSuccess: alGuardar,
   });
 }
@@ -152,12 +176,17 @@ export function useMisOrdenesActivas() {
   return useQuery({
     queryKey: ['ordenes', 'lista', 'mis-activas'],
     queryFn: async () => {
-      const grupos = await Promise.all(
-        (['por_aprobar', 'listas', 'en_proceso'] as const).map((grupo) =>
-          ordenesApi.listar({ grupo, page: 1, limit: 20 }),
+      const [grupos, porRetirar] = await Promise.all([
+        Promise.all(
+          (['por_aprobar', 'listas', 'en_proceso'] as const).map((grupo) =>
+            ordenesApi.listar({ grupo, page: 1, limit: 20 }).then((g) => g.data),
+          ),
         ),
-      );
-      return grupos.flatMap((g) => g.data);
+        // HU-66: una cancelada sigue activa hasta que el cliente recoja la moto
+        ordenesApi.canceladasPorRetirar(),
+      ]);
+      const [porAprobar = [], listas = [], enProceso = []] = grupos;
+      return [...porAprobar, ...listas, ...porRetirar, ...enProceso];
     },
   });
 }

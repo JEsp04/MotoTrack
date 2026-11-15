@@ -18,6 +18,8 @@ export interface NuevaOrdenBody {
   motivoIngreso: string;
   kilometrajeIngreso: number;
   observaciones?: string;
+  /** HU-62 · «AAAA-MM-DD» */
+  fechaEstimadaEntrega?: string;
 }
 
 export interface DiagnosticoBody {
@@ -65,9 +67,31 @@ export const ordenesApi = {
   crear: (body: NuevaOrdenBody) =>
     http.post<ApiResponse<OrdenDetalle>>('/ordenes', body).then(detalle),
 
-  cambiarEstado: (publicId: string, estado: EstadoOrden, observacion?: string) =>
+  /** `codigo`: el código de retiro, obligatorio para entregar (HU-66) */
+  cambiarEstado: (publicId: string, estado: EstadoOrden, observacion?: string, codigo?: string) =>
     http
-      .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/estado`, { estado, observacion })
+      .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/estado`, {
+        estado,
+        observacion,
+        codigo,
+      })
+      .then(detalle),
+
+  /** HU-66 · Retiro sin reparación de una orden cancelada */
+  registrarRetiro: (publicId: string, codigo: string) =>
+    http.post<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/retiro`, { codigo }).then(detalle),
+
+  /** Órdenes canceladas cuya moto sigue en el taller (HU-66) */
+  canceladasPorRetirar: () =>
+    http
+      .get<ApiList<OrdenResumen>>('/ordenes', {
+        params: { estado: 'cancelada', page: 1, limit: POR_PAGINA },
+      })
+      .then((r) => r.data.data.filter((o) => o.retiroPendiente)),
+  /** HU-62 · Solo el admin. null la borra. */
+  cambiarEntrega: (publicId: string, fechaEstimadaEntrega: string | null) =>
+    http
+      .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/entrega`, { fechaEstimadaEntrega })
       .then(detalle),
 
   guardarDiagnostico: (publicId: string, body: DiagnosticoBody) =>

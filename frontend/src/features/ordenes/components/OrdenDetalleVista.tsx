@@ -25,7 +25,7 @@ import { useSession } from '@/features/auth';
 import { parseApiError } from '@/lib/api-error';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN, PASOS } from '@/lib/estados-orden';
-import { formatFecha, formatPesos } from '@/lib/format';
+import { formatDia, formatFecha, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import type { OrdenDetalle, Rol } from '@/types';
 import { accionesPara, actorDe, ESTADOS_EDITABLES, type Accion, type Actor } from '../estados';
@@ -33,6 +33,8 @@ import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-orde
 import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
+import { EntregaSheet } from './EntregaSheet';
+import { RetiroSheet } from './RetiroSheet';
 import { SeguimientoCliente } from './SeguimientoCliente';
 import { ServicioSheet } from './ServicioSheet';
 
@@ -128,6 +130,8 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   const [accion, setAccion] = useState<Accion | null>(null);
   const [diagnosticando, setDiagnosticando] = useState(false);
   const [agregandoServicio, setAgregandoServicio] = useState(false);
+  const [retirando, setRetirando] = useState(false);
+  const [cambiandoEntrega, setCambiandoEntrega] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const cambiar = useCambiarEstado(orden.publicId);
 
@@ -135,9 +139,15 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   const editable = ESTADOS_EDITABLES.includes(orden.estado);
   const puedeDiagnosticar = actor === 'mecanico_asignado' && editable;
   const puedeEditarServicios = editable && (actor === 'admin' || actor === 'mecanico_asignado');
+  // HU-62 · El admin pone o cambia la entrega estimada mientras la moto siga en el taller
+  const puedeCambiarEntrega =
+    actor === 'admin' && !['entregada', 'cerrada', 'cancelada'].includes(orden.estado);
   // registrada → diagnosticada ocurre al guardar el diagnóstico, como en el prototipo
   const registrarDiagnostico = puedeDiagnosticar && orden.estado === 'registrada';
   const { paso, label } = ESTADOS_ORDEN[orden.estado];
+  // HU-66: orden cancelada con la moto aún en el taller
+  const retiroSinReparacion =
+    actor === 'admin' && orden.estado === 'cancelada' && orden.retiroPendiente;
 
   /** Las acciones sin texto obligatorio se confirman manteniendo presionado, sin hoja (HU-48) */
   async function cambiarDirecto(a: Accion) {
@@ -178,7 +188,9 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
             sub={
               orden.estado === 'cancelada'
                 ? undefined
-                : `Con ${orden.mecanico.nombre.split(' ')[0]}`
+                : orden.fechaEstimadaEntrega
+                  ? `${orden.mecanico.nombre.split(' ')[0]}, entrega ${formatDia(orden.fechaEstimadaEntrega)}`
+                  : `Con ${orden.mecanico.nombre.split(' ')[0]}`
             }
             alerta={orden.estado === 'pendiente_repuesto'}
           />
@@ -204,7 +216,13 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
       </div>
 
       <Page narrow pb="actionbar">
-        {pestana === 'resumen' && <Resumen orden={orden} rol={rol} />}
+        {pestana === 'resumen' && (
+          <Resumen
+            orden={orden}
+            rol={rol}
+            onCambiarEntrega={puedeCambiarEntrega ? () => setCambiandoEntrega(true) : undefined}
+          />
+        )}
 
         {pestana === 'diagnostico' &&
           (orden.diagnostico ? (
@@ -330,8 +348,8 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
           )}
           {acciones.map((a, i) => {
             const clave = `${a.a}-${a.label}`;
-            // Las que piden escribir algo (motivo, repuesto) abren la hoja «Cambiar estado»
-            if (a.observacion) {
+            // Las que piden escribir algo (motivo, repuesto, código de retiro) abren la hoja
+            if (a.observacion || a.pideCodigo) {
               return (
                 <Button
                   key={clave}
@@ -361,6 +379,12 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
             );
           })}
         </ActionBar>
+      ) : retiroSinReparacion ? (
+        <ActionBar label="Acciones de la orden">
+          <Button fullWidth variant="secondary" icon="moto" onClick={() => setRetirando(true)}>
+            Registrar retiro sin reparación
+          </Button>
+        </ActionBar>
       ) : (
         (orden.estado === 'cerrada' || orden.estado === 'cancelada') && (
           <ActionBar label="Estado de la orden">
@@ -368,7 +392,9 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
               <Icon name="lock" size={16} />
               {orden.estado === 'cerrada'
                 ? 'Orden cerrada · solo lectura'
-                : 'Orden cancelada · solo lectura'}
+                : orden.fechaEntrega
+                  ? 'Orden cancelada · moto retirada'
+                  : 'Orden cancelada · solo lectura'}
             </p>
           </ActionBar>
         )
@@ -386,6 +412,16 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
         orden={orden}
         onClose={() => setDiagnosticando(false)}
       />
+      <RetiroSheet
+        open={retirando}
+        ordenPublicId={orden.publicId}
+        onClose={() => setRetirando(false)}
+      />
+      <EntregaSheet
+        open={cambiandoEntrega}
+        orden={orden}
+        onClose={() => setCambiandoEntrega(false)}
+      />
       <ServicioSheet
         open={agregandoServicio}
         ordenPublicId={orden.publicId}
@@ -396,7 +432,15 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
 }
 
 /** Pestaña «Resumen»: progreso, cliente e ingreso */
-function Resumen({ orden, rol }: { orden: OrdenDetalle; rol: Rol }) {
+function Resumen({
+  orden,
+  rol,
+  onCambiarEntrega,
+}: {
+  orden: OrdenDetalle;
+  rol: Rol;
+  onCambiarEntrega?: () => void;
+}) {
   const { etapa } = ESTADOS_ORDEN[orden.estado];
   const repuesto = orden.estado === 'pendiente_repuesto';
   const ultimaObs = orden.historial[0]?.observacion;
@@ -421,16 +465,54 @@ function Resumen({ orden, rol }: { orden: OrdenDetalle; rol: Rol }) {
         <Card title="Cliente">
           <p className="font-semibold">{orden.moto.cliente.nombre}</p>
           <p className="text-sm leading-5 text-ink-muted">{orden.moto.cliente.telefono}</p>
+          {orden.codigoRetiro && (
+            <div className="mt-3">
+              {/* HU-66: si el cliente no tiene cuenta, el admin le da el código por teléfono */}
+              <DataList
+                items={[
+                  [
+                    'Código de retiro',
+                    <span key="c" className="font-num tracking-[.2em]">
+                      {orden.codigoRetiro}
+                    </span>,
+                  ],
+                ]}
+              />
+            </div>
+          )}
         </Card>
       )}
-      <Card title="Ingreso">
+      <Card
+        title="Ingreso"
+        action={
+          onCambiarEntrega && (
+            <Button variant="ghost" size="sm" icon="calendar" onClick={onCambiarEntrega}>
+              {orden.fechaEstimadaEntrega ? 'Cambiar entrega' : 'Poner entrega'}
+            </Button>
+          )
+        }
+      >
         <DataList
           items={[
             ['Motivo', orden.motivoIngreso],
             ['Ingreso', formatFecha(orden.fechaIngreso)],
+            orden.fechaEstimadaEntrega
+              ? [
+                  'Entrega estimada',
+                  <span className={orden.atrasada ? 'text-danger-text' : undefined}>
+                    {formatDia(orden.fechaEstimadaEntrega)}
+                    {orden.atrasada ? ' · atrasada' : ''}
+                  </span>,
+                ]
+              : null,
             ['Kilometraje', `${km.format(orden.kilometrajeIngreso)} km`],
             ['Mecánico', orden.mecanico.nombre],
-            orden.fechaEntrega ? ['Entregada', formatFecha(orden.fechaEntrega)] : null,
+            orden.fechaEntrega
+              ? [
+                  orden.estado === 'cancelada' ? 'Retirada' : 'Entregada',
+                  formatFecha(orden.fechaEntrega),
+                ]
+              : null,
             orden.observaciones ? ['Observaciones', orden.observaciones] : null,
           ]}
         />

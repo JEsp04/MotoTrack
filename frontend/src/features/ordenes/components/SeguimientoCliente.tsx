@@ -17,11 +17,12 @@ import {
 import { parseApiError } from '@/lib/api-error';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
-import { formatPesos } from '@/lib/format';
+import { formatDia, formatFecha, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import type { OrdenDetalle } from '@/types';
 import { accionesPara, type Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
+import { TarjetaRetiro } from './TarjetaRetiro';
 import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, MOTIVOS_RECHAZO } from '../textos';
 
 /** «$ 132.000» → «$132.000», como el monto grande del prototipo */
@@ -69,6 +70,14 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
             <div className="min-w-0 flex-1">
               <b>{esperando ? 'Esperando tu aprobación' : label}</b>
               <small>{cancelada ? 'Sin reparación' : `Paso ${paso} de 6 en ${taller}`}</small>
+              {/* HU-62 · Como en la isla de la landing: «Entrega estimada: 18 sep» */}
+              {orden.fechaEstimadaEntrega &&
+                !['entregada', 'cerrada', 'cancelada'].includes(orden.estado) && (
+                  <small>
+                    Entrega estimada: {formatDia(orden.fechaEstimadaEntrega)}
+                    {orden.atrasada ? ' · atrasada' : ''}
+                  </small>
+                )}
               {!cancelada && (
                 <div className="segs" aria-hidden="true">
                   {[1, 2, 3, 4, 5, 6].map((k) => (
@@ -99,6 +108,12 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
       </section>
 
       <Page narrow pb={esperando ? 'actionbar' : undefined}>
+        {orden.retiroPendiente && <TarjetaRetiro orden={orden} />}
+        {cancelada && orden.fechaEntrega && (
+          <Note icon="check">
+            Retiraste tu moto el {formatFecha(orden.fechaEntrega).replace(/ de \d{4}$/, '')}.
+          </Note>
+        )}
         {esperando && (
           <Note icon="clock" tono="accent">
             El taller espera tu respuesta para empezar. Si tienes dudas, escríbele antes de decidir.

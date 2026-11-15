@@ -24,6 +24,7 @@ import { useEquipo } from '@/features/equipo';
 import { MotoSheet } from '@/features/motos';
 import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
+import { hoyColombia } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import { useDebounce } from '@/lib/use-debounce';
 import { LIMITES } from '@/lib/validaciones';
@@ -258,6 +259,7 @@ function DatosOrden({ moto }: { moto: Moto }) {
       motivoIngreso: '',
       kilometrajeIngreso: String(moto.kilometraje),
       observaciones: '',
+      fechaEstimadaEntrega: '',
     },
   });
 
@@ -274,6 +276,7 @@ function DatosOrden({ moto }: { moto: Moto }) {
         ...datos,
         motoPublicId: moto.publicId,
         observaciones: datos.observaciones || undefined,
+        fechaEstimadaEntrega: datos.fechaEstimadaEntrega || undefined,
       });
       toast(`Orden #${orden.numero} creada`, 'success');
       navigate(rutaOrden('admin', orden.publicId), { replace: true });
@@ -322,6 +325,14 @@ function DatosOrden({ moto }: { moto: Moto }) {
         options={mecanicos.map((m) => ({ value: m.publicId, label: m.nombre }))}
         error={errors.mecanicoPublicId?.message}
         {...register('mecanicoPublicId')}
+      />
+      <Input
+        label="Entrega estimada"
+        type="date"
+        min={hoyColombia()}
+        hint="Opcional: el cliente la ve en el seguimiento"
+        error={errors.fechaEstimadaEntrega?.message}
+        {...register('fechaEstimadaEntrega')}
       />
       <Textarea
         label="Observaciones"
