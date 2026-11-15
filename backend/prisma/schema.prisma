@@ -75,6 +75,14 @@ enum EstadoCita {
   cancelada
 }
 
+/// Tipo de aviso dentro de la app (HU-69)
+enum TipoAviso {
+  estado
+  cotizacion
+  cita
+  recordatorio
+}
+
 // ─── Talleres y usuarios ──────────────────────────────────────────────────
 
 model Taller {
@@ -99,6 +107,7 @@ model Taller {
   repuestos        Repuesto[]
   movimientosStock MovimientoStock[]
   citas            Cita[]
+  avisos           Aviso[]
 
   @@map("talleres")
 }
@@ -127,6 +136,7 @@ model Usuario {
   historialOrdenes HistorialOrden[]
   movimientosStock MovimientoStock[]
   citasCreadas     Cita[]
+  avisos           Aviso[]
 
   @@index([tallerId, rol])
   @@map("usuarios")
@@ -241,6 +251,7 @@ model OrdenServicio {
   historial        HistorialOrden[]
   movimientosStock MovimientoStock[]
   cita             Cita?
+  avisos           Aviso[]
 
   @@unique([tallerId, numero])
   @@index([tallerId, estado])
@@ -432,3 +443,28 @@ model Cita {
 }
 
 // Fuera de esta entrega (se agregan después): recomendaciones de IA y notificaciones.
+
+/// Aviso dentro de la app para un usuario (HU-69). Sin servicios pagos: se consulta desde la app.
+model Aviso {
+  avisoId         Int       @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId        String    @unique @default(uuid(7)) @db.Char(36)
+  tallerId        Int
+  /// Usuario que recibe el aviso
+  usuarioId       Int
+  tipo            TipoAviso
+  titulo          String    @db.VarChar(150)
+  texto           String    @db.VarChar(500)
+  /// Orden a la que se refiere, si aplica
+  ordenServicioId Int?
+  leido           Boolean   @default(false)
+  creadoEn        DateTime  @default(now())
+
+  taller  Taller         @relation(fields: [tallerId], references: [tallerId])
+  usuario Usuario        @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  orden   OrdenServicio? @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+
+  @@index([usuarioId, leido, creadoEn])
+  @@index([ordenServicioId])
+  @@map("avisos")
+}
