@@ -6,7 +6,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`; los criterios de aceptación del entregable, en `docs/HISTORIAS.md`; el diseño, en `docs/diseno.md` y `docs/prototipo/`.
 
-Última actualización: lunes 2 de noviembre de 2026.
+Última actualización: domingo 15 de noviembre de 2026.
 
 ---
 
@@ -119,3 +119,4 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 24-oct | PR #16 a #25 (E6.5) unidos en `develop`. `PROGRESS.md` y `Memoria.md` alineados con `docs/HISTORIAS.md`: E6 y E6.5 marcadas como unidas, avance 47/50 (106/112 pts), E7 desglosada por criterios de aceptación y fecha nueva pendiente |
 | 24-oct (tarde) | Nuevas historias HU-51 a HU-81 (`docs/HISTORIAS-2.md`), reparto entre A, V y J (`docs/REPARTO.md`) y guía de sesión (`docs/FLUJO.md`). `PROGRESS.md` y `Memoria.md` sincronizados con el reparto; siguiente: Ronda 1 |
 | 2-nov | V: HU-57 · tabla `citas` (migración `20261102172435_citas`), API `/api/citas` (listar, horas libres, ver, crear, reprogramar y cambiar estado), 7 citas en el seed y 21 pruebas. Backend: 133 pruebas en verde. Siguiente de V: HU-62 |
+| 15-nov | J: HU-73 · `GET` y `PATCH /api/talleres/mio` (cambiar es solo del admin; el horario se valida con el mismo lector de las citas, así las citas nuevas usan el horario nuevo), «Más» del admin en `/admin/mas` con la tarjeta del taller, pantalla «Datos del taller» en `/admin/taller` y enlace en el menú del avatar en computador. Sin migración. 8 pruebas de backend y 5 de frontend. Siguiente de J: HU-69 (después de unir HU-62 y HU-66) |

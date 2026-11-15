@@ -76,6 +76,13 @@ export const routes: RouteObject[] = [
           },
           { path: 'equipo', element: page(() => import('@/pages/admin/EquipoPage')) },
           { path: 'perfil', element: perfil },
+          // HU-73 · «Más» del admin y los datos del taller
+          { path: 'mas', element: perfil },
+          {
+            path: 'taller',
+            element: page(() => import('@/pages/admin/DatosTallerPage')),
+            handle: SIN_NAV,
+          },
         ],
       },
 

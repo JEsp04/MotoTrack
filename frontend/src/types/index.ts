@@ -27,6 +27,18 @@ export interface Usuario {
 
 export type EstadoRegistro = 'activo' | 'inactivo';
 
+/** Datos del taller que se ven y se editan en «Más» (HU-73) */
+export interface DatosTaller {
+  publicId: string;
+  nombre: string;
+  nit: string | null;
+  direccion: string | null;
+  telefono: string;
+  email: string | null;
+  /** Texto libre, por ejemplo «Lunes a viernes 8:00 a 18:00; sábado 8:00 a 12:00» */
+  horarioAtencion: string | null;
+}
+
 /** Integrante del equipo del taller: admin o mecánico (HU-23) */
 export interface Integrante {
   publicId: string;

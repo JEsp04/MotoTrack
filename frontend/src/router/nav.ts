@@ -12,7 +12,7 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     { to: '/admin/ordenes', label: 'Órdenes', icon: 'clipboard' },
     { to: '/admin/clientes', label: 'Clientes y motos', icon: 'users', donde: 'escritorio' },
     { to: '/admin/equipo', label: 'Usuarios', icon: 'user', donde: 'escritorio' },
-    { to: '/admin/perfil', label: 'Más', icon: 'menu', donde: 'celular' },
+    { to: '/admin/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
   mecanico: [
     {
@@ -38,7 +38,11 @@ export const ACCION_PRINCIPAL: Partial<Record<Rol, { to: string; label: string }
 
 /** Enlaces del menú del avatar en computador */
 export const ENLACES_CUENTA: Record<Rol, Array<{ to: string; label: string; icon: IconName }>> = {
-  admin: [{ to: '/admin/perfil', label: 'Mi cuenta', icon: 'user' }],
+  admin: [
+    { to: '/admin/perfil', label: 'Mi cuenta', icon: 'user' },
+    // HU-73 · En computador, los datos del taller están en el menú del avatar
+    { to: '/admin/taller', label: 'Datos del taller', icon: 'settings' },
+  ],
   mecanico: [{ to: '/mecanico/perfil', label: 'Mi cuenta', icon: 'user' }],
   cliente: [],
 };
