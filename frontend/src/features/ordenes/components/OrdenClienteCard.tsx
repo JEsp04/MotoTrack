@@ -8,7 +8,8 @@ import { MENSAJE_CLIENTE } from '../textos';
 /** Tarjeta de una orden abierta en el inicio del cliente (.mt-corder del prototipo) */
 export function OrdenClienteCard({ orden, taller }: { orden: OrdenResumen; taller: string }) {
   const espera = orden.estado === 'esperando_aprobacion';
-  const lista = orden.estado === 'lista_entrega';
+  // HU-66: lista para recoger, o cancelada con la moto aún en el taller
+  const lista = orden.retiroPendiente;
   return (
     <Link
       to={`/cliente/ordenes/${orden.publicId}`}
@@ -45,7 +46,11 @@ export function OrdenClienteCard({ orden, taller }: { orden: OrdenResumen; talle
               : 'bg-bg text-ink',
         )}
       >
-        {espera ? `Revisar cotización · ${formatPesos(orden.costoTotal)}` : 'Ver seguimiento'}
+        {espera
+          ? `Revisar cotización · ${formatPesos(orden.costoTotal)}`
+          : lista
+            ? 'Ver código de retiro'
+            : 'Ver seguimiento'}
       </span>
     </Link>
   );

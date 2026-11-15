@@ -503,7 +503,12 @@ describe('HU-35 a HU-37 · Reparación, entrega, cierre y cancelación', () => {
       [p.admin, 'cerrada'],
     ];
     for (const [quien, estado, observacion] of pasos) {
-      const res = await cambiar(orden.publicId, quien, { estado, observacion });
+      // HU-66: para entregar se usa el código que se creó al pasar a lista
+      const { codigoRetiro } = await prisma.ordenServicio.findUniqueOrThrow({
+        where: { ordenServicioId: orden.ordenServicioId },
+      });
+      const codigo = estado === 'entregada' ? (codigoRetiro ?? undefined) : undefined;
+      const res = await cambiar(orden.publicId, quien, { estado, observacion, codigo });
       expect(res.status, estado).toBe(200);
     }
     const final = await prisma.ordenServicio.findUniqueOrThrow({
