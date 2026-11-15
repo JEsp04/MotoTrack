@@ -18,6 +18,8 @@ export interface NuevaOrdenBody {
   motivoIngreso: string;
   kilometrajeIngreso: number;
   observaciones?: string;
+  /** HU-62 · «AAAA-MM-DD» */
+  fechaEstimadaEntrega?: string;
 }
 
 export interface DiagnosticoBody {
@@ -68,6 +70,12 @@ export const ordenesApi = {
   cambiarEstado: (publicId: string, estado: EstadoOrden, observacion?: string) =>
     http
       .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/estado`, { estado, observacion })
+      .then(detalle),
+
+  /** HU-62 · Solo el admin. null la borra. */
+  cambiarEntrega: (publicId: string, fechaEstimadaEntrega: string | null) =>
+    http
+      .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/entrega`, { fechaEstimadaEntrega })
       .then(detalle),
 
   guardarDiagnostico: (publicId: string, body: DiagnosticoBody) =>

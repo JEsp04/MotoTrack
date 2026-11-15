@@ -230,6 +230,10 @@ async function main() {
       prioridad?: 'normal' | 'urgente';
     };
     servicios?: string[];
+    /** HU-62: días desde hoy para la entrega estimada (negativo = ya pasó) */
+    entregaEnDias?: number;
+    /** Hace cuántos días ingresó (por defecto hoy) */
+    ingresoHaceDias?: number;
   }> = [
     {
       moto: nmax,
@@ -242,6 +246,9 @@ async function main() {
         prioridad: 'urgente',
       },
       servicios: ['Cambio de pastillas de freno', 'Cambio de aceite y filtro'],
+      // Atrasada: debía estar ayer y sigue en reparación
+      ingresoHaceDias: 3,
+      entregaEnDias: -1,
     },
     {
       moto: pulsar,
@@ -253,12 +260,14 @@ async function main() {
         trabajoRecomendado: 'Limpieza de inyectores y sincronización.',
       },
       servicios: ['Limpieza de carburador o inyectores', 'Sincronización'],
+      entregaEnDias: 2,
     },
     {
       moto: fz,
       mecanico: andres,
       motivo: 'Revisión antes de un viaje largo.',
       estados: hasta('registrada'),
+      entregaEnDias: 1,
     },
     {
       moto: boxer,
@@ -306,6 +315,13 @@ async function main() {
         estado: estadoFinal,
         motivoIngreso: o.motivo,
         kilometrajeIngreso: o.moto.kilometraje,
+        fechaIngreso: new Date(Date.now() - (o.ingresoHaceDias ?? 0) * 24 * 60 * 60 * 1000),
+        fechaEstimadaEntrega:
+          o.entregaEnDias === undefined
+            ? null
+            : new Date(
+                `${new Date(Date.now() - 5 * 60 * 60 * 1000 + o.entregaEnDias * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}T00:00:00Z`,
+              ),
         costoTotal: detalles.reduce((total, d) => total + d.subtotal, 0),
         fechaEntrega: o.estados.includes('entregada') ? new Date() : null,
         fechaCierre: estadoFinal === 'cerrada' ? new Date() : null,
