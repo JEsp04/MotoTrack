@@ -5,6 +5,7 @@ import {
   Alert,
   AppBar,
   Badge,
+  BottomSheet,
   Button,
   Card,
   DataList,
@@ -13,6 +14,8 @@ import {
   HoldButton,
   Icon,
   IconButton,
+  List,
+  ListItem,
   Page,
   Plate,
   Skeleton,
@@ -27,6 +30,12 @@ import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN, PASOS } from '@/lib/estados-orden';
 import { formatDia, formatFecha, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
+import {
+  enlaceTelefono,
+  enlaceWhatsApp,
+  mensajeCotizacionWhatsApp,
+  mensajeOrdenWhatsApp,
+} from '@/lib/whatsapp';
 import type { OrdenDetalle, Rol } from '@/types';
 import { accionesPara, actorDe, ESTADOS_EDITABLES, type Accion, type Actor } from '../estados';
 import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-ordenes';
@@ -117,17 +126,35 @@ export function OrdenDetalleVista({ publicId }: { publicId: string }) {
   if (usuario.rol === 'cliente') {
     return <SeguimientoCliente orden={orden.data} taller={usuario.taller.nombre} />;
   }
-  return <Contenido orden={orden.data} actor={actorDe(usuario, orden.data)} rol={usuario.rol} />;
+  return (
+    <Contenido
+      orden={orden.data}
+      actor={actorDe(usuario, orden.data)}
+      rol={usuario.rol}
+      taller={usuario.taller.nombre}
+    />
+  );
 }
 
 /**
  * Detalle igual a OrderDetailScreen del prototipo: encabezado con placa y dial, pestañas
  * Resumen, Diagnóstico, Servicios e Historial, y la barra de acciones con mantener presionado.
  */
-function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | null; rol: Rol }) {
+function Contenido({
+  orden,
+  actor,
+  rol,
+  taller,
+}: {
+  orden: OrdenDetalle;
+  actor: Actor | null;
+  rol: Rol;
+  taller: string;
+}) {
   const navigate = useNavigate();
   const [pestana, setPestana] = useState<Pestana>('resumen');
   const [accion, setAccion] = useState<Accion | null>(null);
+  const [menuAcciones, setMenuAcciones] = useState(false);
   const [diagnosticando, setDiagnosticando] = useState(false);
   const [agregandoServicio, setAgregandoServicio] = useState(false);
   const [retirando, setRetirando] = useState(false);
@@ -148,6 +175,7 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
   // HU-66: orden cancelada con la moto aún en el taller
   const retiroSinReparacion =
     actor === 'admin' && orden.estado === 'cancelada' && orden.retiroPendiente;
+  const telefonoCliente = rol === 'admin' ? orden.moto.cliente.telefono?.trim() || null : null;
 
   /** Las acciones sin texto obligatorio se confirman manteniendo presionado, sin hoja (HU-48) */
   async function cambiarDirecto(a: Accion) {
@@ -166,6 +194,11 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
         title={`Orden #${orden.numero}`}
         subtitle={`Ingresó el ${formatFecha(orden.fechaIngreso).replace(/ de \d{4}$/, '')}`}
         onBack={() => navigate(-1)}
+        actions={
+          telefonoCliente ? (
+            <IconButton icon="more" label="Más acciones" onClick={() => setMenuAcciones(true)} />
+          ) : undefined
+        }
       />
 
       {/* Encabezado: moto, placa y dial (.mt-od-hero) */}
@@ -220,6 +253,7 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
           <Resumen
             orden={orden}
             rol={rol}
+            taller={taller}
             onCambiarEntrega={puedeCambiarEntrega ? () => setCambiandoEntrega(true) : undefined}
           />
         )}
@@ -427,6 +461,23 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
         ordenPublicId={orden.publicId}
         onClose={() => setAgregandoServicio(false)}
       />
+      {telefonoCliente && (
+        <BottomSheet
+          open={menuAcciones}
+          title={`Orden #${orden.numero}`}
+          onClose={() => setMenuAcciones(false)}
+        >
+          <List label="Más acciones de la orden">
+            <ListItem
+              icon="receipt"
+              title="Compartir cotización"
+              subtitle="Enviar hallazgos y total por WhatsApp"
+              href={enlaceWhatsApp(telefonoCliente, mensajeCotizacionWhatsApp(orden, taller))}
+              onClick={() => setMenuAcciones(false)}
+            />
+          </List>
+        </BottomSheet>
+      )}
     </>
   );
 }
@@ -435,15 +486,18 @@ function Contenido({ orden, actor, rol }: { orden: OrdenDetalle; actor: Actor | 
 function Resumen({
   orden,
   rol,
+  taller,
   onCambiarEntrega,
 }: {
   orden: OrdenDetalle;
   rol: Rol;
+  taller: string;
   onCambiarEntrega?: () => void;
 }) {
   const { etapa } = ESTADOS_ORDEN[orden.estado];
   const repuesto = orden.estado === 'pendiente_repuesto';
   const ultimaObs = orden.historial[0]?.observacion;
+  const telefono = rol === 'admin' ? orden.moto.cliente.telefono?.trim() || null : null;
   return (
     <>
       <Card title="Progreso">
@@ -463,10 +517,34 @@ function Resumen({
       </Card>
       {rol === 'admin' && (
         <Card title="Cliente">
-          <p className="font-semibold">{orden.moto.cliente.nombre}</p>
-          {orden.moto.cliente.telefono && (
-            <p className="text-sm leading-5 text-ink-muted">{orden.moto.cliente.telefono}</p>
-          )}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold">{orden.moto.cliente.nombre}</p>
+              {telefono && <p className="text-sm leading-5 text-ink-muted">{telefono}</p>}
+            </div>
+            {telefono && (
+              <div className="flex shrink-0 items-center gap-2">
+                <a
+                  href={enlaceTelefono(telefono)}
+                  aria-label="Llamar"
+                  title="Llamar"
+                  className="inline-flex size-touch shrink-0 items-center justify-center rounded-full bg-surface text-ink transition-[background-color,transform] duration-150 ease-out hover:bg-surface-2 active:scale-[0.94]"
+                >
+                  <Icon name="phone" size={22} />
+                </a>
+                <a
+                  href={enlaceWhatsApp(telefono, mensajeOrdenWhatsApp(orden, taller))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Escribir por WhatsApp"
+                  title="Escribir por WhatsApp"
+                  className="inline-flex size-touch shrink-0 items-center justify-center rounded-full bg-surface text-ink transition-[background-color,transform] duration-150 ease-out hover:bg-surface-2 active:scale-[0.94]"
+                >
+                  <Icon name="message" size={22} />
+                </a>
+              </div>
+            )}
+          </div>
           {orden.codigoRetiro && (
             <div className="mt-3">
               {/* HU-66: si el cliente no tiene cuenta, el admin le da el código por teléfono */}

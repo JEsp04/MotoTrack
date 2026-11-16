@@ -735,3 +735,55 @@ describe('HU-64 · Inicio del mecánico', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('HU-68 · Contactar al cliente por WhatsApp sin costo', () => {
+  it('muestra Llamar, Escribir por WhatsApp y Compartir cotización con hallazgos y total', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({
+      numero: 44,
+      costoTotal: 65000,
+      moto: {
+        ...ordenDetalle().moto,
+        cliente: { publicId: 'c1', nombre: 'Laura Martínez', telefono: '3104445566' },
+      },
+    });
+    api.obtener.mockResolvedValue(orden);
+
+    const user = userEvent.setup();
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+
+    const llamar = await screen.findByRole('link', { name: 'Llamar' });
+    expect(llamar).toHaveAttribute('href', 'tel:3104445566');
+
+    const wa = screen.getByRole('link', { name: 'Escribir por WhatsApp' });
+    expect(wa.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/573104445566\?text=/);
+    expect(decodeURIComponent(wa.getAttribute('href') ?? '')).toContain('#44');
+
+    await user.click(screen.getByRole('button', { name: 'Más acciones' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Orden #44' });
+    const compartir = within(dialog).getByRole('link', { name: /Compartir cotización/i });
+    const urlCotizacion = decodeURIComponent(compartir.getAttribute('href') ?? '');
+    expect(compartir.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/573104445566\?text=/);
+    expect(urlCotizacion).toContain('Pastillas de freno gastadas');
+    expect(urlCotizacion).toContain('65.000');
+    await user.click(compartir);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('sin celular del cliente oculta los botones de contacto y compartir', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({
+      moto: {
+        ...ordenDetalle().moto,
+        cliente: { publicId: 'c2', nombre: 'Cliente sin celular' },
+      },
+    });
+    api.obtener.mockResolvedValue(orden);
+
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('Cliente sin celular')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Llamar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Escribir por WhatsApp' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Más acciones' })).not.toBeInTheDocument();
+  });
+});

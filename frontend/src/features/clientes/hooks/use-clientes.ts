@@ -31,7 +31,11 @@ export function useCrearCliente() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: NuevoClienteBody) => clientesApi.crear(body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ['clientes'] }),
+        qc.invalidateQueries({ queryKey: ['ordenes'] }),
+      ]),
   });
 }
 
@@ -40,6 +44,10 @@ export function useActualizarCliente() {
   return useMutation({
     mutationFn: ({ publicId, body }: { publicId: string; body: EditarClienteBody }) =>
       clientesApi.actualizar(publicId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['clientes'] }),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ['clientes'] }),
+        qc.invalidateQueries({ queryKey: ['ordenes'] }),
+      ]),
   });
 }
