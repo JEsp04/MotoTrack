@@ -16,12 +16,12 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     { to: '/admin/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
   mecanico: [
+    { to: '/mecanico', label: 'Inicio', labelEscritorio: 'Mi día', icon: 'home', end: true },
     {
-      to: '/mecanico',
+      to: '/mecanico/ordenes',
       label: 'Órdenes',
       labelEscritorio: 'Mis órdenes',
       icon: 'clipboard',
-      end: true,
     },
     { to: '/mecanico/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
     { to: '/mecanico/perfil', label: 'Más', icon: 'menu', donde: 'celular' },

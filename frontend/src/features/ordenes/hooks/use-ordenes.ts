@@ -190,3 +190,39 @@ export function useMisOrdenesActivas() {
     },
   });
 }
+
+/**
+ * HU-64 · Inicio del mecánico: órdenes asignadas al mecánico y los últimos cambios de estado
+ * para la sección «Actividad».
+ */
+export function useInicioMecanico() {
+  return useQuery({
+    queryKey: ['ordenes', 'lista', 'inicio-mecanico'],
+    queryFn: async () => {
+      const [enProceso, porAprobar, listas, cerradas] = await Promise.all(
+        (['en_proceso', 'por_aprobar', 'listas', 'cerradas'] as const).map((grupo) =>
+          ordenesApi.listar({ grupo, page: 1, limit: 50 }),
+        ),
+      );
+      const abiertas = [...porAprobar!.data, ...enProceso!.data, ...listas!.data];
+      const candidatas = [...abiertas, ...cerradas!.data].slice(0, 4);
+      const detalles = await Promise.all(
+        candidatas.map((o) => ordenesApi.obtener(o.publicId).catch(() => null)),
+      );
+      const actividad = detalles
+        .filter((d): d is OrdenDetalle => Boolean(d))
+        .flatMap((d) =>
+          d.historial.map((ev) => ({
+            ...ev,
+            ordenPublicId: d.publicId,
+            numero: d.numero,
+            placa: d.moto.placa,
+          })),
+        )
+        .sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime())
+        .slice(0, 5);
+
+      return { abiertas, actividad };
+    },
+  });
+}

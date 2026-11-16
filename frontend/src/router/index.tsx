@@ -115,7 +115,8 @@ export const routes: RouteObject[] = [
         path: '/mecanico',
         element: <RoleLayout rol="mecanico" />,
         children: [
-          { index: true, element: page(() => import('@/pages/mecanico/OrdenesPage')) },
+          { index: true, element: page(() => import('@/pages/mecanico/InicioPage')) },
+          { path: 'ordenes', element: page(() => import('@/pages/mecanico/OrdenesPage')) },
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'inventario', element: inventario },
           { path: 'perfil', element: perfil },
