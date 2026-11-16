@@ -190,7 +190,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 
 ### E11 · Avisos, reportes y ajustes · 16 pts
 
-- [ ] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1]
+- [~] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1] · rama `HU-69` (sale de `HU-73`), por abrir PR
 - [ ] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2]
 - [ ] HU-71 · Reportes del taller · 3 pts · [J, ronda 2]
 - [ ] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2]

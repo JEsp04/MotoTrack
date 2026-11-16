@@ -4,6 +4,7 @@ import type { UsuarioAutenticado } from '../../types/express.js';
 import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
+import { crearAvisosDeEstado } from '../avisos/avisos.service.js';
 import { nuevoCodigoRetiro } from './codigo-retiro.js';
 import {
   actorDe,
@@ -345,6 +346,13 @@ export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenI
           where: { motocicletaId: moto.motocicletaId },
           data: { kilometraje: input.kilometrajeIngreso },
         });
+        // HU-69: «Recibimos tu moto.»
+        await crearAvisosDeEstado(tx, {
+          ordenServicioId: orden.ordenServicioId,
+          de: null,
+          a: 'registrada',
+          observacion: null,
+        });
         return orden.ordenServicioId;
       });
       return detalle(usuario, id);
@@ -395,12 +403,17 @@ export async function cambiarEstado(
   }
 
   await prisma.$transaction((tx) =>
-    aplicarCambio(tx, orden.id, usuario.usuarioId, orden.estado, input.estado, observacion),
+    aplicarCambio(tx, orden.id, usuario.usuarioId, orden.estado, input.estado, observacion, {
+      porCliente: orden.actor === 'cliente_dueno',
+    }),
   );
   return detalle(usuario, orden.id);
 }
 
-/** Cambia el estado y escribe el historial. Siempre dentro de una transacción. */
+/**
+ * Cambia el estado, escribe el historial y crea los avisos (HU-69).
+ * Siempre dentro de una transacción: si algo falla, no queda ni el cambio ni el aviso.
+ */
 async function aplicarCambio(
   tx: Prisma.TransactionClient,
   ordenServicioId: number,
@@ -408,6 +421,7 @@ async function aplicarCambio(
   de: EstadoOrden,
   a: EstadoOrden,
   observacion: string | null,
+  opciones: { porCliente?: boolean } = {},
 ) {
   const ahora = new Date();
   // where con el estado actual: si otro usuario la cambió un instante antes, no se pisa
@@ -428,6 +442,13 @@ async function aplicarCambio(
   }
   await tx.historialOrden.create({
     data: { ordenServicioId, usuarioId, estadoAnterior: de, estadoNuevo: a, observacion },
+  });
+  await crearAvisosDeEstado(tx, {
+    ordenServicioId,
+    de,
+    a,
+    observacion,
+    porCliente: opciones.porCliente,
   });
 }
 
