@@ -2,6 +2,12 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../../config/prisma.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { HttpError } from '../../utils/http-error.js';
+import type { RegistroInvitacionInput } from '../invitaciones/invitaciones.schemas.js';
+import {
+  buscarPorCodigo,
+  estadoVisible,
+  MENSAJE_ESTADO,
+} from '../invitaciones/invitaciones.service.js';
 import type { LoginInput, RegisterClienteInput, RegisterTallerInput } from './auth.schemas.js';
 import {
   firmarAccessToken,
@@ -187,6 +193,56 @@ export async function registrarCliente(input: RegisterClienteInput): Promise<Ses
           },
         });
       }
+      return nuevo;
+    });
+    return abrirSesion(usuario);
+  } catch (error) {
+    if (esCorreoDuplicado(error))
+      throw new HttpError(409, CORREO_REGISTRADO, [{ field: 'email', message: CORREO_REGISTRADO }]);
+    throw error;
+  }
+}
+
+// ─── HU-67 · Crear la cuenta con una invitación ────────────────────────────
+
+/**
+ * El rol, el taller y el celular salen de la invitación, nunca de lo que se envía.
+ * Si la invitación venció, se usó o se canceló, responde 409 con su mensaje y no crea nada.
+ */
+export async function registrarConInvitacion(
+  input: RegistroInvitacionInput,
+  ip: string,
+): Promise<Sesion> {
+  const invitacion = await buscarPorCodigo(input.codigo, ip);
+  const estado = estadoVisible(invitacion);
+  if (estado !== 'pendiente') {
+    throw new HttpError(409, MENSAJE_ESTADO[estado], [
+      { field: 'codigo', message: MENSAJE_ESTADO[estado] },
+    ]);
+  }
+  await correoDisponible(input.email);
+  const passwordHash = await bcrypt.hash(input.password, BCRYPT_COSTO);
+
+  try {
+    const usuario = await prisma.$transaction(async (tx) => {
+      const nuevo = await tx.usuario.create({
+        data: {
+          tallerId: invitacion.tallerId,
+          rol: invitacion.rol,
+          nombre: input.nombre,
+          email: input.email,
+          telefono: invitacion.telefono,
+          passwordHash,
+          ultimoAcceso: new Date(),
+        },
+        select: usuarioSesion,
+      });
+      // Solo la marca como usada si sigue pendiente: dos registros a la vez no pueden usarla
+      const { count } = await tx.invitacion.updateMany({
+        where: { invitacionId: invitacion.invitacionId, estado: 'pendiente' },
+        data: { estado: 'usada', usuarioId: nuevo.usuarioId },
+      });
+      if (count === 0) throw HttpError.conflict(MENSAJE_ESTADO.usada);
       return nuevo;
     });
     return abrirSesion(usuario);

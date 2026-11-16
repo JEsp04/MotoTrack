@@ -7,6 +7,7 @@ const router = Router();
 
 router.post('/register-taller', auth.registerTaller);
 router.post('/register', auth.register);
+router.post('/register-invitacion', auth.registerInvitacion);
 router.post('/login', auth.login);
 router.post('/refresh', auth.refresh);
 router.post('/logout', auth.logout);
