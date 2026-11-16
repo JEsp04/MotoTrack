@@ -111,7 +111,7 @@ describe('HU-30 · Lista de órdenes', () => {
   it('el mecánico ve sus órdenes y filtra por pestaña', async () => {
     sesionDePrueba('mecanico');
     api.listar.mockResolvedValue(lista([ordenResumen()]));
-    abrirApp('/mecanico');
+    abrirApp('/mecanico/ordenes');
     const ul = await screen.findByRole('list', { name: 'Órdenes' });
     expect(within(ul).getByText('#12')).toBeInTheDocument();
     expect(within(ul).getByLabelText('Placa K L M 4 5 F')).toBeInTheDocument();
@@ -614,7 +614,7 @@ describe('HU-62 · Fecha estimada de entrega', () => {
         ordenResumen({ numero: 13, fechaEstimadaEntrega: '2026-11-05' }),
       ]),
     );
-    abrirApp('/mecanico');
+    abrirApp('/mecanico/ordenes');
     const ul = await screen.findByRole('list', { name: 'Órdenes' });
     expect(within(ul).getByText(/Atrasada · 1 nov/)).toBeInTheDocument();
     expect(within(ul).getByText(/Entrega 5 nov/)).toBeInTheDocument();
@@ -653,5 +653,85 @@ describe('HU-62 · Fecha estimada de entrega', () => {
     api.obtener.mockResolvedValue(orden);
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     expect(await screen.findByText('Entrega estimada: 5 nov')).toBeInTheDocument();
+  });
+});
+
+describe('HU-64 · Inicio del mecánico', () => {
+  it('sin órdenes muestra el estado vacío esperado', async () => {
+    sesionDePrueba('mecanico');
+    api.listar.mockResolvedValue(lista([]));
+    abrirApp('/mecanico');
+    expect(await screen.findByText('Aún no tienes órdenes')).toBeInTheDocument();
+    expect(
+      screen.getByText('Cuando el administrador te asigne una moto, aparecerá aquí.'),
+    ).toBeInTheDocument();
+  });
+
+  it('muestra lecturas, actividad y permite iniciar reparación con HoldButton sin salir del inicio', async () => {
+    sesionDePrueba('mecanico');
+    let aprobada = ordenResumen({
+      numero: 21,
+      estado: 'aprobada',
+      moto: { ...ordenResumen().moto, placa: 'APR21D' },
+    });
+    const registrada = ordenResumen({ numero: 22, estado: 'registrada' });
+    const sinRepuesto = ordenResumen({ numero: 23, estado: 'pendiente_repuesto' });
+    const listaEntrega = ordenResumen({ numero: 24, estado: 'lista_entrega' });
+
+    api.listar.mockImplementation(async ({ grupo }) => {
+      if (grupo === 'en_proceso')
+        return lista([
+          registrada,
+          ...(aprobada.estado === 'en_reparacion' ? [aprobada] : []),
+          sinRepuesto,
+        ]);
+      if (grupo === 'por_aprobar') return lista(aprobada.estado === 'aprobada' ? [aprobada] : []);
+      if (grupo === 'listas') return lista([listaEntrega]);
+      return lista([]);
+    });
+    api.obtener.mockResolvedValue(
+      ordenDetalle({
+        publicId: aprobada.publicId,
+        numero: 21,
+        estado: 'aprobada',
+        moto: { ...ordenDetalle().moto, placa: 'APR21D' },
+      }),
+    );
+    api.cambiarEstado.mockImplementation(async () => {
+      aprobada = { ...aprobada, estado: 'en_reparacion' };
+      return ordenDetalle({
+        publicId: aprobada.publicId,
+        numero: 21,
+        estado: 'en_reparacion',
+      });
+    });
+
+    const router = abrirApp('/mecanico');
+
+    expect(await screen.findByRole('heading', { name: 'Hola, Andrés' })).toBeInTheDocument();
+    const resumen = await screen.findByRole('list', { name: 'Resumen de mi día' });
+    expect(within(resumen).getByText('Mis órdenes')).toBeInTheDocument();
+    expect(within(resumen).getByText('Por diagnosticar')).toBeInTheDocument();
+    expect(within(resumen).getByText('En reparación')).toBeInTheDocument();
+    expect(within(resumen).getByText('Sin repuesto')).toBeInTheDocument();
+    expect(within(resumen).getByText('Listas')).toBeInTheDocument();
+
+    expect(screen.getByRole('list', { name: 'Actividad' })).toBeInTheDocument();
+
+    const hold = await screen.findByRole('button', { name: /Mantén para iniciar la reparación/ });
+    await mantener(hold);
+
+    await waitFor(() =>
+      expect(api.cambiarEstado).toHaveBeenCalledWith(
+        aprobada.publicId,
+        'en_reparacion',
+        undefined,
+        undefined,
+      ),
+    );
+    expect(router.state.location.pathname).toBe('/mecanico');
+    expect(
+      await screen.findByRole('button', { name: /Mantén para marcar lista/ }),
+    ).toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+export { InicioMecanico } from './components/InicioMecanico';
 export { NuevaOrdenForm } from './components/NuevaOrdenForm';
 export { OrdenDetalleVista } from './components/OrdenDetalleVista';
 export { OrdenesLista } from './components/OrdenesLista';

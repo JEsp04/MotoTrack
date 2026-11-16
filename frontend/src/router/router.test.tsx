@@ -33,11 +33,17 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
     expect(router.state.location.pathname).toBe('/admin');
   });
 
-  it('el mecánico no ve la opción Clientes', async () => {
+  it('el mecánico no ve la opción Clientes y su menú tiene Inicio, Órdenes y Más (HU-64)', async () => {
     sesionDePrueba('mecanico');
     abrirApp('/mecanico');
-    expect(await screen.findByRole('heading', { name: 'Mis órdenes' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Hola, Andrés' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Clientes/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/mecanico');
+    expect(screen.getByRole('link', { name: 'Órdenes' })).toHaveAttribute(
+      'href',
+      '/mecanico/ordenes',
+    );
+    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/mecanico/perfil');
   });
 
   it('la opción de la página actual queda marcada', async () => {
