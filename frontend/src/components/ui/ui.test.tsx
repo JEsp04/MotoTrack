@@ -6,6 +6,7 @@ import { StatusBadge } from './Badge';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 import { Input } from './Input';
+import { QuantityStepper } from './QuantityStepper';
 
 describe('Button', () => {
   it('tiene la zona de toque mínima y no se envía dos veces mientras carga', async () => {
@@ -80,5 +81,18 @@ describe('BottomSheet', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Abrir' }));
     await userEvent.click(screen.getByTestId('sheet-backdrop'));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('QuantityStepper', () => {
+  it('sube, baja y respeta el mínimo con botones de 48 px', async () => {
+    const onChange = vi.fn();
+    render(<QuantityStepper value={1} min={1} onChange={onChange} />);
+    const menos = screen.getByRole('button', { name: 'Menos' });
+    const mas = screen.getByRole('button', { name: 'Más' });
+    expect(menos).toBeDisabled();
+    expect(mas).toHaveClass('size-touch');
+    await userEvent.click(mas);
+    expect(onChange).toHaveBeenCalledWith(2);
   });
 });

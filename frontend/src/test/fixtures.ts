@@ -7,6 +7,8 @@ import type {
   Moto,
   OrdenDetalle,
   OrdenResumen,
+  Repuesto,
+  RepuestoDetalle,
 } from '@/types';
 import { USUARIOS_PRUEBA } from './utils';
 
@@ -149,6 +151,48 @@ export function ordenDetalle(extra: Partial<OrdenDetalle> = {}): OrdenDetalle {
         observacion: 'Orden creada',
         creadoEn: '2026-10-10T15:00:00.000Z',
         usuario: { publicId: uuid(), nombre: 'Carolina Restrepo', rol: 'admin' },
+      },
+    ],
+    ...extra,
+  };
+}
+
+export function repuesto(extra?: Partial<Repuesto>): Repuesto {
+  const stock = extra?.stock ?? 6;
+  const stockMinimo = extra?.stockMinimo ?? 4;
+  return {
+    publicId: uuid(),
+    nombre: 'Aceite Motul 5100 10W-40 1L',
+    referencia: 'MOT-5100-10W40',
+    categoria: 'aceites',
+    precioVenta: 42000,
+    costo: 28000,
+    stock,
+    stockMinimo,
+    proveedor: 'Motul Colombia',
+    motosCompatibles: 'Pulsar NS 200, Apache 200',
+    activo: true,
+    critico: stock <= stockMinimo,
+    margen: 33,
+    creadoEn: '2026-10-01T12:00:00.000Z',
+    actualizadoEn: '2026-10-01T12:00:00.000Z',
+    ...extra,
+  };
+}
+
+export function repuestoDetalle(extra?: Partial<RepuestoDetalle>): RepuestoDetalle {
+  return {
+    ...repuesto(extra),
+    movimientos: [
+      {
+        publicId: uuid(),
+        tipo: 'entrada',
+        cantidad: 6,
+        stockResultante: 6,
+        referencia: 'Compra proveedor',
+        creadoEn: '2026-10-05T15:00:00.000Z',
+        orden: null,
+        usuario: { publicId: uuid(), nombre: 'Carolina Restrepo' },
       },
     ],
     ...extra,

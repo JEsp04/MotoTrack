@@ -16,6 +16,7 @@ function page(loader: () => Promise<{ default: ComponentType }>) {
 
 const perfil = page(() => import('@/pages/PerfilPage'));
 const ordenDetalle = page(() => import('@/pages/OrdenDetallePage'));
+const inventario = page(() => import('@/pages/InventarioPage'));
 
 /** Pantallas sin barra inferior en celular (como en el prototipo): tienen su propia barra de acciones */
 const SIN_NAV = { sinNav: true };
@@ -85,6 +86,13 @@ export const routes: RouteObject[] = [
             path: 'clientes/:id',
             element: page(() => import('@/pages/admin/ClienteDetallePage')),
           },
+          // HU-54 / HU-55 · Inventario
+          { path: 'inventario', element: inventario },
+          {
+            path: 'inventario/nuevo',
+            element: page(() => import('@/pages/admin/NuevoRepuestoPage')),
+            handle: SIN_NAV,
+          },
           { path: 'equipo', element: page(() => import('@/pages/admin/EquipoPage')) },
           // HU-67 · Invitar usuario
           {
@@ -109,6 +117,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: page(() => import('@/pages/mecanico/OrdenesPage')) },
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
+          { path: 'inventario', element: inventario },
           { path: 'perfil', element: perfil },
         ],
       },

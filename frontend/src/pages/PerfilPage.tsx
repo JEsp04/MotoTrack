@@ -1,6 +1,7 @@
-import { AppBar, Initials, List, ListItem, Page } from '@/components/ui';
+import { AppBar, Badge, Initials, List, ListItem, Page } from '@/components/ui';
 import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
 import { useMotos } from '@/features/motos';
+import { useResumenInventario } from '@/features/repuestos';
 import { TarjetaTaller } from '@/features/taller';
 import type { Usuario } from '@/types';
 
@@ -46,6 +47,9 @@ function CerrarSesion() {
 
 function Mas({ usuario }: { usuario: Usuario }) {
   const admin = usuario.rol === 'admin';
+  const resumen = useResumenInventario(admin);
+  const criticos = resumen.data?.criticos ?? 0;
+
   return (
     <>
       <AppBar title="Más" />
@@ -58,10 +62,26 @@ function Mas({ usuario }: { usuario: Usuario }) {
             detalle={`${ROL_LABEL[usuario.rol]} · ${usuario.taller.nombre}`}
           />
         )}
-        {admin && (
+        {admin ? (
           <List>
             <ListItem icon="users" title="Clientes y motos" to="/admin/clientes" />
+            <ListItem
+              icon="box"
+              title="Inventario"
+              trailing={
+                criticos > 0 ? (
+                  <Badge tono="accent">
+                    {criticos === 1 ? '1 crítico' : `${criticos} críticos`}
+                  </Badge>
+                ) : undefined
+              }
+              to="/admin/inventario"
+            />
             <ListItem icon="user" title="Usuarios y roles" to="/admin/equipo" />
+          </List>
+        ) : (
+          <List>
+            <ListItem icon="box" title="Inventario" to="/mecanico/inventario" />
           </List>
         )}
         <List>
