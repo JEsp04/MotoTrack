@@ -221,6 +221,46 @@ export interface ServicioCatalogo {
   tiempoEstimadoMin: number | null;
 }
 
+export type CategoriaRepuesto =
+  'aceites' | 'frenos' | 'filtros' | 'transmision' | 'electrico' | 'llantas' | 'otros';
+
+export type TipoMovimientoStock = 'entrada' | 'salida' | 'ajuste';
+
+/** Repuesto del inventario del taller (HU-52, HU-54) */
+export interface Repuesto {
+  publicId: string;
+  nombre: string;
+  referencia: string | null;
+  categoria: CategoriaRepuesto;
+  precioVenta: number;
+  costo: number | null;
+  stock: number;
+  stockMinimo: number;
+  proveedor: string | null;
+  motosCompatibles: string | null;
+  activo: boolean;
+  critico: boolean;
+  margen: number | null;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+export interface MovimientoStock {
+  publicId: string;
+  tipo: TipoMovimientoStock;
+  cantidad: number;
+  stockResultante: number;
+  referencia: string | null;
+  creadoEn: string;
+  orden: { publicId: string; numero: number } | null;
+  usuario: { publicId: string; nombre: string };
+}
+
+/** Repuesto con sus últimos 20 movimientos (HU-52, HU-54) */
+export interface RepuestoDetalle extends Repuesto {
+  movimientos: MovimientoStock[];
+}
+
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────
 
 export interface ApiResponse<T> {

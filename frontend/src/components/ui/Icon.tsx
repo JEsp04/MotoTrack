@@ -19,6 +19,7 @@ const PATHS = {
   bell: 'M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9|M10 20.5a2 2 0 0 0 4 0',
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z|M20.5 20.5l-4.5-4.5',
   plus: 'M12 5v14|M5 12h14',
+  minus: 'M5 12h14',
   chevronRight: 'M9 6l6 6-6 6',
   chevronDown: 'M6 9l6 6 6-6',
   back: 'M19 12H5|M11 6l-6 6 6 6',
@@ -48,6 +49,8 @@ const PATHS = {
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z|M12 11v5|M12 7.8v.2',
   refresh: 'M21 4v6h-6|M3 20v-6h6|M5 9a8 8 0 0 1 13.5-3L21 10|M3 14l2.5 4A8 8 0 0 0 19 15',
   arrowRight: 'M5 12h14|M13 6l6 6-6 6',
+  arrowDown: 'M12 4v16|M6 14l6 6 6-6',
+  arrowUp: 'M12 20V4|M6 10l6-6 6 6',
 } as const;
 
 export type IconName = keyof typeof PATHS;

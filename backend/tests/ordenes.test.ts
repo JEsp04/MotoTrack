@@ -307,6 +307,21 @@ describe('HU-31 · Detalle', () => {
     const res = await request(app).get(`/api/ordenes/${orden.publicId}`).set(auth(otro));
     expect(res.status).toBe(404);
   });
+
+  it('el admin ve el teléfono del cliente en el detalle; el mecánico no lo recibe', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('registrada');
+    const delAdmin = await request(app).get(`/api/ordenes/${orden.publicId}`).set(auth(p.admin));
+    expect(delAdmin.status).toBe(200);
+    expect(delAdmin.body.data.moto.cliente.telefono).toBe('3104445566');
+
+    const delMecanico = await request(app)
+      .get(`/api/ordenes/${orden.publicId}`)
+      .set(auth(p.mecanico));
+    expect(delMecanico.status).toBe(200);
+    expect(delMecanico.body.data.moto.cliente.nombre).toBe('Laura Martínez');
+    expect(delMecanico.body.data.moto.cliente).not.toHaveProperty('telefono');
+  });
 });
 
 describe('HU-32 · Diagnóstico', () => {

@@ -11,6 +11,7 @@ export { HoldButton, HOLD_MS, type HoldVariant } from './HoldButton';
 export { Icon, type IconName } from './Icon';
 export { Input } from './Input';
 export { Plate } from './Plate';
+export { QuantityStepper } from './QuantityStepper';
 export { Select, type SelectOption } from './Select';
 export { Skeleton, SkeletonList } from './Skeleton';
 export { Spinner } from './Spinner';

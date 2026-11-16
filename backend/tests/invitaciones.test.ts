@@ -69,6 +69,7 @@ describe('HU-67 · Invitar usuarios con un código', () => {
     expect(validar.body.data).toMatchObject({
       estado: 'pendiente',
       nombre: 'Sebastián Gil',
+      telefono: '••••••4471',
       rol: 'admin',
       taller: { nombre: 'Moto Express' },
       invito: 'Usuario admin',

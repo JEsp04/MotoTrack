@@ -11,6 +11,7 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     { to: '/admin', label: 'Inicio', labelEscritorio: 'Taller', icon: 'home', end: true },
     { to: '/admin/ordenes', label: 'Órdenes', icon: 'clipboard' },
     { to: '/admin/clientes', label: 'Clientes y motos', icon: 'users', donde: 'escritorio' },
+    { to: '/admin/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
     { to: '/admin/equipo', label: 'Usuarios', icon: 'user', donde: 'escritorio' },
     { to: '/admin/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
@@ -22,6 +23,7 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
       icon: 'clipboard',
       end: true,
     },
+    { to: '/mecanico/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
     { to: '/mecanico/perfil', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
   cliente: [

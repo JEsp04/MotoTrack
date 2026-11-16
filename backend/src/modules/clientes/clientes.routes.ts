@@ -4,14 +4,14 @@ import * as clientes from './clientes.controller.js';
 
 /**
  * /api/clientes (HU-24, HU-25). :id es el publicId.
- * Admin y mecánico consultan; solo el admin crea y edita.
+ * Solo el admin consulta, crea y edita clientes; el mecánico no ve clientes (contexto.md).
  */
 const router = Router();
 
-router.use(requireAuth, requireRole('admin', 'mecanico'));
+router.use(requireAuth, requireRole('admin'));
 router.get('/', clientes.listar);
 router.get('/:id', clientes.obtener);
-router.post('/', requireRole('admin'), clientes.crear);
-router.patch('/:id', requireRole('admin'), clientes.actualizar);
+router.post('/', clientes.crear);
+router.patch('/:id', clientes.actualizar);
 
 export default router;

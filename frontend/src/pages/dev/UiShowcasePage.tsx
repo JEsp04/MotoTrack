@@ -16,6 +16,7 @@ import {
   ListItem,
   Note,
   Plate,
+  QuantityStepper,
   Segmented,
   SelectCard,
   Select,
@@ -225,6 +226,7 @@ export default function UiShowcasePage() {
               { id: 'cliente', label: 'Soy cliente' },
             ]}
           />
+          <QuantityStepper label="Cantidad" value={2} min={1} max={10} onChange={() => {}} />
         </Seccion>
 
         <Seccion title="Hoja inferior y avisos">

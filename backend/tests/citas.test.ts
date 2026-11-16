@@ -326,6 +326,8 @@ describe('HU-57 · Listar citas', () => {
 
     const delMecanico = await request(app).get('/api/citas').set(auth(mecanico));
     expect(delMecanico.body.meta.total).toBe(2);
+    expect(delMecanico.body.data[0].cliente).not.toHaveProperty('telefono');
+    expect(delAdmin.body.data[0].cliente.telefono).toBeTruthy();
 
     const delCliente = await request(app).get('/api/citas').set(auth(usuarioCliente));
     expect(delCliente.body.data).toHaveLength(1);
@@ -516,9 +518,9 @@ describe('HU-57 · Reprogramar y cambiar el estado', () => {
       .set(auth(mecanico))
       .send({ estado: 'confirmada' });
     expect(delMecanico.status).toBe(403);
-    expect((await request(app).get(`/api/citas/${cita.publicId}`).set(auth(mecanico))).status).toBe(
-      200,
-    );
+    const verMecanico = await request(app).get(`/api/citas/${cita.publicId}`).set(auth(mecanico));
+    expect(verMecanico.status).toBe(200);
+    expect(verMecanico.body.data.cliente).not.toHaveProperty('telefono');
   });
 });
 

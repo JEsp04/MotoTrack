@@ -98,6 +98,16 @@ async function exigirHoraLibre(
     throw new HttpError(409, HORA_OCUPADA, [{ field: 'fechaHora', message: HORA_OCUPADA }]);
 }
 
+/** El mecánico consulta la agenda en solo lectura, sin el teléfono personal del cliente. */
+function sinTelefonoParaMecanico<
+  T extends { cliente: { publicId: string; nombre: string; telefono: string } },
+>(usuario: UsuarioAutenticado, cita: T) {
+  const { publicId, nombre } = cita.cliente;
+  const cliente: { publicId: string; nombre: string; telefono?: string } =
+    usuario.rol === 'mecanico' ? { publicId, nombre } : cita.cliente;
+  return { ...cita, cliente };
+}
+
 /**
  * GET /api/citas (HU-57).
  * Admin y mecánico ven las del taller; el cliente solo las suyas. Ordenadas por fecha y hora.
@@ -124,7 +134,10 @@ export async function listarCitas(usuario: UsuarioAutenticado, query: ListarCita
     }),
     prisma.cita.count({ where }),
   ]);
-  return { data: citas, meta: { page: query.page, limit: query.limit, total } };
+  return {
+    data: citas.map((c) => sinTelefonoParaMecanico(usuario, c)),
+    meta: { page: query.page, limit: query.limit, total },
+  };
 }
 
 /**
@@ -173,7 +186,7 @@ const detalle = (citaId: number) =>
 /** GET /api/citas/:id */
 export async function obtenerCita(usuario: UsuarioAutenticado, publicId: string) {
   const { citaId } = await buscarCita(usuario, publicId);
-  return detalle(citaId);
+  return sinTelefonoParaMecanico(usuario, await detalle(citaId));
 }
 
 /** La moto del taller (y, si es cliente, una de las suyas). Si no, 404. */
