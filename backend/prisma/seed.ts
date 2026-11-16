@@ -13,6 +13,7 @@ export const CLAVE_DE_PRUEBA = 'MotoTrack2026';
 
 async function limpiar() {
   // Orden inverso a las dependencias
+  await prisma.invitacion.deleteMany();
   await prisma.aviso.deleteMany();
   await prisma.cita.deleteMany();
   await prisma.movimientoStock.deleteMany();
@@ -631,6 +632,32 @@ async function main() {
     })),
   });
 
+  // HU-67 · Invitaciones de ejemplo, con los códigos de la demo del prototipo
+  const invitacion = (
+    codigo: string,
+    nombre: string,
+    telefono: string,
+    rol: 'admin' | 'mecanico',
+    diasParaVencer: number,
+    estado: 'pendiente' | 'cancelada' = 'pendiente',
+  ) => ({
+    tallerId: taller.tallerId,
+    invitadoPorId: admin.usuarioId,
+    codigo,
+    nombre,
+    telefono,
+    rol,
+    estado,
+    venceEn: new Date(Date.now() + diasParaVencer * 24 * 60 * 60 * 1000),
+  });
+  await prisma.invitacion.createMany({
+    data: [
+      invitacion('8Q2K', 'Sebastián Gil', '3119024471', 'mecanico', 5),
+      invitacion('X7PL', 'Mónica Duque', '3005557812', 'admin', -2),
+      invitacion('K9ZD', 'Julián Arango', '3156610023', 'mecanico', 3, 'cancelada'),
+    ],
+  });
+
   const resumen = {
     talleres: await prisma.taller.count(),
     usuarios: await prisma.usuario.count(),
@@ -643,6 +670,7 @@ async function main() {
     movimientosStock: await prisma.movimientoStock.count(),
     citas: await prisma.cita.count(),
     avisos: await prisma.aviso.count(),
+    invitaciones: await prisma.invitacion.count(),
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(
