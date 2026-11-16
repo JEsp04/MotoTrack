@@ -185,6 +185,30 @@ describe('HU-31 · Detalle', () => {
     expect(botones()).toEqual(['Mantén para marcar lista', 'Falta repuesto']);
   });
 
+  it('el admin ve el teléfono del cliente en el detalle', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle();
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('3104445566')).toBeInTheDocument();
+  });
+
+  it('el mecánico no ve el teléfono del cliente en el detalle', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle();
+    api.obtener.mockResolvedValue(
+      ordenDetalle({
+        moto: {
+          ...orden.moto,
+          cliente: { publicId: orden.moto.cliente.publicId, nombre: 'Laura Martínez' },
+        },
+      }),
+    );
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    await screen.findByRole('heading', { name: 'Orden #12' });
+    expect(screen.queryByText('3104445566')).not.toBeInTheDocument();
+  });
+
   it('el cliente no ve botones de cambio de estado en reparación', async () => {
     sesionDePrueba('cliente');
     const orden = ordenDetalle({ estado: 'en_reparacion' });
