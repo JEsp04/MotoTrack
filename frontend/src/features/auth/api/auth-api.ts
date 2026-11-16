@@ -1,5 +1,5 @@
 import { http } from '@/lib/http';
-import type { ApiResponse, Usuario } from '@/types';
+import type { ApiResponse, InvitacionValidada, Usuario } from '@/types';
 
 /** Respuesta de login, registro y renovación: token de acceso + usuario. */
 export interface SesionResponse {
@@ -33,6 +33,15 @@ export interface RegistroClienteBody {
   password: string;
 }
 
+/** HU-67 · Crear la cuenta con una invitación. El rol y el taller salen de la invitación. */
+export interface RegistroInvitacionBody {
+  codigo: string;
+  nombre: string;
+  email: string;
+  password: string;
+  aceptaTerminos: true;
+}
+
 /** Llamadas a /api/auth (docs/HISTORIAS.md, HU-13 a HU-18). */
 export const authApi = {
   login: (body: LoginBody) =>
@@ -48,6 +57,17 @@ export const authApi = {
   refresh: () => http.post<ApiResponse<SesionResponse>>('/auth/refresh').then((r) => r.data.data),
 
   logout: () => http.post('/auth/logout').then(() => undefined),
+
+  registrarConInvitacion: (body: RegistroInvitacionBody) =>
+    http
+      .post<ApiResponse<SesionResponse>>('/auth/register-invitacion', body)
+      .then((r) => r.data.data),
+
+  /** HU-67 · Validación pública del código (sin sesión) */
+  validarInvitacion: (codigo: string) =>
+    http
+      .get<ApiResponse<InvitacionValidada>>(`/invitaciones/codigo/${encodeURIComponent(codigo)}`)
+      .then((r) => r.data.data),
 
   talleresPublicos: () =>
     http.get<ApiResponse<TallerPublico[]>>('/talleres/publicos').then((r) => r.data.data),

@@ -5,6 +5,7 @@ import {
   authApi,
   type LoginBody,
   type RegistroClienteBody,
+  type RegistroInvitacionBody,
   type RegistroTallerBody,
   type SesionResponse,
 } from '../api/auth-api';
@@ -34,6 +35,19 @@ export function useRegistroTaller() {
 export function useRegistroCliente() {
   return useMutation({
     mutationFn: (body: RegistroClienteBody) => authApi.registrarCliente(body),
+    onSuccess: guardarSesion,
+  });
+}
+
+/** HU-67 · GET /invitaciones/codigo/:codigo */
+export function useValidarInvitacion() {
+  return useMutation({ mutationFn: (codigo: string) => authApi.validarInvitacion(codigo) });
+}
+
+/** HU-67 · POST /auth/register-invitacion */
+export function useRegistroInvitacion() {
+  return useMutation({
+    mutationFn: (body: RegistroInvitacionBody) => authApi.registrarConInvitacion(body),
     onSuccess: guardarSesion,
   });
 }

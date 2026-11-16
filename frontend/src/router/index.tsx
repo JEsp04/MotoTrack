@@ -47,6 +47,17 @@ export const routes: RouteObject[] = [
                 element: page(() => import('@/pages/auth/RegistroTallerPage')),
                 handle: { panel: 'Registrar taller' },
               },
+              // HU-67 · Unirse al taller con una invitación
+              {
+                path: '/unirse',
+                element: page(() => import('@/pages/auth/UnirsePage')),
+                handle: { panel: 'Tengo una invitación' },
+              },
+              {
+                path: '/i/:codigo',
+                element: page(() => import('@/pages/auth/UnirsePage')),
+                handle: { panel: 'Tengo una invitación' },
+              },
               {
                 path: '/registro/cliente',
                 element: page(() => import('@/pages/auth/RegistroClientePage')),
@@ -75,6 +86,12 @@ export const routes: RouteObject[] = [
             element: page(() => import('@/pages/admin/ClienteDetallePage')),
           },
           { path: 'equipo', element: page(() => import('@/pages/admin/EquipoPage')) },
+          // HU-67 · Invitar usuario
+          {
+            path: 'equipo/invitar',
+            element: page(() => import('@/pages/admin/InvitarUsuarioPage')),
+            handle: SIN_NAV,
+          },
           { path: 'perfil', element: perfil },
           // HU-73 · «Más» del admin y los datos del taller
           { path: 'mas', element: perfil },
