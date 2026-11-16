@@ -75,3 +75,13 @@ export const registroClienteSchema = z
   })
   .refine(confirmarClave, { message: 'Las contraseñas no coinciden', path: ['confirmar'] });
 export type RegistroClienteForm = z.infer<typeof registroClienteSchema>;
+
+// ─── Unirse al taller con una invitación (HU-67) ───────────────────────────
+
+export const unirseSchema = z.object({
+  nombre: obligatorio('Tu nombre').max(LIMITES.nombre, maximo(LIMITES.nombre)),
+  email,
+  password,
+  aceptaTerminos: z.boolean().refine((v) => v, 'Acepta los términos para crear tu cuenta'),
+});
+export type UnirseForm = z.infer<typeof unirseSchema>;

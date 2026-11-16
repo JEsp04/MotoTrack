@@ -39,6 +39,41 @@ export interface DatosTaller {
   horarioAtencion: string | null;
 }
 
+/** Estado de una invitación (HU-67). «vencida» la calcula el backend con la fecha */
+export type EstadoInvitacion = 'pendiente' | 'vencida' | 'usada' | 'cancelada';
+export type RolInvitado = 'admin' | 'mecanico';
+
+/** Invitación del taller, como la ve el admin en «Usuarios y roles» (HU-67) */
+export interface Invitacion {
+  publicId: string;
+  nombre: string;
+  telefono: string;
+  email: string | null;
+  rol: RolInvitado;
+  codigo: string;
+  estado: EstadoInvitacion;
+  venceEn: string;
+  creadoEn: string;
+  actualizadoEn: string;
+  /** Nombre del admin que invitó */
+  invito: string;
+}
+
+/**
+ * Lo que responde la validación pública del código (HU-67). Si no está pendiente,
+ * solo trae el estado, quién invitó y cuándo vencía.
+ */
+export interface InvitacionValidada {
+  estado: EstadoInvitacion;
+  invito: string;
+  venceEn: string;
+  taller?: { nombre: string };
+  nombre?: string;
+  telefono?: string;
+  email?: string | null;
+  rol?: RolInvitado;
+}
+
 /** Integrante del equipo del taller: admin o mecánico (HU-23) */
 export interface Integrante {
   publicId: string;

@@ -46,12 +46,20 @@ export default function LoginPage() {
       />
       <AccesoLinks>
         {tab === 'taller' ? (
-          <AccesoLink
-            to="/registro/taller"
-            icon="home"
-            titulo="Registrar mi taller"
-            texto="Crea la cuenta como administrador"
-          />
+          <>
+            <AccesoLink
+              to="/unirse"
+              icon="mail"
+              titulo="Tengo una invitación"
+              texto="Únete al taller donde trabajas"
+            />
+            <AccesoLink
+              to="/registro/taller"
+              icon="home"
+              titulo="Registrar mi taller"
+              texto="Crea la cuenta como administrador"
+            />
+          </>
         ) : (
           <AccesoLink
             to="/registro/cliente"
