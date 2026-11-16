@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { usuarioActual } from '../../middlewares/auth.js';
+import { registroInvitacionSchema } from '../invitaciones/invitaciones.schemas.js';
 import { loginSchema, registerClienteSchema, registerTallerSchema } from './auth.schemas.js';
 import * as authService from './auth.service.js';
 import { opcionesCookieRefresh, REFRESH_COOKIE } from './auth.tokens.js';
@@ -23,6 +24,11 @@ export async function registerTaller(req: Request, res: Response) {
 export async function register(req: Request, res: Response) {
   const input = registerClienteSchema.parse(req.body);
   responderSesion(res, await authService.registrarCliente(input), 201);
+}
+
+export async function registerInvitacion(req: Request, res: Response) {
+  const input = registroInvitacionSchema.parse(req.body);
+  responderSesion(res, await authService.registrarConInvitacion(input, req.ip ?? ''), 201);
 }
 
 export async function login(req: Request, res: Response) {

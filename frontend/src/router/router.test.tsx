@@ -62,7 +62,11 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
       'href',
       '/admin/perfil',
     );
-    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/admin/perfil');
+    expect(screen.getByRole('link', { name: /Datos del taller/ })).toHaveAttribute(
+      'href',
+      '/admin/taller',
+    );
+    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/admin/mas');
   });
 
   it('el admin tiene el botón «Recibir moto» en la barra superior (HU-44)', async () => {

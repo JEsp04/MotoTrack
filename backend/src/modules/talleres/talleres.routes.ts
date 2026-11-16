@@ -1,20 +1,13 @@
 import { Router } from 'express';
-import { prisma } from '../../config/prisma.js';
+import { requireAuth, requireRole } from '../../middlewares/auth.js';
+import * as talleres from './talleres.controller.js';
 
 /** /api/talleres */
 const router = Router();
 
-/**
- * Lista pública de talleres activos, para que el cliente elija el suyo al registrarse (HU-20).
- * Solo datos públicos: publicId, nombre y dirección.
- */
-router.get('/publicos', async (_req, res) => {
-  const talleres = await prisma.taller.findMany({
-    where: { estado: 'activo' },
-    select: { publicId: true, nombre: true, direccion: true },
-    orderBy: { nombre: 'asc' },
-  });
-  res.json({ data: talleres });
-});
+router.get('/publicos', talleres.publicos);
+// HU-73 · Datos del taller: todos los del taller los ven; solo el admin los cambia
+router.get('/mio', requireAuth, talleres.obtenerMio);
+router.patch('/mio', requireAuth, requireRole('admin'), talleres.actualizarMio);
 
 export default router;

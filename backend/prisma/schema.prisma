@@ -26,6 +26,13 @@ enum Rol {
   cliente
 }
 
+/// Estado guardado de una invitación (HU-67). «Vencida» no se guarda: se calcula con venceEn.
+enum EstadoInvitacion {
+  pendiente
+  usada
+  cancelada
+}
+
 enum EstadoRegistro {
   activo
   inactivo
@@ -75,6 +82,14 @@ enum EstadoCita {
   cancelada
 }
 
+/// Tipo de aviso dentro de la app (HU-69)
+enum TipoAviso {
+  estado
+  cotizacion
+  cita
+  recordatorio
+}
+
 // ─── Talleres y usuarios ──────────────────────────────────────────────────
 
 model Taller {
@@ -99,6 +114,8 @@ model Taller {
   repuestos        Repuesto[]
   movimientosStock MovimientoStock[]
   citas            Cita[]
+  avisos           Aviso[]
+  invitaciones     Invitacion[]
 
   @@map("talleres")
 }
@@ -118,15 +135,18 @@ model Usuario {
   creadoEn      DateTime       @default(now())
   actualizadoEn DateTime       @updatedAt
 
-  taller           Taller            @relation(fields: [tallerId], references: [tallerId])
-  cliente          Cliente?
-  refreshTokens    RefreshToken[]
-  ordenesAsignadas OrdenServicio[]   @relation("MecanicoAsignado")
-  ordenesCreadas   OrdenServicio[]   @relation("CreadaPor")
-  diagnosticos     Diagnostico[]
-  historialOrdenes HistorialOrden[]
-  movimientosStock MovimientoStock[]
-  citasCreadas     Cita[]
+  taller               Taller            @relation(fields: [tallerId], references: [tallerId])
+  cliente              Cliente?
+  refreshTokens        RefreshToken[]
+  ordenesAsignadas     OrdenServicio[]   @relation("MecanicoAsignado")
+  ordenesCreadas       OrdenServicio[]   @relation("CreadaPor")
+  diagnosticos         Diagnostico[]
+  historialOrdenes     HistorialOrden[]
+  movimientosStock     MovimientoStock[]
+  citasCreadas         Cita[]
+  avisos               Aviso[]
+  invitacionesEnviadas Invitacion[]      @relation("InvitacionesEnviadas")
+  invitacionAceptada   Invitacion?       @relation("InvitacionAceptada")
 
   @@index([tallerId, rol])
   @@map("usuarios")
@@ -241,6 +261,7 @@ model OrdenServicio {
   historial        HistorialOrden[]
   movimientosStock MovimientoStock[]
   cita             Cita?
+  avisos           Aviso[]
 
   @@unique([tallerId, numero])
   @@index([tallerId, estado])
@@ -432,3 +453,60 @@ model Cita {
 }
 
 // Fuera de esta entrega (se agregan después): recomendaciones de IA y notificaciones.
+
+/// Aviso dentro de la app para un usuario (HU-69). Sin servicios pagos: se consulta desde la app.
+model Aviso {
+  avisoId         Int       @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId        String    @unique @default(uuid(7)) @db.Char(36)
+  tallerId        Int
+  /// Usuario que recibe el aviso
+  usuarioId       Int
+  tipo            TipoAviso
+  titulo          String    @db.VarChar(150)
+  texto           String    @db.VarChar(500)
+  /// Orden a la que se refiere, si aplica
+  ordenServicioId Int?
+  leido           Boolean   @default(false)
+  creadoEn        DateTime  @default(now())
+
+  taller  Taller         @relation(fields: [tallerId], references: [tallerId])
+  usuario Usuario        @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+  orden   OrdenServicio? @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+
+  @@index([usuarioId, leido, creadoEn])
+  @@index([ordenServicioId])
+  @@map("avisos")
+}
+
+/// Invitación para que un mecánico o un admin cree su cuenta en el taller (HU-67).
+/// El código (4 caracteres, sin 0, O, 1 ni I) se valida sin sesión, pero solo el admin
+/// del mismo taller lo ve en la lista.
+model Invitacion {
+  invitacionId  Int              @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId      String           @unique @default(uuid(7)) @db.Char(36)
+  tallerId      Int
+  /// El admin que invitó
+  invitadoPorId Int
+  nombre        String           @db.VarChar(150)
+  telefono      String           @db.VarChar(20)
+  email         String?          @db.VarChar(150)
+  /// Solo admin o mecánico: los clientes no se invitan
+  rol           Rol
+  codigo        String           @unique @db.Char(4)
+  estado        EstadoInvitacion @default(pendiente)
+  /// 7 días después de enviarla o reenviarla
+  venceEn       DateTime
+  /// La cuenta que se creó con la invitación
+  usuarioId     Int?             @unique
+  creadoEn      DateTime         @default(now())
+  actualizadoEn DateTime         @updatedAt
+
+  taller      Taller   @relation(fields: [tallerId], references: [tallerId])
+  invitadoPor Usuario  @relation("InvitacionesEnviadas", fields: [invitadoPorId], references: [usuarioId])
+  usuario     Usuario? @relation("InvitacionAceptada", fields: [usuarioId], references: [usuarioId])
+
+  @@index([tallerId, estado])
+  @@map("invitaciones")
+}

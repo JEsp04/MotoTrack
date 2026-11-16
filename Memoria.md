@@ -6,7 +6,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`; los criterios de aceptación del entregable, en `docs/HISTORIAS.md`; el diseño, en `docs/diseno.md` y `docs/prototipo/`.
 
-Última actualización: lunes 2 de noviembre de 2026.
+Última actualización: domingo 15 de noviembre de 2026.
 
 ---
 
@@ -122,3 +122,5 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 2-nov | V: HU-57 · tabla `citas` (migración `20261102172435_citas`), API `/api/citas` (listar, horas libres, ver, crear, reprogramar y cambiar estado), 7 citas en el seed y 21 pruebas. Backend: 133 pruebas en verde. Siguiente de V: HU-62 |
 | 2-nov | V: HU-62 · columna `fechaEstimadaEntrega` (migración `20261102174934_fecha_estimada_entrega`), `PATCH /api/ordenes/:id/entrega` (solo admin), `atrasada` calculada por el backend, y la fecha en la tarjeta, el panel, el detalle, «Nueva orden» y el seguimiento del cliente. Atrasada se pinta en rojo de peligro (`text-danger-text`), como dice la HU; el prototipo usaba amarillo y V eligió el rojo |
 | 2-nov | V: HU-66 · código de retiro (migración `20261102183402_codigo_retiro`), entrega con código, `POST /api/ordenes/:id/retiro`, tarjeta «Lista para recoger» / «Recoge tu moto», orden #6 lista en el seed (código 4821). Backend 142 pruebas, frontend 103 |
+| 15-nov | J: HU-73 · `GET` y `PATCH /api/talleres/mio` (cambiar es solo del admin; el horario se valida con el mismo lector de las citas, así las citas nuevas usan el horario nuevo), «Más» del admin en `/admin/mas` con la tarjeta del taller, pantalla «Datos del taller» en `/admin/taller` y enlace en el menú del avatar en computador. Sin migración. 8 pruebas de backend y 5 de frontend. Siguiente de J: HU-69 (después de unir HU-62 y HU-66) |
+| 15-nov | J: HU-69 · tabla `avisos` (migración `20261115223032_avisos`). `cambiarEstado()` (en `aplicarCambio`) y `crearOrden()` crean el aviso del cliente dueño en la misma transacción, con los textos del prototipo; si el cliente aprueba o rechaza desde la app, avisa a cada admin activo. Cliente sin cuenta: sin aviso. API `GET /api/avisos?noLeidos=` (con `meta.noLeidos`), `PATCH /api/avisos/:id/leido`, `POST /api/avisos/leer-todos`. 13 avisos en el seed y 11 pruebas. Backend: 167 pruebas en verde. Siguiente de J: HU-67 |

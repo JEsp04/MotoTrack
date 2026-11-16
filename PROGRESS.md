@@ -22,7 +22,7 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E8 · Inventario de repuestos | HU-51 a HU-56 | 16 | ⏳ A · `docs/HISTORIAS-2.md` |
 | E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V · HU-57 en `develop` (PR #30) |
 | E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ V (61, 62, 63, 65, 66), A (64, 68), J (67) |
-| E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J |
+| E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J · HU-73 en la rama `HU-73` |
 | E12 · Funciones con costo | HU-76 a HU-81 | 21 | ⛔ Solo si se aprueba el gasto |
 | E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ De última: A (HU-38), V (HU-39), J (HU-40) |
 
@@ -163,9 +163,9 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 
 ### E8 · Inventario de repuestos · 16 pts
 
-- [ ] HU-51 · Tablas de repuestos y movimientos · 3 pts · [A, ronda 1, primera migración]
-- [ ] HU-52 · API de repuestos y stock crítico · 3 pts · [A, ronda 1]
-- [ ] HU-53 · Registrar entradas, salidas y ajustes de stock · 2 pts · [A, ronda 1]
+- [x] HU-51 · Tablas de repuestos y movimientos · 3 pts · [A, ronda 1, primera migración] · PR #27
+- [x] HU-52 · API de repuestos y stock crítico · 3 pts · [A, ronda 1] · PR #28
+- [x] HU-53 · Registrar entradas, salidas y ajustes de stock · 2 pts · [A, ronda 1] · PR #29
 - [ ] HU-54 · Pantalla de inventario · 3 pts · [A, ronda 2, necesita HU-73]
 - [ ] HU-55 · Registrar un repuesto nuevo · 2 pts · [A, ronda 2]
 - [ ] HU-56 · Repuestos en la cotización del diagnóstico · 3 pts · [A, ronda 3]
@@ -190,11 +190,11 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 
 ### E11 · Avisos, reportes y ajustes · 16 pts
 
-- [ ] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1]
+- [~] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1] · rama `HU-69` (sale de `HU-73`), por abrir PR
 - [ ] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2]
 - [ ] HU-71 · Reportes del taller · 3 pts · [J, ronda 2]
 - [ ] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2]
-- [ ] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero]
+- [~] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero] · rama `HU-73`, por abrir PR
 - [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]
 - [ ] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68]
 

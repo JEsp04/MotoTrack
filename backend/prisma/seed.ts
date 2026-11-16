@@ -5,6 +5,7 @@
 import bcrypt from 'bcryptjs';
 import { prisma } from '../src/config/prisma.js';
 import { env } from '../src/config/env.js';
+import { avisoParaCliente } from '../src/modules/avisos/avisos.textos.js';
 import { desdeColombia, enColombia, horarioDelTaller } from '../src/modules/citas/horario.js';
 import type { CategoriaRepuesto, EstadoOrden } from '../src/generated/prisma/client.js';
 
@@ -12,6 +13,8 @@ export const CLAVE_DE_PRUEBA = 'MotoTrack2026';
 
 async function limpiar() {
   // Orden inverso a las dependencias
+  await prisma.invitacion.deleteMany();
+  await prisma.aviso.deleteMany();
   await prisma.cita.deleteMany();
   await prisma.movimientoStock.deleteMany();
   await prisma.repuesto.deleteMany();
@@ -593,6 +596,68 @@ async function main() {
     })),
   });
 
+  // Avisos de ejemplo (HU-69): uno por cada cambio de estado de las órdenes de clientes con
+  // cuenta, como los habría creado cambiarEstado(). Solo el último de cada orden queda sin leer.
+  const historial = await prisma.historialOrden.findMany({
+    where: { orden: { tallerId, moto: { cliente: { usuarioId: { not: null } } } } },
+    orderBy: [{ creadoEn: 'asc' }, { historialOrdenId: 'asc' }],
+    select: {
+      ordenServicioId: true,
+      estadoAnterior: true,
+      estadoNuevo: true,
+      observacion: true,
+      creadoEn: true,
+      orden: {
+        select: {
+          numero: true,
+          moto: { select: { placa: true, cliente: { select: { usuarioId: true } } } },
+        },
+      },
+    },
+  });
+  const ultimoPorOrden = new Map(historial.map((h, i) => [h.ordenServicioId, i]));
+  await prisma.aviso.createMany({
+    data: historial.map((h, i) => ({
+      tallerId,
+      usuarioId: h.orden.moto.cliente.usuarioId!,
+      ordenServicioId: h.ordenServicioId,
+      ...avisoParaCliente(
+        { numero: h.orden.numero, placa: h.orden.moto.placa },
+        h.estadoAnterior,
+        h.estadoNuevo,
+        h.observacion,
+      ),
+      leido: ultimoPorOrden.get(h.ordenServicioId) !== i,
+      creadoEn: h.creadoEn,
+    })),
+  });
+
+  // HU-67 · Invitaciones de ejemplo, con los códigos de la demo del prototipo
+  const invitacion = (
+    codigo: string,
+    nombre: string,
+    telefono: string,
+    rol: 'admin' | 'mecanico',
+    diasParaVencer: number,
+    estado: 'pendiente' | 'cancelada' = 'pendiente',
+  ) => ({
+    tallerId: taller.tallerId,
+    invitadoPorId: admin.usuarioId,
+    codigo,
+    nombre,
+    telefono,
+    rol,
+    estado,
+    venceEn: new Date(Date.now() + diasParaVencer * 24 * 60 * 60 * 1000),
+  });
+  await prisma.invitacion.createMany({
+    data: [
+      invitacion('8Q2K', 'Sebastián Gil', '3119024471', 'mecanico', 5),
+      invitacion('X7PL', 'Mónica Duque', '3005557812', 'admin', -2),
+      invitacion('K9ZD', 'Julián Arango', '3156610023', 'mecanico', 3, 'cancelada'),
+    ],
+  });
+
   const resumen = {
     talleres: await prisma.taller.count(),
     usuarios: await prisma.usuario.count(),
@@ -604,6 +669,8 @@ async function main() {
     repuestos: await prisma.repuesto.count(),
     movimientosStock: await prisma.movimientoStock.count(),
     citas: await prisma.cita.count(),
+    avisos: await prisma.aviso.count(),
+    invitaciones: await prisma.invitacion.count(),
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(

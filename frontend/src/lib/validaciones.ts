@@ -18,6 +18,7 @@ export const LIMITES = {
   documento: 30,
   nit: 20,
   direccion: 255,
+  horario: 255,
   placa: 10,
   marca: 80,
   referencia: 80,

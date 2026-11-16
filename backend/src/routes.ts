@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import authRoutes from './modules/auth/auth.routes.js';
+import avisosRoutes from './modules/avisos/avisos.routes.js';
 import citasRoutes from './modules/citas/citas.routes.js';
 import clientesRoutes from './modules/clientes/clientes.routes.js';
+import invitacionesRoutes from './modules/invitaciones/invitaciones.routes.js';
 import motosRoutes from './modules/motos/motos.routes.js';
 import ordenesRoutes from './modules/ordenes/ordenes.routes.js';
 import repuestosRoutes from './modules/repuestos/repuestos.routes.js';
@@ -19,11 +21,13 @@ router.use('/auth', authRoutes);
 router.use('/talleres', talleresRoutes);
 // Cada módulo aplica requireAuth y requireRole en su propio archivo de rutas
 router.use('/usuarios', usuariosRoutes);
+router.use('/invitaciones', invitacionesRoutes);
 router.use('/clientes', clientesRoutes);
 router.use('/motos', motosRoutes);
 router.use('/ordenes', ordenesRoutes);
 router.use('/servicios', serviciosRoutes);
 router.use('/repuestos', repuestosRoutes);
 router.use('/citas', citasRoutes);
+router.use('/avisos', avisosRoutes);
 
 export default router;

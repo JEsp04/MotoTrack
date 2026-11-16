@@ -1,11 +1,15 @@
 import { AppBar, Initials, List, ListItem, Page } from '@/components/ui';
 import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
 import { useMotos } from '@/features/motos';
+import { TarjetaTaller } from '@/features/taller';
 import type { Usuario } from '@/types';
 
 /**
- * HU-22, HU-50 · «Más» del taller (MoreScreen del prototipo) y «Mi cuenta» del cliente
+ * HU-22, HU-50, HU-73 · «Más» del taller (MoreScreen del prototipo) y «Mi cuenta» del cliente
  * (ClientAccountScreen). En celular aquí está «Cerrar sesión».
+ * Para el admin, arriba va la tarjeta del taller, que abre «Datos del taller» (HU-73).
+ * Las demás opciones del prototipo (Inventario, Citas, Reportes, Tema oscuro) se agregan
+ * cuando su historia esté unida.
  */
 export default function PerfilPage() {
   const usuario = useSession((s) => s.usuario);
@@ -46,10 +50,14 @@ function Mas({ usuario }: { usuario: Usuario }) {
     <>
       <AppBar title="Más" />
       <Page>
-        <Perfil
-          nombre={usuario.nombre}
-          detalle={`${ROL_LABEL[usuario.rol]} · ${usuario.taller.nombre}`}
-        />
+        {admin ? (
+          <TarjetaTaller nombre={usuario.taller.nombre} />
+        ) : (
+          <Perfil
+            nombre={usuario.nombre}
+            detalle={`${ROL_LABEL[usuario.rol]} · ${usuario.taller.nombre}`}
+          />
+        )}
         {admin && (
           <List>
             <ListItem icon="users" title="Clientes y motos" to="/admin/clientes" />
