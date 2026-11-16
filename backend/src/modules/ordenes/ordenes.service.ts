@@ -222,13 +222,26 @@ function exigirActor(actor: Actor | null, permitidos: Actor[]) {
   if (!actor || !permitidos.includes(actor)) throw HttpError.forbidden();
 }
 
+/**
+ * El mecánico no recibe el teléfono del cliente (principio de mínimo privilegio;
+ * la comunicación con el cliente corresponde al admin).
+ */
+function sinTelefonoParaMecanico<
+  T extends { moto: { cliente: { publicId: string; nombre: string; telefono: string } } },
+>(usuario: UsuarioAutenticado, orden: T) {
+  const { publicId, nombre } = orden.moto.cliente;
+  const cliente: { publicId: string; nombre: string; telefono?: string } =
+    usuario.rol === 'mecanico' ? { publicId, nombre } : orden.moto.cliente;
+  return { ...orden, moto: { ...orden.moto, cliente } };
+}
+
 /** Respuesta del detalle, sin los Int */
 async function detalle(usuario: UsuarioAutenticado, ordenServicioId: number) {
   const orden = await prisma.ordenServicio.findUniqueOrThrow({
     where: { ordenServicioId },
     select: ordenDetalle,
   });
-  return conRetiro(usuario, conEntrega(orden));
+  return sinTelefonoParaMecanico(usuario, conRetiro(usuario, conEntrega(orden)));
 }
 
 // ─── HU-30 · Lista ─────────────────────────────────────────────────────────

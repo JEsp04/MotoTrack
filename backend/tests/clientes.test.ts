@@ -190,9 +190,12 @@ describe('HU-25 · Buscar y ver clientes', () => {
     expect(meca.status).toBe(403);
   });
 
-  it('un cliente no puede listar clientes', async () => {
-    const { usuarioCliente } = await escenario();
-    const res = await request(app).get('/api/clientes').set(auth(usuarioCliente));
-    expect(res.status).toBe(403);
+  it('un cliente y un mecánico no pueden listar ni ver clientes (403)', async () => {
+    const { mecanico, usuarioCliente, ficha } = await escenario();
+    expect((await request(app).get('/api/clientes').set(auth(usuarioCliente))).status).toBe(403);
+    expect((await request(app).get('/api/clientes').set(auth(mecanico))).status).toBe(403);
+    expect(
+      (await request(app).get(`/api/clientes/${ficha.publicId}`).set(auth(mecanico))).status,
+    ).toBe(403);
   });
 });

@@ -9,6 +9,8 @@ export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
+  // Confía en 1 proxy inverso (ej. Vercel) para leer la IP real en req.ip sin aceptar cadenas falsas
+  app.set('trust proxy', 1);
   app.use(cors({ origin: env.CORS_ORIGIN.split(',').map((o) => o.trim()), credentials: true }));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());

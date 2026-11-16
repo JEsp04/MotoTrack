@@ -174,10 +174,16 @@ export async function buscarPorCodigo(codigo: string, ip: string) {
   return invitacion;
 }
 
+/** Enmascara el celular para mostrar solo los últimos 4 dígitos en la consulta pública. */
+function enmascararTelefono(telefono: string) {
+  if (telefono.length <= 4) return '•'.repeat(telefono.length);
+  return `${'•'.repeat(telefono.length - 4)}${telefono.slice(-4)}`;
+}
+
 /**
  * GET /api/invitaciones/codigo/:codigo (pública) · Para la pantalla «Únete a tu taller».
  * Si la invitación ya no sirve, solo dice por qué, quién invitó y cuándo vencía:
- * los datos del invitado no se muestran.
+ * los datos del invitado no se muestran. Si está pendiente, el celular va enmascarado.
  */
 export async function validarCodigo(codigo: string, ip: string) {
   const i = await buscarPorCodigo(codigo, ip);
@@ -188,7 +194,7 @@ export async function validarCodigo(codigo: string, ip: string) {
     ...base,
     taller: { nombre: i.taller.nombre },
     nombre: i.nombre,
-    telefono: i.telefono,
+    telefono: enmascararTelefono(i.telefono),
     email: i.email,
     rol: i.rol,
   };
