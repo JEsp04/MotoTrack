@@ -24,7 +24,19 @@ export interface RegistrarMovimientoBody {
   referencia?: string;
 }
 
-/** Llamadas a /api/repuestos (HU-52, HU-53, HU-54). */
+export interface CrearRepuestoBody {
+  nombre: string;
+  referencia?: string;
+  categoria: CategoriaRepuesto;
+  precioVenta: number;
+  costo?: number | null;
+  stock: number;
+  stockMinimo: number;
+  proveedor?: string;
+  motosCompatibles?: string;
+}
+
+/** Llamadas a /api/repuestos (HU-52, HU-53, HU-54, HU-55). */
 export const repuestosApi = {
   listar: ({ q, categoria, critico, page = 1, limit = POR_PAGINA }: ListarRepuestosParams = {}) =>
     http
@@ -41,6 +53,9 @@ export const repuestosApi = {
 
   obtener: (publicId: string) =>
     http.get<ApiResponse<RepuestoDetalle>>(`/repuestos/${publicId}`).then((r) => r.data.data),
+
+  crear: (body: CrearRepuestoBody) =>
+    http.post<ApiResponse<RepuestoDetalle>>('/repuestos', body).then((r) => r.data.data),
 
   registrarMovimiento: (publicId: string, body: RegistrarMovimientoBody) =>
     http
