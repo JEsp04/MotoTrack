@@ -6,7 +6,11 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import type { CategoriaRepuesto } from '@/types';
-import { repuestosApi, type RegistrarMovimientoBody } from '../api/repuestos-api';
+import {
+  repuestosApi,
+  type CrearRepuestoBody,
+  type RegistrarMovimientoBody,
+} from '../api/repuestos-api';
 
 export interface FiltroInventario {
   q?: string;
@@ -60,6 +64,21 @@ export function useRegistrarMovimiento(publicId: string) {
     mutationFn: (body: RegistrarMovimientoBody) => repuestosApi.registrarMovimiento(publicId, body),
     onSuccess: (detalle) => {
       qc.setQueryData(['repuestos', 'detalle', publicId], detalle);
+      return Promise.all([
+        qc.invalidateQueries({ queryKey: ['repuestos', 'lista'] }),
+        qc.invalidateQueries({ queryKey: ['repuestos', 'resumen'] }),
+      ]);
+    },
+  });
+}
+
+/** Crea un repuesto nuevo y refresca inventario y contadores (HU-55) */
+export function useCrearRepuesto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CrearRepuestoBody) => repuestosApi.crear(body),
+    onSuccess: (creado) => {
+      qc.setQueryData(['repuestos', 'detalle', creado.publicId], creado);
       return Promise.all([
         qc.invalidateQueries({ queryKey: ['repuestos', 'lista'] }),
         qc.invalidateQueries({ queryKey: ['repuestos', 'resumen'] }),

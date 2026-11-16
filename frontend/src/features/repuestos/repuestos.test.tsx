@@ -1,14 +1,19 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession } from '@/features/auth';
-import { lista, repuesto, repuestoDetalle } from '@/test/fixtures';
+import { errorApi, lista, repuesto, repuestoDetalle } from '@/test/fixtures';
 import { abrirApp, sesionDePrueba } from '@/test/utils';
 import type { Repuesto, RepuestoDetalle } from '@/types';
 import { repuestosApi, type ListarRepuestosParams } from './api/repuestos-api';
 
 vi.mock('./api/repuestos-api', () => ({
   POR_PAGINA: 50,
-  repuestosApi: { listar: vi.fn(), obtener: vi.fn(), registrarMovimiento: vi.fn() },
+  repuestosApi: {
+    listar: vi.fn(),
+    obtener: vi.fn(),
+    crear: vi.fn(),
+    registrarMovimiento: vi.fn(),
+  },
 }));
 const api = vi.mocked(repuestosApi);
 
@@ -190,5 +195,122 @@ describe('HU-54 · Pantalla de inventario', () => {
 
     await user.click(item);
     expect(await screen.findByRole('heading', { name: 'Inventario' })).toBeInTheDocument();
+  });
+});
+
+describe('HU-55 · Registrar un repuesto nuevo', () => {
+  it('muestra el margen vivo: verde >= 15 %, advertencia < 15 % y negativo en rojo si costo > precio', async () => {
+    const user = userEvent.setup();
+    abrirApp('/admin/inventario/nuevo');
+
+    const precio = await screen.findByLabelText(/Precio de venta/i);
+    const costo = screen.getByLabelText(/Costo/i);
+
+    await user.type(precio, '28000');
+    await user.type(costo, '19000');
+    const margenVerde = await screen.findByText('32 %');
+    expect(margenVerde).toHaveClass('text-success-text');
+
+    await user.clear(costo);
+    await user.type(costo, '25000');
+    const margenBajo = await screen.findByText('11 %');
+    expect(margenBajo).toHaveClass('text-accent-text');
+    expect(screen.getByText(/bajo para un repuesto/i)).toBeInTheDocument();
+
+    await user.clear(costo);
+    await user.type(costo, '35000');
+    const margenNegativo = await screen.findByText('-25 %');
+    expect(margenNegativo).toHaveClass('text-danger-text');
+    expect(screen.getByText(/el costo supera al precio/i)).toBeInTheDocument();
+  });
+
+  it('guarda un repuesto nuevo con margen bajo (< 15 %), stock inicial y aparece en el inventario', async () => {
+    const estado: Repuesto[] = [];
+    simularInventario(() => estado);
+    api.crear.mockImplementation(async (body) => {
+      const creado = repuestoDetalle({
+        nombre: body.nombre,
+        referencia: body.referencia ?? null,
+        categoria: body.categoria,
+        precioVenta: body.precioVenta,
+        costo: body.costo ?? null,
+        stock: body.stock,
+        stockMinimo: body.stockMinimo,
+        proveedor: body.proveedor ?? null,
+        motosCompatibles: body.motosCompatibles ?? null,
+      });
+      estado.push(creado);
+      return creado;
+    });
+
+    const user = userEvent.setup();
+    abrirApp('/admin/inventario');
+
+    await user.click(await screen.findByRole('link', { name: 'Repuesto' }));
+    expect(await screen.findByRole('heading', { name: 'Repuesto nuevo' })).toBeInTheDocument();
+    expect(document.querySelector('.max-w-form')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(/Nombre/i), 'Guaya acelerador Pulsar NS200');
+    await user.type(screen.getByLabelText(/Referencia/i), 'BJ-JF151030');
+    await user.selectOptions(screen.getByLabelText(/Categoría/i), 'transmision');
+    await user.type(screen.getByLabelText(/Precio de venta/i), '28.000');
+    await user.type(screen.getByLabelText(/Costo/i), '25.000');
+
+    const grupoStockInicial = screen.getByRole('group', { name: 'Stock inicial' });
+    await user.click(within(grupoStockInicial).getByRole('button', { name: 'Más' }));
+    await user.click(within(grupoStockInicial).getByRole('button', { name: 'Más' }));
+
+    const grupoStockMinimo = screen.getByRole('group', { name: 'Stock mínimo' });
+    await user.click(within(grupoStockMinimo).getByRole('button', { name: 'Más' }));
+
+    await user.type(screen.getByLabelText(/Proveedor/i), 'Distrimotos');
+    await user.type(screen.getByLabelText(/Motos compatibles/i), 'Bajaj Pulsar NS200, NS160');
+
+    await user.click(screen.getByRole('button', { name: 'Guardar repuesto' }));
+
+    await waitFor(() =>
+      expect(api.crear).toHaveBeenCalledWith({
+        nombre: 'Guaya acelerador Pulsar NS200',
+        referencia: 'BJ-JF151030',
+        categoria: 'transmision',
+        precioVenta: 28000,
+        costo: 25000,
+        stock: 2,
+        stockMinimo: 2,
+        proveedor: 'Distrimotos',
+        motosCompatibles: 'Bajaj Pulsar NS200, NS160',
+      }),
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Inventario' })).toBeInTheDocument();
+    expect(await screen.findByText('Guaya acelerador Pulsar NS200')).toBeInTheDocument();
+    expect(screen.getByText('2 und')).toBeInTheDocument();
+  });
+
+  it('valida campos obligatorios y marca en el campo si el nombre ya existe', async () => {
+    api.crear.mockRejectedValue(
+      errorApi(409, {
+        message: 'Ya existe un repuesto con este nombre en el taller',
+        errors: [
+          { field: 'nombre', message: 'Ya existe un repuesto con este nombre en el taller' },
+        ],
+      }),
+    );
+
+    const user = userEvent.setup();
+    abrirApp('/admin/inventario/nuevo');
+
+    await user.click(await screen.findByRole('button', { name: 'Guardar repuesto' }));
+    expect(await screen.findByText('El nombre es obligatorio')).toBeInTheDocument();
+    expect(screen.getByText('El precio de venta es obligatorio')).toBeInTheDocument();
+    expect(api.crear).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText(/Nombre/i), 'Aceite Motul 5100');
+    await user.type(screen.getByLabelText(/Precio de venta/i), '42000');
+    await user.click(screen.getByRole('button', { name: 'Guardar repuesto' }));
+
+    expect(
+      await screen.findByText('Ya existe un repuesto con este nombre en el taller'),
+    ).toBeInTheDocument();
   });
 });

@@ -23,6 +23,8 @@ export const LIMITES = {
   marca: 80,
   referencia: 80,
   color: 40,
+  proveedor: 150,
+  motosCompatibles: 255,
   busqueda: 100,
 } as const;
 
