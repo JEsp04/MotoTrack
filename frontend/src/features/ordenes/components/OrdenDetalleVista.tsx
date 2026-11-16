@@ -461,10 +461,12 @@ function Resumen({
           </p>
         )}
       </Card>
-      {rol !== 'cliente' && (
+      {rol === 'admin' && (
         <Card title="Cliente">
           <p className="font-semibold">{orden.moto.cliente.nombre}</p>
-          <p className="text-sm leading-5 text-ink-muted">{orden.moto.cliente.telefono}</p>
+          {orden.moto.cliente.telefono && (
+            <p className="text-sm leading-5 text-ink-muted">{orden.moto.cliente.telefono}</p>
+          )}
           {orden.codigoRetiro && (
             <div className="mt-3">
               {/* HU-66: si el cliente no tiene cuenta, el admin le da el código por teléfono */}

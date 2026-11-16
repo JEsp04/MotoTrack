@@ -26,7 +26,7 @@ const valida: InvitacionValidada = {
   venceEn: '2026-11-22T15:00:00.000Z',
   taller: { nombre: 'Moto Express' },
   nombre: 'Sebastián Gil',
-  telefono: '3119024471',
+  telefono: '••••••4471',
   email: null,
   rol: 'mecanico',
 };
@@ -50,6 +50,9 @@ describe('HU-67 · Únete a tu taller', () => {
     expect(api.validarInvitacion).toHaveBeenCalledWith('8Q2K');
     expect(await screen.findByText('Únete a Moto Express')).toBeInTheDocument();
     expect(screen.getByLabelText(/Tu nombre/)).toHaveValue('Sebastián Gil');
+    const celular = screen.getByLabelText(/Celular/);
+    expect(celular).toHaveValue('••••••4471');
+    expect(celular).toHaveAttribute('readonly');
 
     await userEvent.type(screen.getByLabelText(/^Correo/), 'sebastian@correo.co');
     await userEvent.type(screen.getByLabelText(/^Contraseña/), 'Taller2026');

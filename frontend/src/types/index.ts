@@ -196,7 +196,7 @@ export interface OrdenDetalle extends Omit<OrdenResumen, 'moto'> {
   moto: OrdenResumen['moto'] & {
     modelo: number;
     color: string | null;
-    cliente: { publicId: string; nombre: string; telefono: string };
+    cliente: { publicId: string; nombre: string; telefono?: string };
   };
   creadoPor: { publicId: string; nombre: string };
   diagnostico: {
