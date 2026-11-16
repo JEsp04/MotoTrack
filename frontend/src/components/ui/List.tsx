@@ -73,6 +73,8 @@ export interface ListItemProps {
   /** Muestra la flecha cuando la fila se puede tocar */
   chevron?: boolean;
   to?: string;
+  /** Enlace externo (por ejemplo, wa.me o tel:) */
+  href?: string;
   onClick?: () => void;
   'aria-label'?: string;
 }
@@ -88,6 +90,7 @@ export function ListItem({
   danger,
   chevron = true,
   to,
+  href,
   onClick,
   'aria-label': ariaLabel,
 }: ListItemProps) {
@@ -98,7 +101,7 @@ export function ListItem({
   ) : (
     leading
   );
-  const tocable = Boolean(to || onClick);
+  const tocable = Boolean(to || href || onClick);
   const contenido = (
     <>
       {lead}
@@ -128,6 +131,17 @@ export function ListItem({
         <Link to={to} className={clases} aria-label={ariaLabel}>
           {contenido}
         </Link>
+      ) : href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClick}
+          className={clases}
+          aria-label={ariaLabel}
+        >
+          {contenido}
+        </a>
       ) : onClick ? (
         <button type="button" onClick={onClick} className={clases} aria-label={ariaLabel}>
           {contenido}
