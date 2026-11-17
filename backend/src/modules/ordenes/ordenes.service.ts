@@ -89,6 +89,7 @@ const ordenDetalle = {
       precioUnitario: true,
       subtotal: true,
       servicio: { select: { publicId: true, nombre: true } },
+      repuesto: { select: { publicId: true, nombre: true, stock: true, stockMinimo: true } },
     },
     orderBy: { creadoEn: 'asc' },
   },
@@ -424,6 +425,100 @@ export async function cambiarEstado(
 }
 
 /**
+ * HU-56 · Descuenta los repuestos al iniciar la reparación (`en_reparacion`) con referencia `OT-<número>`
+ * y devuelve al inventario lo descontado si la orden se cancela después.
+ * Si algún repuesto está agotado al pasar a `en_reparacion`, la orden no se bloquea y ese repuesto queda pendiente.
+ */
+async function sincronizarStockOrden(
+  tx: Prisma.TransactionClient,
+  ordenServicioId: number,
+  usuarioId: number,
+  nuevoEstado: EstadoOrden,
+) {
+  if (nuevoEstado !== 'en_reparacion' && nuevoEstado !== 'cancelada') return;
+
+  const orden = await tx.ordenServicio.findUniqueOrThrow({
+    where: { ordenServicioId },
+    select: { tallerId: true, numero: true },
+  });
+  const [detalles, movimientos] = await Promise.all([
+    tx.detalleServicio.findMany({
+      where: { ordenServicioId, repuestoId: { not: null } },
+      select: { repuestoId: true, cantidad: true },
+    }),
+    tx.movimientoStock.findMany({
+      where: { ordenServicioId },
+      select: { repuestoId: true, tipo: true, cantidad: true },
+    }),
+  ]);
+  if (detalles.length === 0 && movimientos.length === 0) return;
+
+  const descontado = new Map<number, number>();
+  for (const m of movimientos) {
+    const actual = descontado.get(m.repuestoId) ?? 0;
+    if (m.tipo === 'salida') descontado.set(m.repuestoId, actual + m.cantidad);
+    else if (m.tipo === 'entrada') descontado.set(m.repuestoId, actual - m.cantidad);
+  }
+
+  if (nuevoEstado === 'en_reparacion') {
+    const requeridos = new Map<number, number>();
+    for (const d of detalles) {
+      if (d.repuestoId === null) continue;
+      requeridos.set(d.repuestoId, (requeridos.get(d.repuestoId) ?? 0) + d.cantidad);
+    }
+    const ids = [...requeridos.keys()].sort((x, y) => x - y);
+    for (const repuestoId of ids) {
+      const pendiente = (requeridos.get(repuestoId) ?? 0) - (descontado.get(repuestoId) ?? 0);
+      if (pendiente <= 0) continue;
+      const [fila] = await tx.$queryRaw<Array<{ stock: number }>>`
+        SELECT stock FROM repuestos WHERE repuestoId = ${repuestoId} FOR UPDATE`;
+      if (!fila) continue;
+      const stockActual = Number(fila.stock);
+      if (stockActual < pendiente) continue;
+
+      const stockNuevo = stockActual - pendiente;
+      await tx.repuesto.update({ where: { repuestoId }, data: { stock: stockNuevo } });
+      await tx.movimientoStock.create({
+        data: {
+          tallerId: orden.tallerId,
+          repuestoId,
+          tipo: 'salida',
+          cantidad: pendiente,
+          stockResultante: stockNuevo,
+          referencia: `OT-${orden.numero}`,
+          ordenServicioId,
+          usuarioId,
+        },
+      });
+    }
+    return;
+  }
+
+  const ids = [...descontado.keys()].sort((x, y) => x - y);
+  for (const repuestoId of ids) {
+    const devuelto = descontado.get(repuestoId) ?? 0;
+    if (devuelto <= 0) continue;
+    const [fila] = await tx.$queryRaw<Array<{ stock: number }>>`
+      SELECT stock FROM repuestos WHERE repuestoId = ${repuestoId} FOR UPDATE`;
+    if (!fila) continue;
+    const stockNuevo = Number(fila.stock) + devuelto;
+    await tx.repuesto.update({ where: { repuestoId }, data: { stock: stockNuevo } });
+    await tx.movimientoStock.create({
+      data: {
+        tallerId: orden.tallerId,
+        repuestoId,
+        tipo: 'entrada',
+        cantidad: devuelto,
+        stockResultante: stockNuevo,
+        referencia: `OT-${orden.numero} · Orden cancelada`,
+        ordenServicioId,
+        usuarioId,
+      },
+    });
+  }
+}
+
+/**
  * Cambia el estado, escribe el historial y crea los avisos (HU-69).
  * Siempre dentro de una transacción: si algo falla, no queda ni el cambio ni el aviso.
  */
@@ -453,6 +548,7 @@ async function aplicarCambio(
   if (count === 0) {
     throw HttpError.conflict('La orden cambió mientras tanto. Recarga e intenta de nuevo.');
   }
+  await sincronizarStockOrden(tx, ordenServicioId, usuarioId, a);
   await tx.historialOrden.create({
     data: { ordenServicioId, usuarioId, estadoAnterior: de, estadoNuevo: a, observacion },
   });
@@ -559,25 +655,45 @@ export async function agregarServicio(
   input: AgregarServicioInput,
 ) {
   const orden = await ordenEditableParaServicios(usuario, publicId);
-  const servicio = await prisma.servicio.findFirst({
-    where: { publicId: input.servicioPublicId, tallerId: usuario.tallerId, estado: 'activo' },
-    select: { servicioId: true, precioBase: true },
-  });
-  if (!servicio) {
-    throw HttpError.badRequest('Datos inválidos', [
-      { field: 'servicioPublicId', message: 'Elige un servicio del catálogo de tu taller' },
-    ]);
+  let servicioId: number | undefined;
+  let repuestoId: number | undefined;
+  let precioUnitario = input.precioUnitario;
+
+  if (input.servicioPublicId) {
+    const servicio = await prisma.servicio.findFirst({
+      where: { publicId: input.servicioPublicId, tallerId: usuario.tallerId, estado: 'activo' },
+      select: { servicioId: true, precioBase: true },
+    });
+    if (!servicio) {
+      throw HttpError.badRequest('Datos inválidos', [
+        { field: 'servicioPublicId', message: 'Elige un servicio del catálogo de tu taller' },
+      ]);
+    }
+    servicioId = servicio.servicioId;
+    precioUnitario ??= servicio.precioBase;
+  } else if (input.repuestoPublicId) {
+    const repuesto = await prisma.repuesto.findFirst({
+      where: { publicId: input.repuestoPublicId, tallerId: usuario.tallerId, activo: true },
+      select: { repuestoId: true, precioVenta: true },
+    });
+    if (!repuesto) {
+      throw HttpError.badRequest('Datos inválidos', [
+        { field: 'repuestoPublicId', message: 'Elige un repuesto activo de tu taller' },
+      ]);
+    }
+    repuestoId = repuesto.repuestoId;
+    precioUnitario ??= repuesto.precioVenta;
   }
-  const precioUnitario = input.precioUnitario ?? servicio.precioBase;
 
   await prisma.$transaction(async (tx) => {
     await tx.detalleServicio.create({
       data: {
         ordenServicioId: orden.id,
-        servicioId: servicio.servicioId,
+        servicioId,
+        repuestoId,
         cantidad: input.cantidad,
-        precioUnitario,
-        subtotal: precioUnitario * input.cantidad,
+        precioUnitario: precioUnitario!,
+        subtotal: precioUnitario! * input.cantidad,
       },
     });
     await recalcularTotal(tx, orden.id);

@@ -3,7 +3,7 @@
 Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct) y `docs/HISTORIAS-2.md` (segunda etapa, HU-51 a HU-81). Reparto: `docs/REPARTO.md`. Guía de cada sesión: `docs/FLUJO.md`. Diseño: `docs/diseno.md` y `docs/prototipo/`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: lunes 2 de noviembre de 2026.
+Última actualización: lunes 16 de noviembre de 2026.
 
 Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
@@ -19,15 +19,15 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E5 · Usuarios, clientes y motos | HU-23 a HU-27 | 10 | ✅ En `develop` (12-oct, PR #12) |
 | E6 · Órdenes de servicio | HU-28 a HU-37 | 21 | ✅ En `develop` (12-oct, PR #13) |
 | E6.5 · Migración al diseño nuevo | HU-41 a HU-50 | 24 | ✅ En `develop` (24-oct, PR #16 a #25) |
-| E8 · Inventario de repuestos | HU-51 a HU-56 | 16 | ⏳ A · `docs/HISTORIAS-2.md` |
-| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V · HU-57 en `develop` (PR #30) |
-| E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ V (61, 62, 63, 65, 66), A (64, 68), J (67) |
-| E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J · HU-73 en la rama `HU-73` |
+| E8 · Inventario de repuestos | HU-51 a HU-56 | 16 | ✅ A · Completa (`HU-51` a `HU-56`) |
+| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V · HU-57 en `develop` (PR #30); falta ronda 2 (`HU-58` a `HU-60`) |
+| E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ En `develop`: `HU-62`, `HU-64`, `HU-66`, `HU-67`, `HU-68` · faltan V (`HU-61`, `63`, `65`) |
+| E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J · `HU-69` y `HU-73` en `develop` · faltan rondas 2 y 3 (`HU-70` a `72`, `74`, `75`) |
 | E12 · Funciones con costo | HU-76 a HU-81 | 21 | ⛔ Solo si se aprueba el gasto |
 | E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ De última: A (HU-38), V (HU-39), J (HU-40) |
 
 **Avance del primer entregable:** 47 de 50 historias unidas · 106 de 112 puntos (≈ 95 %). Faltan las 3 historias de E7 (6 puntos), todas obligatorias.
-**Segunda etapa:** 0 de 25 historias sin costo (59 puntos).
+**Segunda etapa (sin costo):** 14 de 25 historias completadas (35 de 59 puntos). **A** completó todas sus historias de las rondas 1, 2 y 3 (`HU-51` a `HU-56`, `HU-64`, `HU-68`); **V** y **J** siguen con ronda 2 y ronda 3.
 
 ---
 
@@ -166,9 +166,9 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 - [x] HU-51 · Tablas de repuestos y movimientos · 3 pts · [A, ronda 1, primera migración] · PR #27
 - [x] HU-52 · API de repuestos y stock crítico · 3 pts · [A, ronda 1] · PR #28
 - [x] HU-53 · Registrar entradas, salidas y ajustes de stock · 2 pts · [A, ronda 1] · PR #29
-- [ ] HU-54 · Pantalla de inventario · 3 pts · [A, ronda 2, necesita HU-73]
-- [ ] HU-55 · Registrar un repuesto nuevo · 2 pts · [A, ronda 2]
-- [ ] HU-56 · Repuestos en la cotización del diagnóstico · 3 pts · [A, ronda 3]
+- [x] HU-54 · Pantalla de inventario · 3 pts · [A, ronda 2, necesita HU-73] · PR #43
+- [x] HU-55 · Registrar un repuesto nuevo · 2 pts · [A, ronda 2] · PR #44
+- [x] HU-56 · Repuestos en la cotización del diagnóstico · 3 pts · [A, ronda 3] · migración `20261116233540_repuesto_en_cotizacion`
 
 ### E9 · Citas y agenda · 11 pts
 
@@ -180,21 +180,21 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 ### E10 · El día a día del taller · 16 pts
 
 - [ ] HU-61 · Ficha de la moto con su historial · 2 pts · [V, ronda 3, al inicio: J la necesita]
-- [~] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1] · rama `HU-62`, por abrir PR
+- [x] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1] · PR #33
 - [ ] HU-63 · Reasignar el mecánico de una orden *(deseable)* · 1 pt · [V, ronda 3]
-- [ ] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2]
+- [x] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2] · PR #45
 - [ ] HU-65 · Inicio del cliente · 2 pts · [V, ronda 3]
-- [~] HU-66 · Código de retiro para entregar la moto · 2 pts · [V, ronda 1] · rama `HU-66`, por abrir PR
-- [~] HU-67 · Invitar usuarios al taller con un código · 3 pts · [J, ronda 1] · rama `HU-67` (sale de `HU-69`), por abrir PR
-- [ ] HU-68 · Contactar al cliente por WhatsApp sin costo *(deseable)* · 1 pt · [A, ronda 3, al inicio: J la necesita]
+- [x] HU-66 · Código de retiro para entregar la moto · 2 pts · [V, ronda 1] · PR #32
+- [x] HU-67 · Invitar usuarios al taller con un código · 3 pts · [J, ronda 1] · PR #36 y PR #39
+- [x] HU-68 · Contactar al cliente por WhatsApp sin costo *(deseable)* · 1 pt · [A, ronda 3, al inicio: J la necesita] · PR #46
 
 ### E11 · Avisos, reportes y ajustes · 16 pts
 
-- [~] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1] · rama `HU-69` (sale de `HU-73`), por abrir PR
+- [x] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1] · PR #35
 - [ ] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2]
 - [ ] HU-71 · Reportes del taller · 3 pts · [J, ronda 2]
 - [ ] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2]
-- [~] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero] · rama `HU-73`, por abrir PR
+- [x] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero] · PR #34
 - [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]
 - [ ] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68]
 
@@ -216,7 +216,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 - [ ] Cada integrante actualiza su entorno con `develop`: `git pull`, `npm install`, `.env`, `CREATE DATABASE mototrack`, `npm run db:deploy` y `npm run seed`
 - [ ] Corregir los enlaces a `docs/CONTEXTO.md` (borrado el 16-oct) en `README.md` y `docs/HISTORIAS.md`: ahora es `contexto.md` en la raíz. El resumen de `HISTORIAS.md` también dice todavía «40 historias, 88 puntos»
 - [ ] Decidir qué pasa con la landing del compañero: la del prototipo ya quedó integrada en HU-45 (`features/landing`)
-- [ ] Poner `develop` como rama por defecto en GitHub (Settings → General), para no abrir PRs hacia `main` por error
+- [x] Poner `develop` como rama por defecto en GitHub (Settings → General), para no abrir PRs hacia `main` por error *(confirmado el 16-nov)*
 - [ ] Proteger `develop`: exigir 1 revisión y la revisión automática en verde
 
 ## Backlog que aún no tiene historia

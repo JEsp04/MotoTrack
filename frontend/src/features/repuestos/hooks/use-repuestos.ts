@@ -48,6 +48,17 @@ export function useResumenInventario(activo = true) {
   });
 }
 
+/** HU-56 · Búsqueda rápida de repuestos para agregar a una cotización */
+export function useBuscarRepuestos(q: string, activo = true) {
+  return useQuery({
+    queryKey: ['repuestos', 'lista', 'cotizacion', q],
+    enabled: activo,
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      repuestosApi.listar({ q: q || undefined, page: 1, limit: 50 }).then((r) => r.data),
+  });
+}
+
 /** Detalle de un repuesto con sus últimos 20 movimientos (HU-52, HU-54) */
 export function useRepuesto(publicId: string | null) {
   return useQuery({

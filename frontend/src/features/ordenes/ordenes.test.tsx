@@ -4,6 +4,7 @@ import { HOLD_MS } from '@/components/ui';
 import { useSession } from '@/features/auth';
 import { clientesApi } from '@/features/clientes/api/clientes-api';
 import { equipoApi } from '@/features/equipo/api/equipo-api';
+import { repuestosApi } from '@/features/repuestos/api/repuestos-api';
 import {
   cliente,
   clienteDetalle,
@@ -13,6 +14,7 @@ import {
   moto,
   ordenDetalle,
   ordenResumen,
+  repuesto,
 } from '@/test/fixtures';
 import { abrirApp, sesionDePrueba } from '@/test/utils';
 import type { EstadoOrden } from '@/types';
@@ -42,14 +44,20 @@ vi.mock('@/features/clientes/api/clientes-api', () => ({
 vi.mock('@/features/equipo/api/equipo-api', () => ({
   equipoApi: { listar: vi.fn(), crearMecanico: vi.fn(), cambiarEstado: vi.fn() },
 }));
+vi.mock('@/features/repuestos/api/repuestos-api', () => ({
+  POR_PAGINA: 50,
+  repuestosApi: { listar: vi.fn(), obtener: vi.fn(), crear: vi.fn(), registrarMovimiento: vi.fn() },
+}));
 
 const api = vi.mocked(ordenesApi);
 const clientes = vi.mocked(clientesApi);
 const equipo = vi.mocked(equipoApi);
+const repuestos = vi.mocked(repuestosApi);
 
 beforeEach(() => {
   vi.clearAllMocks();
   useSession.getState().clearSession();
+  repuestos.listar.mockResolvedValue(lista([]));
 });
 
 /** Nombre visible de un botón; el de mantener presionado sin la instrucción final */
@@ -397,9 +405,8 @@ describe('HU-33 · Servicios', () => {
     abrirApp(`/admin/ordenes/${orden.publicId}`);
     await userEvent.click(await screen.findByRole('tab', { name: 'Servicios' }));
     await userEvent.click(screen.getByRole('button', { name: 'Agregar' }));
-    const hoja = within(await screen.findByRole('dialog', { name: 'Agregar servicio' }));
-    await screen.findByRole('option', { name: 'Sincronización · $ 120.000' });
-    await userEvent.selectOptions(hoja.getByLabelText(/Servicio/), 'srv-1');
+    const hoja = within(await screen.findByRole('dialog', { name: 'Agregar a la cotización' }));
+    await userEvent.click(await hoja.findByRole('button', { name: /Sincronización/ }));
     await userEvent.click(hoja.getByRole('button', { name: 'Agregar' }));
     await waitFor(() =>
       expect(api.agregarServicio).toHaveBeenCalledWith(orden.publicId, {
@@ -785,5 +792,114 @@ describe('HU-68 · Contactar al cliente por WhatsApp sin costo', () => {
     expect(screen.queryByRole('link', { name: 'Llamar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Escribir por WhatsApp' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Más acciones' })).not.toBeInTheDocument();
+  });
+});
+
+describe('HU-56 · Repuestos en la cotización del diagnóstico', () => {
+  it('abre «Buscar repuesto o servicio» con stock («N en stock», «Bajo», «Agotado») y agrega un repuesto', async () => {
+    sesionDePrueba('mecanico');
+    const aceiteRep = repuesto({
+      nombre: 'Aceite Motul 5100',
+      precioVenta: 42000,
+      stock: 8,
+      stockMinimo: 4,
+    });
+    const pastillas = repuesto({
+      nombre: 'Pastillas freno Brembo',
+      precioVenta: 68000,
+      stock: 2,
+      stockMinimo: 3,
+    });
+    const kit = repuesto({
+      nombre: 'Kit de arrastre FZ',
+      precioVenta: 110000,
+      stock: 0,
+      stockMinimo: 2,
+    });
+
+    const orden = ordenDetalle({ estado: 'diagnosticada', servicios: [], costoTotal: 0 });
+    api.obtener.mockResolvedValue(orden);
+    api.catalogo.mockResolvedValue([]);
+    repuestos.listar.mockResolvedValue(lista([aceiteRep, pastillas, kit]));
+    api.agregarServicio.mockResolvedValue({
+      ...orden,
+      costoTotal: 136000,
+      servicios: [
+        {
+          publicId: 'det-rep-1',
+          cantidad: 2,
+          precioUnitario: 68000,
+          subtotal: 136000,
+          servicio: null,
+          repuesto: {
+            publicId: pastillas.publicId,
+            nombre: pastillas.nombre,
+            stock: pastillas.stock,
+            stockMinimo: pastillas.stockMinimo,
+          },
+        },
+      ],
+    });
+
+    const user = userEvent.setup();
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }));
+    await user.click(screen.getByRole('button', { name: 'Agregar' }));
+
+    const hoja = within(await screen.findByRole('dialog', { name: 'Agregar a la cotización' }));
+    expect(hoja.getByPlaceholderText('Buscar repuesto o servicio')).toBeInTheDocument();
+    expect(await hoja.findByText(/8 en stock/)).toBeInTheDocument();
+    expect(hoja.getByText('Bajo')).toBeInTheDocument();
+    expect(hoja.getByText('Agotado')).toBeInTheDocument();
+
+    await user.click(hoja.getByRole('button', { name: /Pastillas freno Brembo/i }));
+    const campoCant = hoja.getByLabelText('Cantidad');
+    await user.clear(campoCant);
+    await user.type(campoCant, '2');
+    await user.click(hoja.getByRole('button', { name: 'Agregar' }));
+
+    await waitFor(() =>
+      expect(api.agregarServicio).toHaveBeenCalledWith(orden.publicId, {
+        repuestoPublicId: pastillas.publicId,
+        cantidad: 2,
+        precioUnitario: undefined,
+      }),
+    );
+  });
+
+  it('repuesto agotado avisa sin bloquear «Iniciar reparación» y se muestra al cliente', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({
+      estado: 'aprobada',
+      costoTotal: 90000,
+      servicios: [
+        {
+          publicId: 'det-rep-2',
+          cantidad: 1,
+          precioUnitario: 90000,
+          subtotal: 90000,
+          servicio: null,
+          repuesto: {
+            publicId: 'rep-agotado',
+            nombre: 'Kit 428 agotado',
+            stock: 0,
+            stockMinimo: 2,
+          },
+        },
+      ],
+    });
+    api.obtener.mockResolvedValue(orden);
+
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    expect(await screen.findByText(/Stock insuficiente para Kit 428 agotado/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Mantén para iniciar la reparación/ }),
+    ).not.toBeDisabled();
+
+    useSession.getState().clearSession();
+    sesionDePrueba('cliente');
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('Kit 428 agotado')).toBeInTheDocument();
   });
 });

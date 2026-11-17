@@ -29,7 +29,8 @@ export interface DiagnosticoBody {
 }
 
 export interface ServicioBody {
-  servicioPublicId: string;
+  servicioPublicId?: string;
+  repuestoPublicId?: string;
   cantidad: number;
   precioUnitario?: number;
 }

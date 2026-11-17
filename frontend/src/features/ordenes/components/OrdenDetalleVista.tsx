@@ -16,6 +16,7 @@ import {
   IconButton,
   List,
   ListItem,
+  Note,
   Page,
   Plate,
   Skeleton,
@@ -498,8 +499,17 @@ function Resumen({
   const repuesto = orden.estado === 'pendiente_repuesto';
   const ultimaObs = orden.historial[0]?.observacion;
   const telefono = rol === 'admin' ? orden.moto.cliente.telefono?.trim() || null : null;
+  const sinStockCotizado = ['aprobada', 'en_reparacion'].includes(orden.estado)
+    ? orden.servicios.filter((s) => s.repuesto && s.repuesto.stock < s.cantidad)
+    : [];
   return (
     <>
+      {sinStockCotizado.length > 0 && (
+        <Note icon="alert" tono="accent">
+          Stock insuficiente para {sinStockCotizado.map((s) => s.repuesto?.nombre).join(', ')}. La
+          reparación no se bloquea; si aún falta al reparar, usa «Falta repuesto».
+        </Note>
+      )}
       <Card title="Progreso">
         {orden.estado === 'cancelada' ? (
           <div className="flex flex-wrap items-center gap-2">
@@ -628,40 +638,57 @@ function Servicios({
       ) : (
         <>
           <ul className="flex flex-col">
-            {orden.servicios.map((s) => (
-              <li
-                key={s.publicId}
-                className="flex items-start gap-3 border-b border-border py-3 last:border-b-0"
-              >
-                <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-surface text-ink"
-                  aria-hidden="true"
+            {orden.servicios.map((s) => {
+              const nombreItem = s.repuesto?.nombre ?? s.servicio?.nombre ?? 'Ítem';
+              const esRepuesto = Boolean(s.repuesto);
+              const mostrarStock =
+                esRepuesto && !['entregada', 'cerrada', 'cancelada'].includes(orden.estado);
+              return (
+                <li
+                  key={s.publicId}
+                  className="flex items-start gap-3 border-b border-border py-3 last:border-b-0"
                 >
-                  <Icon name="wrench" size={18} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p>{s.servicio.nombre}</p>
-                  <p className="text-sm leading-5 text-ink-muted">
-                    {s.cantidad} × {formatPesos(s.precioUnitario)}
-                  </p>
-                </div>
-                <span className="font-semibold whitespace-nowrap">{formatPesos(s.subtotal)}</span>
-                {editable && (
-                  <IconButton
-                    icon="trash"
-                    size={18}
-                    label={`Quitar ${s.servicio.nombre}`}
-                    className="-mt-1.5 size-9"
-                    disabled={quitar.isPending}
-                    onClick={() =>
-                      quitar.mutate(s.publicId, {
-                        onError: (e) => toast(parseApiError(e).message, 'danger'),
-                      })
-                    }
-                  />
-                )}
-              </li>
-            ))}
+                  <span
+                    className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-surface text-ink"
+                    aria-hidden="true"
+                  >
+                    <Icon name={esRepuesto ? 'box' : 'wrench'} size={18} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p>{nombreItem}</p>
+                    <p className="text-sm leading-5 text-ink-muted">
+                      {s.cantidad} × {formatPesos(s.precioUnitario)}
+                      {mostrarStock && s.repuesto && (
+                        <>
+                          {' · '}
+                          {s.repuesto.stock === 0 ? 'Agotado' : `${s.repuesto.stock} en stock`}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  {mostrarStock && s.repuesto && s.repuesto.stock < s.cantidad && (
+                    <Badge tono={s.repuesto.stock === 0 ? 'danger' : 'accent'}>
+                      {s.repuesto.stock === 0 ? 'Agotado' : 'Bajo'}
+                    </Badge>
+                  )}
+                  <span className="font-semibold whitespace-nowrap">{formatPesos(s.subtotal)}</span>
+                  {editable && (
+                    <IconButton
+                      icon="trash"
+                      size={18}
+                      label={`Quitar ${nombreItem}`}
+                      className="-mt-1.5 size-9"
+                      disabled={quitar.isPending}
+                      onClick={() =>
+                        quitar.mutate(s.publicId, {
+                          onError: (e) => toast(parseApiError(e).message, 'danger'),
+                        })
+                      }
+                    />
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <div className="flex items-baseline justify-between border-t-2 border-ink pt-3">
             <span className="font-semibold">Total</span>

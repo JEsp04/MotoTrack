@@ -144,7 +144,7 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
                   )}
                 >
                   <div className="min-w-0 flex-1">
-                    <p>{s.servicio.nombre}</p>
+                    <p>{s.repuesto?.nombre ?? s.servicio?.nombre ?? 'Ítem'}</p>
                     <p className="text-sm leading-5 text-ink-muted">
                       {s.cantidad} × {formatPesos(s.precioUnitario)}
                     </p>
