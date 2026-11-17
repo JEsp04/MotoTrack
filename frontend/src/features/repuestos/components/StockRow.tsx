@@ -23,12 +23,16 @@ export function StockRow({ repuesto, onClick }: { repuesto: Repuesto; onClick: (
       >
         <LeadIcon icon="box" />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold">{repuesto.nombre}</span>
-          <span className="block truncate text-sm leading-5 text-ink-muted">
-            {CATEGORIA_LABEL[repuesto.categoria]} · {formatPesos(repuesto.precioVenta)}
+          <span className="block leading-5 font-semibold break-words sm:truncate">
+            {repuesto.nombre}
+          </span>
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm leading-5 text-ink-muted">
+            <span>
+              {CATEGORIA_LABEL[repuesto.categoria]} · {formatPesos(repuesto.precioVenta)}
+            </span>
             {repuesto.critico && (
               <>
-                {' · '}
+                <span aria-hidden="true">·</span>
                 <span className="font-semibold text-accent-text">Stock crítico</span>
               </>
             )}

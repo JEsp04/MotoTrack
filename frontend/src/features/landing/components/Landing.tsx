@@ -423,7 +423,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
         <div className="lp-bar">
           <button
             type="button"
-            className="lp-brand"
+            className="lp-brand min-h-touch"
             onClick={() => ir('top')}
             aria-label="MotoTrack, ir arriba"
           >
@@ -517,7 +517,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
               >
                 Registrar mi taller
               </button>
-              <button type="button" className="lp-link" onClick={() => ir('recorrido')}>
+              <button type="button" className="lp-link min-h-touch" onClick={() => ir('recorrido')}>
                 Ver el recorrido de una moto
               </button>
             </div>
@@ -722,13 +722,13 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
           <div className="lp-wrap">
             <span className="lp-foot-brand">MOTOTRACK</span>
             <nav aria-label="Accesos">
-              <button type="button" onClick={acciones.ingresar}>
+              <button type="button" className="min-h-touch" onClick={acciones.ingresar}>
                 Iniciar sesión
               </button>
-              <button type="button" onClick={acciones.registrarTaller}>
+              <button type="button" className="min-h-touch" onClick={acciones.registrarTaller}>
                 Registrar taller
               </button>
-              <button type="button" onClick={acciones.ingresarCliente}>
+              <button type="button" className="min-h-touch" onClick={acciones.ingresarCliente}>
                 Seguir mi moto
               </button>
             </nav>

@@ -64,7 +64,7 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
         <div className="text-right">
           <button
             type="button"
-            className="min-h-10 text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
+            className="inline-flex min-h-touch items-center text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
             onClick={() => setVerAyuda((v) => !v)}
             aria-expanded={verAyuda}
           >

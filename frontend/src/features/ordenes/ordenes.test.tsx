@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HOLD_MS } from '@/components/ui';
 import { useSession } from '@/features/auth';
@@ -897,9 +897,39 @@ describe('HU-56 · Repuestos en la cotización del diagnóstico', () => {
       screen.getByRole('button', { name: /Mantén para iniciar la reparación/ }),
     ).not.toBeDisabled();
 
+    cleanup();
     useSession.getState().clearSession();
     sesionDePrueba('cliente');
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     expect(await screen.findByText('Kit 428 agotado')).toBeInTheDocument();
+  });
+});
+
+describe('HU-82 · Correcciones móviles, áreas táctiles y barras fijas', () => {
+  it('al pasar del Paso 2 al Paso 3 en «Nueva orden» no dispara errores prematuros', async () => {
+    sesionDePrueba('admin');
+    const c = cliente();
+    const m = moto({ ordenActiva: null });
+    clientes.listar.mockResolvedValue(lista([c]));
+    clientes.obtener.mockResolvedValue(clienteDetalle({ ...c, motos: [m] }));
+    equipo.listar.mockResolvedValue([mecanico()]);
+
+    const user = userEvent.setup();
+    abrirApp('/admin/ordenes/nueva');
+
+    await user.click(await screen.findByRole('radio', { name: new RegExp(c.nombre) }));
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    await user.click(await screen.findByRole('radio', { name: new RegExp(m.referencia) }));
+    await user.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    const motivo = await screen.findByLabelText(/Motivo de ingreso/);
+    const selectMecanico = screen.getByLabelText(/Mecánico asignado/);
+    expect(motivo).not.toHaveAttribute('aria-invalid', 'true');
+    expect(selectMecanico).not.toHaveAttribute('aria-invalid', 'true');
+    expect(
+      screen.queryByText('El motivo de ingreso debe tener al menos 5 caracteres'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Elige el mecánico', { selector: 'p' })).not.toBeInTheDocument();
   });
 });

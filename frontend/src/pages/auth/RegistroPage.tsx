@@ -59,7 +59,7 @@ export default function RegistroPage() {
         ¿Ya tienes cuenta?{' '}
         <Link
           to="/login"
-          className="inline-flex min-h-11 items-center font-semibold text-ink underline decoration-border-strong underline-offset-4"
+          className="inline-flex min-h-touch items-center font-semibold text-ink underline decoration-border-strong underline-offset-4"
         >
           Inicia sesión
         </Link>

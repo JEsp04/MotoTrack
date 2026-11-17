@@ -28,7 +28,7 @@ export function Segmented<T extends string>({
             aria-selected={on}
             onClick={() => onChange(o.id)}
             className={cn(
-              'min-h-10 flex-1 rounded-[10px] text-sm font-semibold transition-colors duration-150',
+              'min-h-touch flex-1 rounded-[10px] text-sm font-semibold transition-colors duration-150',
               on ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted',
             )}
           >
