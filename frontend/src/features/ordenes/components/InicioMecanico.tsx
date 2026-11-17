@@ -139,7 +139,7 @@ export function InicioMecanico() {
                   <h2 className="text-[15px] font-semibold text-ink-muted">Sigue con esta moto</h2>
                   <Link
                     to={rutaOrden('mecanico', urgente.publicId)}
-                    className="text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
+                    className="inline-flex min-h-touch items-center px-2 text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
                   >
                     Ver detalle
                   </Link>
@@ -156,7 +156,7 @@ export function InicioMecanico() {
                     <h2 className="text-[15px] font-semibold text-ink-muted">Mi cola de trabajo</h2>
                     <Link
                       to="/mecanico/ordenes"
-                      className="text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
+                      className="inline-flex min-h-touch items-center px-2 text-sm font-semibold text-ink underline decoration-border-strong underline-offset-4"
                     >
                       Ver todas
                     </Link>

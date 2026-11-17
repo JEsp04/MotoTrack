@@ -63,7 +63,7 @@ export function AppLayout({
   const inferiores = items.filter((i) => i.donde !== 'escritorio');
 
   return (
-    <div className="min-h-dvh">
+    <div className="flex min-h-dvh flex-col">
       <a
         href="#contenido"
         className="sr-only z-[70] rounded-sm bg-surface px-4 py-3 font-semibold focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
@@ -116,7 +116,7 @@ export function AppLayout({
       <main
         id="contenido"
         className={cn(
-          'w-full',
+          'flex w-full flex-1 flex-col',
           !sinNav && 'pb-[calc(var(--spacing-bottom-nav)+env(safe-area-inset-bottom))] lg:pb-0',
         )}
       >

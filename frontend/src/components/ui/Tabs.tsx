@@ -47,8 +47,10 @@ export function Tabs<T extends string>({
       role="tablist"
       aria-label={label}
       className={cn(
-        'flex overflow-x-auto [scrollbar-width:none]',
-        chips ? '-mx-4 gap-2 px-4 py-0.5' : 'border-b border-border bg-surface/78',
+        'flex',
+        chips
+          ? 'flex-wrap gap-2 py-0.5'
+          : 'overflow-x-auto border-b border-border bg-surface/78 [scrollbar-width:none]',
         className,
       )}
     >
@@ -70,7 +72,7 @@ export function Tabs<T extends string>({
               'shrink-0 text-sm font-semibold whitespace-nowrap',
               chips
                 ? cn(
-                    'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 transition-colors duration-150',
+                    'inline-flex min-h-touch items-center gap-1.5 rounded-full border px-3.5 transition-colors duration-150',
                     activa
                       ? 'border-ink bg-ink text-on-primary'
                       : 'border-border bg-surface text-ink',

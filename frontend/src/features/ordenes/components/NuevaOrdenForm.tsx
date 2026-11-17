@@ -90,6 +90,7 @@ export function NuevaOrdenForm({ clienteInicial }: { clienteInicial?: string }) 
       <ActionBar>
         {paso < 2 ? (
           <Button
+            key="continuar"
             fullWidth
             iconRight="chevronRight"
             disabled={!puedeSeguir}
@@ -98,7 +99,14 @@ export function NuevaOrdenForm({ clienteInicial }: { clienteInicial?: string }) 
             Continuar
           </Button>
         ) : (
-          <Button type="submit" form={FORM_ID} fullWidth icon="check" loading={guardando}>
+          <Button
+            key="crear-orden"
+            type="submit"
+            form={FORM_ID}
+            fullWidth
+            icon="check"
+            loading={guardando}
+          >
             Crear orden
           </Button>
         )}
@@ -195,15 +203,21 @@ function ElegirMoto({
               onSelect={() => onElegir(m)}
             >
               <Plate placa={m.placa} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-semibold">
-                  {m.marca} {m.referencia}
+              <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">
+                    {m.marca} {m.referencia}
+                  </span>
+                  <span className="block truncate text-sm leading-5 text-ink-muted">
+                    {m.modelo} · {km.format(m.kilometraje)} km
+                  </span>
                 </span>
-                <span className="block truncate text-sm leading-5 text-ink-muted">
-                  {m.modelo} · {km.format(m.kilometraje)} km
-                </span>
+                {m.ordenActiva && (
+                  <span className="self-start sm:shrink-0 sm:self-center">
+                    <StatusBadge estado={m.ordenActiva.estado} />
+                  </span>
+                )}
               </span>
-              {m.ordenActiva && <StatusBadge estado={m.ordenActiva.estado} />}
             </SelectCard>
           ))}
         </div>

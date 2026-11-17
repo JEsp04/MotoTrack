@@ -20,10 +20,11 @@ export function Page({
   return (
     <div
       className={cn(
-        'mx-auto flex w-full flex-col gap-4 p-4 lg:p-8',
+        'mx-auto flex w-full flex-1 flex-col gap-4 px-4 pt-4 lg:px-8 lg:pt-8',
         narrow ? 'max-w-form' : 'max-w-[1200px]',
-        pb === 'fab' && 'pb-24 lg:pb-28',
-        pb === 'actionbar' && 'pb-44 lg:pb-44',
+        !pb && 'pb-4 lg:pb-8',
+        pb === 'fab' && 'pb-28 lg:pb-28',
+        pb === 'actionbar' && 'pb-8 lg:pb-10',
         className,
       )}
     >
@@ -50,7 +51,7 @@ export function ActionBar({
     <div
       role="group"
       aria-label={label}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+      className="sticky inset-x-0 bottom-0 z-30 mt-auto w-full border-t border-border bg-surface px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]"
     >
       <div
         className={cn(

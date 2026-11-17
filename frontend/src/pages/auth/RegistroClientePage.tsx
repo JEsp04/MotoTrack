@@ -26,7 +26,7 @@ export default function RegistroClientePage() {
         ¿Ya tienes cuenta?{' '}
         <Link
           to="/login?tab=cliente"
-          className="inline-flex min-h-11 items-center font-semibold text-ink underline decoration-border-strong underline-offset-4"
+          className="inline-flex min-h-touch items-center font-semibold text-ink underline decoration-border-strong underline-offset-4"
         >
           Inicia sesión
         </Link>
