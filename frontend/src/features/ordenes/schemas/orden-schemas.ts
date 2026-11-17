@@ -19,9 +19,8 @@ export const diagnosticoSchema = z.object({
 });
 export type DiagnosticoForm = z.infer<typeof diagnosticoSchema>;
 
-/** HU-33 · Precio en pesos enteros; vacío = el del catálogo */
+/** HU-33, HU-56 · Precio en pesos enteros; vacío = el del catálogo o repuesto */
 export const servicioSchema = z.object({
-  servicioPublicId: z.string().min(1, 'Elige el servicio'),
   cantidad: enteroDesdeTexto('Escribe solo números')
     .refine((v) => v === undefined || (v >= 1 && v <= 99), 'Entre 1 y 99')
     .transform((v) => v ?? 1),

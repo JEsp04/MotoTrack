@@ -135,6 +135,7 @@ export function ordenDetalle(extra: Partial<OrdenDetalle> = {}): OrdenDetalle {
         precioUnitario: 40000,
         subtotal: 40000,
         servicio: { publicId: uuid(), nombre: 'Cambio de aceite' },
+        repuesto: null,
       },
       {
         publicId: uuid(),
@@ -142,6 +143,7 @@ export function ordenDetalle(extra: Partial<OrdenDetalle> = {}): OrdenDetalle {
         precioUnitario: 25000,
         subtotal: 25000,
         servicio: { publicId: uuid(), nombre: 'Ajuste de cadena' },
+        repuesto: null,
       },
     ],
     historial: [

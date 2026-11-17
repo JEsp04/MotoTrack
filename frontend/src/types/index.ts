@@ -176,7 +176,13 @@ export interface ServicioDeOrden {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
-  servicio: { publicId: string; nombre: string };
+  servicio: { publicId: string; nombre: string } | null;
+  repuesto?: {
+    publicId: string;
+    nombre: string;
+    stock: number;
+    stockMinimo: number;
+  } | null;
 }
 
 export interface EventoHistorial {

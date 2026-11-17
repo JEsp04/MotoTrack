@@ -6,54 +6,46 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`; los criterios de aceptación del entregable, en `docs/HISTORIAS.md`; el diseño, en `docs/diseno.md` y `docs/prototipo/`.
 
-Última actualización: domingo 15 de noviembre de 2026.
+Última actualización: lunes 16 de noviembre de 2026.
 
 ---
 
 ## Estado actual
 
 - **Avance del entregable (`docs/HISTORIAS.md`):** 47 de 50 historias en `develop` (106 de 112 puntos, ≈ 95 %). Falta **E7 · Despliegue y entrega (HU-38 a HU-40, 6 pts)**, que desde el 24-oct queda de última.
-- **Segunda etapa (`docs/HISTORIAS-2.md`):** HU-51 a HU-75 (E8 a E11, 25 historias, 59 pts, sin costo) más HU-76 a HU-81 (E12, con costo, solo si se aprueban). Repartidas entre A, V y J en `docs/REPARTO.md`. HU-51 a HU-53 (A) unidas en `develop` (PR #27 a #29). HU-57 (V) unida en `develop` (PR #30). HU-62 (V) en la rama `HU-62`, PR por abrir.
-- **Rama `develop`:** E0 a E6.5 unidas (HU-01 a HU-50), PR #4 a #25. Último commit: `e50feda Merge pull request #25 from JEsp04/HU-50` (24-oct).
-  - PR #13: E6 · órdenes de servicio (`feature/ordenes`).
-  - PR #14: guardián de tokens de color (`npm run check:tokens`).
-  - PR #15: pruebas del backend sin mocks de Prisma (ESLint lo bloquea).
-  - 16-oct: se borra el duplicado `docs/CONTEXTO.md`.
-  - PR #16 a #25: E6.5 · migración al diseño nuevo, una rama por historia (`HU-41` … `HU-50`), unidas el 24-oct.
+- **Segunda etapa (`docs/HISTORIAS-2.md`):** HU-51 a HU-75 (E8 a E11, 25 historias, 59 pts, sin costo) más HU-76 a HU-81 (E12, con costo, solo si se aprueban).
+  - **Ronda 1 — COMPLETADA y unida en `develop`:** A (`HU-51` a `HU-53`, PR #27–#29), V (`HU-57` PR #30, `HU-66` PR #32, `HU-62` PR #33), J (`HU-73` PR #34, `HU-69` PR #35, `HU-67` PR #36/#39).
+  - **Rondas 2 y 3 de A — COMPLETADAS:** `HU-54` (PR #43), `HU-55` (PR #44), `HU-64` (PR #45), `HU-68` (PR #46) y `HU-56` (aprobada para `develop`).
+  - **Pendiente para V y J:** Ronda 2 de V (`HU-58` → `HU-59` → `HU-60`), Ronda 2 de J (`HU-70` → `HU-71` → `HU-72`), Ronda 3 de V (`HU-61` → `HU-63` → `HU-65`) y Ronda 3 de J (`HU-74` → `HU-75`).
+- **Rama `develop`:** último merge unido `c9d4e09 Merge pull request #46 from JEsp04/HU-68` (16-nov, más el PR de `HU-56` al integrarse). GitHub ya tiene `develop` como rama por defecto.
+  - Incluye además `fix/privacidad-telefono` (PR #42): oculta el teléfono del cliente al mecánico y enmascara el teléfono en invitaciones públicas.
 - **Backend funcionando:**
-  - API en TypeScript con Prisma 7 y MySQL.
-  - Auth completa, talleres públicos, equipo (`/usuarios`), `/clientes`, `/motos`, `/ordenes` y `/servicios`. `/api/health` ya existe (lo pide HU-39).
+  - API en TypeScript con Prisma 7 y MySQL (`11` módulos en `src/modules/`).
+  - Además de auth, talleres (`/api/talleres/mio`), equipo, clientes, motos, órdenes y servicios, ya están activos `/api/repuestos` (HU-52/53), `/api/citas` (HU-57), `/api/avisos` (HU-69), `/api/invitaciones` (HU-67) y cotización con repuestos y descuento automático de stock (`HU-56`).
   - Hacia afuera solo `publicId` (UUIDv7); los `Int` son internos.
-  - 91 pruebas contra MySQL real.
-- **Frontend funcionando, con el diseño nuevo del prototipo aprobado el 17-oct:**
-  - Fondo blanco y un solo acento amarillo; fuentes Geist y Michroma. Componentes `ui` nuevos: `HoldButton`, `Arc`, `Fab`, `IconButton`, `List`, `Note`, `Page`, `Segmented`, `SelectCard`, `Stepper`.
-  - Barra inferior en celular y barra superior con menú del avatar en computador; rutas con `lazy`, 404 y error.
-  - Landing del prototipo con ingreso y registro en un panel encima (HU-45).
-  - Ingreso, registro, sesión al recargar y cierre de sesión.
-  - Panel del taller, Clientes, Equipo, Órdenes y recibir moto, detalle de la orden con dial y «mantener presionado», seguimiento del cliente, perfil.
-- **Base de datos:** 10 tablas; migraciones `20261010150000_inicial`, `20261012210000_public_id` y `20261012230000_public_id_servicios`, las tres en `develop`; seed con el taller Moto Express Laureles.
-- **Aún no desplegado.** En el repositorio no existen `api/index.ts`, `vercel.json` ni la etiqueta `v0.1`, y `main` sigue en el commit inicial `b7b3c71`.
+  - **179 pruebas** contra MySQL real en 13 archivos.
+- **Frontend funcionando, con el diseño nuevo del prototipo:**
+  - Fondo blanco y un solo acento amarillo (`check:tokens`); fuentes Geist y Michroma. Componentes `ui` nuevos: `HoldButton`, `Arc`, `Dial`, `QuantityStepper`, `Fab`, `IconButton`, `List`, `Note`, `Page`, `Segmented`, `SelectCard`, `Stepper`, `BottomSheet`, `Tabs`.
+  - Pantallas activas nuevas además de E0–E6.5: «Más» y «Datos del taller» (`/admin/mas`, `/admin/taller`), Invitar usuario y Únete a tu taller (`/admin/equipo/invitar`, `/unirse`, `/i/:codigo`), Inventario y Repuesto nuevo (`/admin/inventario`, `/admin/inventario/nuevo`, `/mecanico/inventario`), Inicio del mecánico (`/mecanico` + `/mecanico/ordenes`), contacto WhatsApp/llamada en orden (`HU-68`), y selector unificado de repuestos y servicios en cotización (`HU-56`).
+  - **141 pruebas** en 14 archivos (Vitest + Testing Library) en verde.
+- **Base de datos:** **15 tablas**; **10 migraciones** (`inicial` a `invitaciones`, más `20261116233540_repuesto_en_cotizacion`, que hace opcional `servicioId` y agrega `repuestoId` a `detalle_servicios`).
+- **Aún no desplegado.** En el repositorio no existen `api/index.ts`, `vercel.json` ni la etiqueta `v0.1`. E7 (`HU-38`, `HU-39`, `HU-40`) va al final de la segunda etapa sin costo.
 
 ## Sesión activa
 
-**Siguiente: Ronda 1 de la segunda etapa**, los tres en paralelo (guía paso a paso en `docs/FLUJO.md`, reparto en `docs/REPARTO.md`):
-
-| Persona | Tema | Ronda 1 | Al final (E7) | Revisa a |
-|---|---|---|---|---|
-| **A** | Inventario y el día del mecánico | HU-51 → HU-52 → HU-53 | HU-38 · Aiven | V |
-| **V** | Citas y la experiencia del cliente | HU-57 → HU-62 → HU-66 | HU-39 · Vercel | J |
-| **J** | Avisos, reportes y ajustes del taller | HU-73 → HU-69 → HU-67 | HU-40 · Guion y `v0.1` | A |
-
-- HU-51 (A) es la primera migración; V migra después de que se una. Avisar en el grupo antes de cada `db:migrate`.
-- HU-73 (J) va primero porque el menú «Más» lo necesitan inventario (A) y citas (V) en la ronda 2.
-- E7 se hace cuando las rondas 1 a 3 estén en `develop`. Aiven y Vercel: **pedir confirmación antes** de crear las cuentas.
+**Estado al cierre del 16-nov-2026:**
+- **A** completó todas sus historias de Ronda 1 (`HU-51` a `HU-53`), Ronda 2 (`HU-54`, `HU-55`, `HU-64`) y Ronda 3 (`HU-68`, `HU-56`). Solo queda `HU-38 · Aiven` al final en E7.
+- **Siguiente para V:** Ronda 2 (`HU-58 → HU-59 → HU-60`, pantallas de citas; el backend `HU-57`, `HU-62`, `HU-66` ya está en `develop`) y luego Ronda 3 (`HU-61 → HU-63 → HU-65`). **Nota:** `HU-61` va al inicio de su Ronda 3 porque **J** la necesita para `HU-75`.
+- **Siguiente para J:** Ronda 2 (`HU-70 → HU-71 → HU-72`, avisos y reportes; el backend `HU-69`, `HU-73`, `HU-67` ya está en `develop`) y luego Ronda 3 (`HU-74 → HU-75`). **Nota:** `HU-68` de **A** (helpers en `frontend/src/lib/whatsapp.ts`) ya quedó unida en `develop` para `HU-75`.
+- **Aviso importante para el equipo:** al arrancar en `develop`, correr `npm run db:deploy` en `backend/` para aplicar la migración `20261116233540_repuesto_en_cotizacion` de `HU-56` (y `npx prisma generate` / `npm run build` si hace falta).
+- E7 (`HU-38`, `HU-39`, `HU-40`) se hace cuando todas las rondas 1 a 3 estén en `develop`. Aiven y Vercel: **pedir confirmación antes** de crear las cuentas.
 
 **Pendiente de decidir:** fecha de cierre de las rondas y de E7; si el guion de HU-40 suma citas, repuestos, avisos y código de retiro; si se aprueba algún gasto de E12.
 
 **Para probar lo que hay en tu PC:**
-1. En tu copia del repositorio: `git checkout develop` y `git pull`; en `backend`: `npm install`, `npm run db:deploy` y `npm run seed`; en `frontend`: `npm install`.
+1. En tu copia del repositorio: `git checkout develop` y `git pull origin develop`; en `backend`: `npm install`, `npm run db:deploy` y `npm run seed`; en `frontend`: `npm install`.
 2. `npm run dev` en las dos carpetas.
-3. Admin `admin@mototrack.co`, mecánico `andres@mototrack.co`, cliente `juan@correo.co` (clave `MotoTrack2026`). Juan tiene la orden #2 esperando su aprobación (se aprueba manteniendo presionado).
+3. Admin `admin@mototrack.co`, mecánico `andres@mototrack.co`, cliente `juan@correo.co` (clave `MotoTrack2026`). Invitaciones de ejemplo: `8Q2K` (válida), `X7PL` (vencida), `K9ZD` (cancelada).
 
 ## Decisiones vigentes
 
@@ -94,6 +86,8 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 24-oct | Reparto por tema (`docs/REPARTO.md`): A inventario + HU-38, V citas y cliente + HU-39, J avisos y taller + HU-40. Revisiones cruzadas: A→V, V→J, J→A. Se puede cambiar si alguien prefiere front o back |
 | 2-nov | Citas (HU-57): bloques de 30 minutos; una sola cita programada o confirmada por hora; horario por defecto L-V 8:00-18:00, sábado 8:00-12:00, domingo cerrado. Si `horarioAtencion` del taller se entiende («Lunes a viernes, 8:00 a. m. a 6:00 p. m.; sábado, 8:00 a. m. a 12:00 m.»), se usa ese. El horario del seed se cambió a ese texto para que el sábado sea hasta las 12. El cliente solo reprograma o cancela; confirmar y marcar atendida es del admin; el mecánico solo consulta |
 | 2-nov | Código de retiro (HU-66): 4 dígitos en `codigoRetiro` de la orden. Se crea al pasar a `lista_entrega` o al cancelar (si ya estaba lista, se conserva). Solo lo reciben el admin y el cliente dueño, mientras la moto espera retiro (`retiroPendiente`); el mecánico nunca. Entregar pide el código (400 si falta o no coincide). El retiro sin reparación (`POST /ordenes/:id/retiro`) guarda `fechaEntrega` en la cancelada y deja «Moto retirada sin reparación» en el historial. Las órdenes viejas sin código no lo piden. El campo del código en la hoja de entrega no está en el prototipo: lo pide la historia |
+| 16-nov | Alta de mecánicos y administradores solo por invitación con código (HU-67); el mecánico no recibe el teléfono del cliente ni ve la tarjeta Cliente en las órdenes (`fix/privacidad-telefono`, PR #42), y en `GET /api/invitaciones/codigo/:codigo` el celular se entrega enmascarado (`••••••4471`) |
+| 16-nov | Cotización con repuestos (HU-56): si un repuesto cotizado está agotado al pasar a `en_reparacion`, la orden no se bloquea y ese repuesto queda pendiente hasta reanudar desde `pendiente_repuesto` (sin duplicar salidas previas); si se cancela una orden con salidas ya hechas, se crea una `entrada` de devolución |
 
 ## Cosas a tener en cuenta
 
@@ -103,7 +97,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - **La migración inicial se escribió a mano** porque el entorno de Claude no puede descargar el motor de Prisma. Se probó en MariaDB y Paula la aplicó en MySQL 8 con `prisma migrate reset` el 10-oct. Si algún compañero ve *drift* en una base sin datos: `npx prisma migrate reset`.
 - **Bases viejas de Sequelize:** quien tenga tablas antiguas en `mototrack` debe hacer `npx prisma migrate reset`.
 - **Landing page de un compañero:** la del prototipo ya quedó en `features/landing` (HU-45). Falta decidir si la del compañero se descarta.
-- **GitHub abre los PR hacia `main` por defecto.** Ya pasó una vez (PR cerrado y rehecho). Siempre revisar que la base sea `develop`.
+- **Rama por defecto en GitHub:** ya quedó cambiada a `develop` (verificado el 16-nov), así los PR nuevos apuntan a `develop` y no a `main`.
 - **Windows y saltos de línea:** el repositorio guarda LF (`.gitattributes`). Si `package-lock.json` aparece modificado solo por `npm install`, se descarta.
 
 ## Bitácora de sesiones
@@ -125,3 +119,9 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 15-nov | J: HU-73 · `GET` y `PATCH /api/talleres/mio` (cambiar es solo del admin; el horario se valida con el mismo lector de las citas, así las citas nuevas usan el horario nuevo), «Más» del admin en `/admin/mas` con la tarjeta del taller, pantalla «Datos del taller» en `/admin/taller` y enlace en el menú del avatar en computador. Sin migración. 8 pruebas de backend y 5 de frontend. Siguiente de J: HU-69 (después de unir HU-62 y HU-66) |
 | 15-nov | J: HU-69 · tabla `avisos` (migración `20261115223032_avisos`). `cambiarEstado()` (en `aplicarCambio`) y `crearOrden()` crean el aviso del cliente dueño en la misma transacción, con los textos del prototipo; si el cliente aprueba o rechaza desde la app, avisa a cada admin activo. Cliente sin cuenta: sin aviso. API `GET /api/avisos?noLeidos=` (con `meta.noLeidos`), `PATCH /api/avisos/:id/leido`, `POST /api/avisos/leer-todos`. 13 avisos en el seed y 11 pruebas. Backend: 167 pruebas en verde. Siguiente de J: HU-67 |
 | 15-nov | J: HU-67 · tabla `invitaciones` (migración `20261115230236_invitaciones`): código de 4 caracteres (sin 0, O, 1 ni I), vence a los 7 días; «vencida» se calcula. API del admin `GET/POST /api/invitaciones`, `POST /:id/reenviar` (da 7 días más) y `/:id/cancelar`; pública `GET /api/invitaciones/codigo/:codigo` (10 fallos por IP cada 15 min, luego 429) y `POST /api/auth/register-invitacion` (rol, taller y celular salen de la invitación). Frontend: «Invitar usuario» en `/admin/equipo/invitar` con vista previa y enlace `wa.me`, pestañas Activos/Invitaciones en Usuarios, «Únete a tu taller» en `/unirse` y `/i/:codigo`, acceso «Tengo una invitación» en el ingreso. Diferencias con el prototipo: vence en 7 días (HU), solo WhatsApp (sin correo, cuesta), paso 2 de 2 (el código por SMS es HU-77) y se pide el correo para poder ingresar. Seed: 8Q2K válida, X7PL vencida, K9ZD cancelada. 8 pruebas de backend y 11 de frontend |
+| 16-nov | Privacidad (`fix/privacidad-telefono`, PR #42) y ajustes de registro: teléfono del cliente oculto al mecánico, enmascarado en invitación pública (`••••••4471`), precarga de datos al unirse por código, y rama por defecto cambiada a `develop` en GitHub |
+| 16-nov | A: HU-54 · pantalla de inventario (PR #43). `/admin/inventario` y `/mecanico/inventario` (solo lectura), `QuantityStepper`, `StockRow`, `RepuestoSheet` con movimientos rápidos sin recargar y badge de críticos en `/admin/mas`. 4 pruebas de frontend |
+| 16-nov | A: HU-55 · formulario «Repuesto nuevo» (PR #44) en `/admin/inventario/nuevo`, margen en vivo (`>= 15 %` verde, `< 15 %` advertencia y `< 0 %` rojo) y ancho `760 px` en escritorio (`ActionBar` alineado). 3 pruebas de frontend |
+| 16-nov | A: HU-64 · inicio del mecánico (PR #45) en `/mecanico` (la lista pasa a `/mecanico/ordenes`), saludo, 5 lecturas, orden urgente arriba con `HoldButton` directo, cola de trabajo, sección «Actividad» con historial y menú actualizado (`Inicio`, `Órdenes`, `Más`). 2 pruebas nuevas + ajuste en `router.test.tsx` |
+| 16-nov | A: HU-68 · contacto sin costo por WhatsApp y llamada (PR #46): «Llamar» (`tel:`) y «Escribir por WhatsApp» (`wa.me/57…`) en tarjeta Cliente del detalle (ocultos si no hay celular o si entra un mecánico), «Más acciones» → «Compartir cotización» con hallazgos y total, e invalidación de órdenes al editar celular del cliente |
+| 16-nov | A: HU-56 · repuestos en la cotización (aprobada en `HU-56` para PR a `develop`). Migración `20261116233540_repuesto_en_cotizacion` (`detalle_servicios.repuestoId` y `servicioId` opcional), buscador «Buscar repuesto o servicio» (`N en stock`, `Bajo`, `Agotado`), recálculo en backend, salida `OT-<número>` al pasar a `en_reparacion` (sin bloquear si está agotado) y devolución al cancelar después de descontar. Backend 179 pruebas (MySQL real) y frontend 141 pruebas en verde; QA en Chrome aprobado en 390 px y 1280 px |

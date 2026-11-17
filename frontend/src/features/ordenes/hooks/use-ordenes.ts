@@ -99,6 +99,7 @@ function useAlGuardar() {
       qc.invalidateQueries({ queryKey: ['ordenes', 'lista'] }),
       qc.invalidateQueries({ queryKey: ['motos'] }),
       qc.invalidateQueries({ queryKey: ['clientes'] }),
+      qc.invalidateQueries({ queryKey: ['repuestos'] }),
     ]);
   };
 }

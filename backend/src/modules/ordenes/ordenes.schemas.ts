@@ -105,23 +105,28 @@ export const diagnosticoSchema = z.object({
     .default('normal'),
 });
 
-/** POST /api/ordenes/:id/servicios (HU-33). Precio en pesos enteros. */
-export const agregarServicioSchema = z.object({
-  servicioPublicId: z.uuid({ error: 'Elige el servicio' }),
-  cantidad: z
-    .number({ error: 'La cantidad debe ser un número' })
-    .int('La cantidad debe ser un número entero')
-    .min(1, 'La cantidad mínima es 1')
-    .max(99, 'La cantidad máxima es 99')
-    .default(1),
-  /** Si no se envía, se usa el precio del catálogo */
-  precioUnitario: z
-    .number({ error: 'El precio debe ser un número' })
-    .int('El precio va en pesos, sin decimales')
-    .min(0, 'El precio no puede ser negativo')
-    .max(100_000_000, 'Revisa el precio')
-    .optional(),
-});
+/** POST /api/ordenes/:id/servicios (HU-33, HU-56). Precio en pesos enteros. */
+export const agregarServicioSchema = z
+  .object({
+    servicioPublicId: z.uuid({ error: 'Elige el servicio' }).optional(),
+    repuestoPublicId: z.uuid({ error: 'Elige el repuesto' }).optional(),
+    cantidad: z
+      .number({ error: 'La cantidad debe ser un número' })
+      .int('La cantidad debe ser un número entero')
+      .min(1, 'La cantidad mínima es 1')
+      .max(99, 'La cantidad máxima es 99')
+      .default(1),
+    /** Si no se envía, se usa el precio del catálogo o del repuesto */
+    precioUnitario: z
+      .number({ error: 'El precio debe ser un número' })
+      .int('El precio va en pesos, sin decimales')
+      .min(0, 'El precio no puede ser negativo')
+      .max(100_000_000, 'Revisa el precio')
+      .optional(),
+  })
+  .refine((d) => Boolean(d.servicioPublicId) !== Boolean(d.repuestoPublicId), {
+    message: 'Elige un servicio o un repuesto, no ambos',
+  });
 
 export type CrearOrdenInput = z.infer<typeof crearOrdenSchema>;
 export type ListarOrdenesQuery = z.infer<typeof listarOrdenesSchema>;

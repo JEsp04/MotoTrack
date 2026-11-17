@@ -560,3 +560,191 @@ describe('HU-35 a HU-37 · Reparación, entrega, cierre y cancelación', () => {
     expect(h.observacion).toBe('El cliente retiró la moto');
   });
 });
+
+describe('HU-56 · Repuestos en la cotización del diagnóstico', () => {
+  it('agrega y quita un repuesto en detalle_servicios y recalcula el total', async () => {
+    const p = await preparar();
+    const filtro = await prisma.repuesto.create({
+      data: {
+        tallerId: p.taller.tallerId,
+        nombre: 'Filtro de aire NMAX',
+        precioVenta: 45000,
+        stock: 6,
+        stockMinimo: 2,
+      },
+    });
+    const orden = await p.ordenEn('diagnosticada');
+    const url = `/api/ordenes/${orden.publicId}/servicios`;
+
+    await request(app)
+      .post(url)
+      .set(auth(p.mecanico))
+      .send({ servicioPublicId: p.aceite.publicId })
+      .expect(201);
+
+    const conRepuesto = await request(app)
+      .post(url)
+      .set(auth(p.mecanico))
+      .send({ repuestoPublicId: filtro.publicId, cantidad: 2 });
+    expect(conRepuesto.status).toBe(201);
+    expect(conRepuesto.body.data.costoTotal).toBe(130000);
+    expect(conRepuesto.body.data.servicios[1]).toMatchObject({
+      cantidad: 2,
+      precioUnitario: 45000,
+      subtotal: 90000,
+      servicio: null,
+      repuesto: { publicId: filtro.publicId, nombre: 'Filtro de aire NMAX', stock: 6 },
+    });
+
+    const detalleDb = await prisma.detalleServicio.findUniqueOrThrow({
+      where: { publicId: conRepuesto.body.data.servicios[1].publicId },
+    });
+    expect(detalleDb.repuestoId).toBe(filtro.repuestoId);
+    expect(detalleDb.servicioId).toBeNull();
+
+    // Si se quita el repuesto, el backend recalcula el total
+    const trasQuitar = await request(app)
+      .delete(`${url}/${conRepuesto.body.data.servicios[1].publicId}`)
+      .set(auth(p.mecanico));
+    expect(trasQuitar.status).toBe(200);
+    expect(trasQuitar.body.data.costoTotal).toBe(40000);
+
+    // Rechaza enviar ambos o ninguno
+    expect(
+      (
+        await request(app)
+          .post(url)
+          .set(auth(p.mecanico))
+          .send({ servicioPublicId: p.aceite.publicId, repuestoPublicId: filtro.publicId })
+      ).status,
+    ).toBe(400);
+  });
+
+  it('al pasar a en_reparacion descuenta stock con referencia OT-<numero> y al cancelar lo devuelve', async () => {
+    const p = await preparar();
+    const pastillas = await prisma.repuesto.create({
+      data: {
+        tallerId: p.taller.tallerId,
+        nombre: 'Pastillas delanteras',
+        precioVenta: 68000,
+        stock: 5,
+        stockMinimo: 2,
+      },
+    });
+    const orden = await p.ordenEn('diagnosticada');
+    await request(app)
+      .post(`/api/ordenes/${orden.publicId}/servicios`)
+      .set(auth(p.mecanico))
+      .send({ repuestoPublicId: pastillas.publicId, cantidad: 2 })
+      .expect(201);
+    await cambiar(orden.publicId, p.mecanico, { estado: 'esperando_aprobacion' }).expect(200);
+    await cambiar(orden.publicId, p.usuarioCliente, { estado: 'aprobada' }).expect(200);
+
+    // Pasa a en_reparacion: baja de 5 a 3 con salida OT-1
+    await cambiar(orden.publicId, p.mecanico, { estado: 'en_reparacion' }).expect(200);
+    const trasSalida = await prisma.repuesto.findUniqueOrThrow({
+      where: { repuestoId: pastillas.repuestoId },
+    });
+    expect(trasSalida.stock).toBe(3);
+    const movSalida = await prisma.movimientoStock.findFirstOrThrow({
+      where: { ordenServicioId: orden.ordenServicioId, tipo: 'salida' },
+    });
+    expect(movSalida).toMatchObject({
+      cantidad: 2,
+      stockResultante: 3,
+      referencia: `OT-${orden.numero}`,
+    });
+
+    // Si luego se cancela, devuelve las 2 unidades (vuelve a 5)
+    await cambiar(orden.publicId, p.admin, {
+      estado: 'cancelada',
+      observacion: 'Cliente desistió',
+    }).expect(200);
+    const trasCancelar = await prisma.repuesto.findUniqueOrThrow({
+      where: { repuestoId: pastillas.repuestoId },
+    });
+    expect(trasCancelar.stock).toBe(5);
+    const movEntrada = await prisma.movimientoStock.findFirstOrThrow({
+      where: { ordenServicioId: orden.ordenServicioId, tipo: 'entrada' },
+    });
+    expect(movEntrada).toMatchObject({
+      cantidad: 2,
+      stockResultante: 5,
+    });
+  });
+
+  it('repuesto agotado no bloquea iniciar reparación, permite pasar a pendiente_repuesto y descuenta al reanudar sin duplicar', async () => {
+    const p = await preparar();
+    const [bujia, kit] = await Promise.all([
+      prisma.repuesto.create({
+        data: {
+          tallerId: p.taller.tallerId,
+          nombre: 'Bujía',
+          precioVenta: 20000,
+          stock: 4,
+          stockMinimo: 1,
+        },
+      }),
+      prisma.repuesto.create({
+        data: {
+          tallerId: p.taller.tallerId,
+          nombre: 'Kit 428',
+          precioVenta: 90000,
+          stock: 0,
+          stockMinimo: 1,
+        },
+      }),
+    ]);
+    const orden = await p.ordenEn('diagnosticada');
+    await request(app)
+      .post(`/api/ordenes/${orden.publicId}/servicios`)
+      .set(auth(p.mecanico))
+      .send({ repuestoPublicId: bujia.publicId, cantidad: 1 })
+      .expect(201);
+    await request(app)
+      .post(`/api/ordenes/${orden.publicId}/servicios`)
+      .set(auth(p.mecanico))
+      .send({ repuestoPublicId: kit.publicId, cantidad: 1 })
+      .expect(201);
+    await cambiar(orden.publicId, p.mecanico, { estado: 'esperando_aprobacion' }).expect(200);
+    await cambiar(orden.publicId, p.usuarioCliente, { estado: 'aprobada' }).expect(200);
+
+    // Inicia reparación aunque Kit 428 esté en 0: no bloquea, solo descuenta Bujía
+    await cambiar(orden.publicId, p.mecanico, { estado: 'en_reparacion' }).expect(200);
+    expect(
+      (await prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: bujia.repuestoId } })).stock,
+    ).toBe(3);
+    expect(
+      (await prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: kit.repuestoId } })).stock,
+    ).toBe(0);
+
+    // Pasa a pendiente_repuesto, llega el kit (+2) y reanuda: descuenta Kit 428 pero no repite Bujía
+    await cambiar(orden.publicId, p.mecanico, {
+      estado: 'pendiente_repuesto',
+      observacion: 'Kit 428 agotado',
+    }).expect(200);
+    await request(app)
+      .post(`/api/repuestos/${kit.publicId}/movimientos`)
+      .set(auth(p.admin))
+      .send({ tipo: 'entrada', cantidad: 2 })
+      .expect(201);
+    await cambiar(orden.publicId, p.mecanico, { estado: 'en_reparacion' }).expect(200);
+
+    expect(
+      (await prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: bujia.repuestoId } })).stock,
+    ).toBe(3);
+    expect(
+      (await prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: kit.repuestoId } })).stock,
+    ).toBe(1);
+
+    // Cancelar antes de salir a reparación (ej. estando aprobada) no crea devolución falsa
+    const orden2 = await p.ordenEn('aprobada');
+    await cambiar(orden2.publicId, p.admin, {
+      estado: 'cancelada',
+      observacion: 'Ya no viene',
+    }).expect(200);
+    expect(
+      await prisma.movimientoStock.count({ where: { ordenServicioId: orden2.ordenServicioId } }),
+    ).toBe(0);
+  });
+});

@@ -332,17 +332,21 @@ model DetalleServicio {
   /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
   publicId          String   @unique @default(uuid(7)) @db.Char(36)
   ordenServicioId   Int
-  servicioId        Int
+  servicioId        Int?
+  /// Repuesto del inventario incluido en la cotización (HU-56)
+  repuestoId        Int?
   cantidad          Int      @default(1)
-  /// Precio cobrado en esta orden (puede diferir de precioBase)
+  /// Precio cobrado en esta orden (puede diferir de precioBase / precioVenta)
   precioUnitario    Int
   subtotal          Int
   creadoEn          DateTime @default(now())
 
   orden    OrdenServicio @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
-  servicio Servicio      @relation(fields: [servicioId], references: [servicioId])
+  servicio Servicio?     @relation(fields: [servicioId], references: [servicioId])
+  repuesto Repuesto?     @relation(fields: [repuestoId], references: [repuestoId])
 
   @@index([ordenServicioId])
+  @@index([repuestoId])
   @@map("detalle_servicios")
 }
 
@@ -376,6 +380,7 @@ model Repuesto {
 
   taller      Taller            @relation(fields: [tallerId], references: [tallerId])
   movimientos MovimientoStock[]
+  detalles    DetalleServicio[]
 
   @@unique([tallerId, nombre])
   @@index([tallerId, categoria])

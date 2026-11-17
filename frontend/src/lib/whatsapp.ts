@@ -55,7 +55,7 @@ export function mensajeCotizacionWhatsApp(orden: OrdenDetalle, taller?: string) 
       'Servicios:',
       ...orden.servicios.map(
         (s) =>
-          `- ${s.servicio.nombre} (${s.cantidad} × ${formatPesos(s.precioUnitario)}): ${formatPesos(s.subtotal)}`,
+          `- ${s.repuesto?.nombre ?? s.servicio?.nombre ?? 'Ítem'} (${s.cantidad} × ${formatPesos(s.precioUnitario)}): ${formatPesos(s.subtotal)}`,
       ),
     );
   }
