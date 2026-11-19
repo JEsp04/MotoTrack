@@ -12,7 +12,7 @@ import { LIMITES } from '@/lib/validaciones';
 import type { Invitacion } from '@/types';
 import { useCrearInvitacion } from '../hooks/use-invitaciones';
 import { invitacionSchema, type InvitacionValues } from '../schemas/invitacion-schema';
-import { EnlaceWhatsApp } from './EnlaceWhatsApp';
+import { BotonCopiarMensaje, EnlaceWhatsApp } from './EnlaceWhatsApp';
 import { MensajePrevio } from './MensajePrevio';
 import { mensajeInvitacion } from './mensaje';
 import { OpcionRol } from './OpcionRol';
@@ -138,8 +138,8 @@ function Formulario({
             texto={mensajeInvitacion({ ...datos, nombre, rol, codigo: SIN_CODIGO })}
           />
           <p className="text-sm leading-5 text-ink-muted">
-            Los clientes no se invitan: se registran solos con su celular, o los registras tú en
-            Clientes.
+            Los clientes no se invitan: se registran solos con su correo y contraseña, o los
+            registras tú en Clientes.
           </p>
         </form>
       </Page>
@@ -168,6 +168,7 @@ function InvitacionLista({ invitacion, onListo }: { invitacion: Invitacion; onLi
       </Page>
       <ActionBar columna>
         <EnlaceWhatsApp telefono={invitacion.telefono} texto={texto} />
+        <BotonCopiarMensaje texto={texto} className="w-full" />
         <Button
           variant="secondary"
           fullWidth

@@ -27,7 +27,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
         <div className="relative">
           <select
             ref={ref}
-            required={required}
             className={cn(controlClasses(error), 'h-touch appearance-none pr-10')}
             {...a11y}
             {...rest}

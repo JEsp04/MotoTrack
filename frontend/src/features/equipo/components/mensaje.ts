@@ -17,8 +17,9 @@ export function mensajeInvitacion(d: {
   codigo: string;
 }) {
   const primerNombre = d.nombre.trim().split(/\s+/)[0] ?? '';
+  const saludo = primerNombre ? `Hola ${primerNombre}, ` : 'Hola, ';
   return (
-    `Hola ${primerNombre}, ${d.admin} te invitó a ${d.taller} en MotoTrack como ` +
+    `${saludo}${d.admin} te invitó a ${d.taller} en MotoTrack como ` +
     `${ROL_INVITADO[d.rol].toLowerCase()}.\n\n` +
     `Crea tu cuenta aquí: ${enlaceInvitacion(d.codigo)}\n` +
     `Código de invitación: ${d.codigo}\n` +

@@ -32,6 +32,7 @@ function errorApi(status: number, data: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.clear();
   useSession.getState().clearSession();
 });
 
@@ -79,17 +80,21 @@ describe('HU-19 · Inicio de sesión', () => {
   it('"¿Olvidaste tu contraseña?" explica qué hacer', async () => {
     abrirApp('/login');
     await userEvent.click(await screen.findByRole('button', { name: '¿Olvidaste tu contraseña?' }));
-    expect(screen.getByText(/Pídele a tu taller/)).toBeInTheDocument();
+    expect(screen.getByText(/pídele a tu taller/i)).toBeInTheDocument();
   });
 });
 
 describe('HU-20 · Registro', () => {
-  it('no ofrece registrarse como mecánico', async () => {
+  it('manda a los trabajadores del taller a /unirse con código de invitación', async () => {
     abrirApp('/registro');
     expect(await screen.findByRole('link', { name: /Tengo un taller/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Soy cliente/ })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Soy mecánico/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/administrador de tu taller te crea la cuenta/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Trabajo en un taller/ })).toHaveAttribute(
+      'href',
+      '/unirse',
+    );
+    expect(screen.getByText(/invitación con un código de 4 caracteres/)).toBeInTheDocument();
   });
 
   it('taller: el paso 1 conserva lo escrito al volver desde el paso 2', async () => {
@@ -198,8 +203,9 @@ describe('Largo máximo de los campos', () => {
 });
 
 describe('HU-21 · Sesión al recargar', () => {
-  it('con la cookie vigente recupera la sesión sin pedir la contraseña', async () => {
+  it('con sesión previa y cookie vigente recupera la sesión sin pedir la contraseña', async () => {
     api.refresh.mockResolvedValue({ accessToken: 'nuevo', usuario: USUARIOS_PRUEBA.admin });
+    window.localStorage.setItem('mototrack_sesion', '1');
     useSession.setState({ status: 'checking', usuario: null, accessToken: null });
     await recuperarSesion();
     expect(useSession.getState()).toMatchObject({ status: 'authenticated', accessToken: 'nuevo' });
@@ -207,9 +213,11 @@ describe('HU-21 · Sesión al recargar', () => {
 
   it('sin cookie queda sin sesión', async () => {
     api.refresh.mockRejectedValue(errorApi(401, { message: 'Tu sesión terminó', errors: [] }));
+    window.localStorage.setItem('mototrack_sesion', '1');
     useSession.setState({ status: 'checking', usuario: null, accessToken: null });
     await recuperarSesion();
     expect(useSession.getState().status).toBe('anonymous');
+    expect(window.localStorage.getItem('mototrack_sesion')).toBeNull();
   });
 });
 
@@ -225,5 +233,80 @@ describe('HU-22 · Cerrar sesión', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
     expect(api.logout).toHaveBeenCalledTimes(1);
     expect(useSession.getState()).toMatchObject({ status: 'anonymous', accessToken: null });
+  });
+});
+
+describe('HU-83 · Coherencia de landing, acceso y registro', () => {
+  it('un visitante anónimo en ruta pública no llama a /auth/refresh ni dispara 401', async () => {
+    window.history.replaceState({}, '', '/');
+    useSession.setState({ status: 'checking', usuario: null, accessToken: null });
+    await recuperarSesion();
+    expect(api.refresh).not.toHaveBeenCalled();
+    expect(useSession.getState().status).toBe('anonymous');
+  });
+
+  it('cambiar entre «Soy del taller» y «Soy cliente» limpia correo, error y ayuda', async () => {
+    api.login.mockRejectedValue(
+      errorApi(401, { message: 'Correo o contraseña incorrectos', errors: [] }),
+    );
+    abrirApp('/login');
+    await userEvent.type(await screen.findByLabelText(/Correo/), 'admin@mototrack.co');
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'Mala1234');
+    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Correo o contraseña incorrectos');
+    await userEvent.click(screen.getByRole('button', { name: '¿Olvidaste tu contraseña?' }));
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Soy cliente' }));
+    expect(screen.getByLabelText(/Correo/)).toHaveValue('');
+    expect(screen.queryByText('Correo o contraseña incorrectos')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Si administras el taller/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: '¿Olvidaste tu contraseña?' }));
+    expect(
+      screen.getByText(/Pídele a tu taller que te ayude a recuperar el acceso a tu cuenta/),
+    ).toBeInTheDocument();
+  });
+
+  it('cerrar sesión como cliente vuelve a /login?tab=cliente', async () => {
+    api.logout.mockResolvedValue(undefined);
+    sesionDePrueba('cliente');
+    const router = abrirApp('/cliente/perfil');
+    await screen.findByRole('heading', { name: 'Mi cuenta' });
+    const botones = screen.getAllByRole('button', { name: 'Cerrar sesión' });
+    await userEvent.click(botones[botones.length - 1]!);
+    await waitFor(() =>
+      expect(router.state.location.pathname + router.state.location.search).toBe(
+        '/login?tab=cliente',
+      ),
+    );
+  });
+
+  it('registro de taller conserva el plan elegido en la URL', async () => {
+    abrirApp('/registro/taller?plan=inteligente');
+    expect(await screen.findByText(/Elegiste el plan Inteligente/)).toBeInTheDocument();
+  });
+
+  it('registro de cliente muestra «Elige tu taller» debajo del select y abre los términos', async () => {
+    api.talleresPublicos.mockResolvedValue([
+      { publicId: 't1', nombre: 'Moto Express', direccion: 'Laureles' },
+    ]);
+    abrirApp('/registro/cliente');
+    await screen.findByRole('option', { name: 'Moto Express · Laureles' });
+
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Crear cuenta' }),
+    );
+    expect(await screen.findByText('Elige tu taller', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Tu taller/)).toHaveAccessibleDescription(/Elige tu taller/);
+
+    await userEvent.click(screen.getByRole('button', { name: /términos de uso y política/i }));
+    const hoja = await screen.findByRole('dialog', { name: 'Términos y tratamiento de datos' });
+    expect(within(hoja).getByText(/Ley 1581 de 2012/)).toBeInTheDocument();
+    await userEvent.click(within(hoja).getByRole('button', { name: 'Entendido' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', { name: 'Términos y tratamiento de datos' }),
+      ).not.toBeInTheDocument(),
+    );
   });
 });

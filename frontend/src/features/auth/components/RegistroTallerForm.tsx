@@ -19,11 +19,20 @@ const CAMPOS_PASO_1 = [
   'taller.direccion',
 ] as const;
 
-/** HU-20 · Registro del taller y su administrador en 2 pasos. */
+const NOTA_PLAN: Record<'basico' | 'inteligente', string> = {
+  inteligente:
+    'Elegiste el plan Inteligente ($ 130.000/mes). Empiezas sin costo mientras activamos las funciones con IA y pagos en línea.',
+  basico:
+    'Elegiste el plan Básico ($ 80.000/mes). Empiezas sin costo mientras configuras tu taller.',
+};
+
+/** HU-20, HU-83 · Registro del taller y su administrador en 2 pasos. */
 export function RegistroTallerForm({
+  planElegido,
   onRegistro,
   onVolver,
 }: {
+  planElegido?: 'basico' | 'inteligente';
   onRegistro: (usuario: Usuario) => void;
   /** Volver desde el paso 1 (al tipo de cuenta) */
   onVolver: () => void;
@@ -120,6 +129,7 @@ export function RegistroTallerForm({
         {errorGeneral && <Alert>{errorGeneral}</Alert>}
 
         <div className={paso === 1 ? 'flex flex-col gap-4' : 'hidden'}>
+          {planElegido && <Note icon="info">{NOTA_PLAN[planElegido]}</Note>}
           <Input
             label="Nombre del taller"
             required
@@ -214,11 +224,11 @@ export function RegistroTallerForm({
 
       <div className="sticky bottom-0 border-t border-border bg-surface px-4 py-3">
         {paso === 1 ? (
-          <Button fullWidth iconRight="chevronRight" onClick={siguiente}>
+          <Button key="paso-1" fullWidth iconRight="chevronRight" onClick={siguiente}>
             Continuar
           </Button>
         ) : (
-          <Button type="submit" fullWidth loading={registro.isPending}>
+          <Button key="paso-2" type="submit" fullWidth loading={registro.isPending}>
             Crear cuenta
           </Button>
         )}

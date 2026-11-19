@@ -2,9 +2,20 @@ import { configureHttpAuth, refreshOnce } from '@/lib/http';
 import { queryClient } from '@/lib/query-client';
 import { toast } from '@/lib/toast';
 import { authApi } from './api/auth-api';
-import { useSession } from './store/session';
+import { marcarSesionPrevia, tieneSesionPrevia, useSession } from './store/session';
 
 let configurado = false;
+
+function esRutaPublica(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/registro' ||
+    pathname.startsWith('/registro/') ||
+    pathname === '/unirse' ||
+    pathname.startsWith('/i/')
+  );
+}
 
 /**
  * Conecta la sesión con el cliente HTTP (HU-21):
@@ -24,6 +35,7 @@ export function configurarSesionHttp() {
         useSession.getState().setSession(accessToken, usuario);
         return accessToken;
       } catch {
+        marcarSesionPrevia(false);
         return null;
       }
     },
@@ -37,11 +49,17 @@ export function configurarSesionHttp() {
 }
 
 /**
- * Al abrir o recargar la app: si la cookie de renovación sigue viva, recupera
- * la sesión sin pedir la contraseña. Si no, queda como anónima.
+ * Al abrir o recargar la app: si hubo una sesión previa o se intenta abrir una ruta privada,
+ * pregunta al backend si la cookie de renovación sigue viva. Si es una visita anónima a una ruta
+ * pública, queda como anónima sin disparar un 401 innecesario (HU-83).
  */
 export async function recuperarSesion(): Promise<void> {
   configurarSesionHttp();
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  if (!tieneSesionPrevia() && esRutaPublica(pathname)) {
+    useSession.getState().clearSession();
+    return;
+  }
   const token = await refreshOnce();
   if (!token) useSession.getState().clearSession();
 }

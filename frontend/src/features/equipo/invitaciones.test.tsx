@@ -94,8 +94,9 @@ describe('HU-67 · Invitar usuarios', () => {
     );
     for (const chip of ['Pendiente', 'Vencida', 'Cancelada', 'Aceptada'])
       expect(within(lista).getByText(chip)).toBeInTheDocument();
-    // Solo las pendientes o vencidas se pueden reenviar
+    // Solo las pendientes o vencidas se pueden reenviar; solo las pendientes muestran Cancelar
     expect(within(lista).getAllByRole('button', { name: /^Reenviar/ })).toHaveLength(2);
+    expect(within(lista).getAllByRole('button', { name: /^Cancelar/ })).toHaveLength(1);
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Reenviar la invitación de Mónica Duque' }),
@@ -103,10 +104,16 @@ describe('HU-67 · Invitar usuarios', () => {
     expect(api.reenviar).toHaveBeenCalledWith('b');
     const hoja = await screen.findByRole('dialog', { name: 'Reenviar invitación' });
     expect(within(hoja).getByRole('link', { name: 'Enviar por WhatsApp' })).toBeInTheDocument();
+    expect(within(hoja).getByRole('button', { name: 'Copiar mensaje' })).toBeInTheDocument();
     await userEvent.click(within(hoja).getByRole('button', { name: 'Listo' }));
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Cancelar la invitación de Sebastián Gil' }),
+    );
+    expect(api.cancelar).not.toHaveBeenCalled();
+    const confirmar = await screen.findByRole('dialog', { name: 'Cancelar invitación' });
+    await userEvent.click(
+      within(confirmar).getByRole('button', { name: 'Sí, cancelar invitación' }),
     );
     await waitFor(() =>
       expect(useToastStore.getState().items.at(-1)?.message).toBe(
@@ -138,5 +145,27 @@ describe('HU-67 · Invitar usuarios', () => {
     await userEvent.type(screen.getByLabelText(/^Correo/), 'admin@mototrack.co');
     await userEvent.click(screen.getByRole('button', { name: 'Enviar invitación' }));
     expect(await screen.findByText('Este correo ya está registrado')).toBeInTheDocument();
+  });
+
+  it('saluda sin espacio antes de coma cuando falta nombre y permite copiar el mensaje (HU-83)', async () => {
+    const escribir = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: escribir },
+      configurable: true,
+    });
+    api.listar.mockResolvedValue([]);
+    api.crear.mockResolvedValue(invitacion({ codigo: 'M4TE' }));
+    abrirApp('/admin/equipo/invitar');
+
+    expect(await screen.findByText(/^Hola, Carolina Restrepo te invitó/)).toBeInTheDocument();
+    expect(screen.getByText(/se registran solos con su correo y contraseña/)).toBeInTheDocument();
+
+    await userEvent.type(screen.getByLabelText(/^Nombre/), 'Sebastián Gil');
+    await userEvent.type(screen.getByLabelText(/^Celular/), '3119024471');
+    await userEvent.click(screen.getByRole('button', { name: 'Enviar invitación' }));
+
+    expect(await screen.findByText('M4TE')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Copiar mensaje' }));
+    expect(escribir).toHaveBeenCalledWith(expect.stringContaining('Código de invitación: M4TE'));
   });
 });

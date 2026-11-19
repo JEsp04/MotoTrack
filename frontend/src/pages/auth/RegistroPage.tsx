@@ -11,10 +11,10 @@ const OPCIONES: Array<{ to: string; icon: IconName; title: string; text: string;
       text: 'Creas el taller y quedas como administrador. Planes desde $ 80.000/mes.',
     },
     {
-      to: '/login',
+      to: '/unirse',
       icon: 'wrench',
       title: 'Trabajo en un taller',
-      text: 'El administrador de tu taller te crea la cuenta. Entra con el correo y la clave que te dé.',
+      text: 'El administrador de tu taller te envía una invitación con un código de 4 caracteres para crear tu cuenta.',
     },
     {
       to: '/registro/cliente',

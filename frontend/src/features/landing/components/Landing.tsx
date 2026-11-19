@@ -11,7 +11,7 @@ export interface AccionesLanding {
   ingresar: () => void;
   ingresarCliente: () => void;
   crearCuenta: () => void;
-  registrarTaller: () => void;
+  registrarTaller: (plan?: PlanId) => void;
 }
 
 const PASOS: Array<[string, string]> = [
@@ -52,8 +52,8 @@ const PLANES: Record<
       'Órdenes de servicio con estados',
       'Clientes y motos por placa',
       'Inventario con stock crítico',
-      'Citas y agenda',
-      'Portal del cliente con avisos de su orden',
+      'Citas y agenda (próximamente)',
+      'Portal del cliente con seguimiento en vivo',
       'Usuarios administrador y mecánico',
     ],
   },
@@ -61,7 +61,7 @@ const PLANES: Record<
     nombre: 'Inteligente',
     precio: '$130.000',
     lema: 'Para que los clientes vuelvan.',
-    pre: 'Todo lo del Básico, y además:',
+    pre: 'Todo lo del Básico, y además (próximamente):',
     items: [
       'Predicciones de mantenimiento con IA',
       'Recordatorios preventivos por WhatsApp y correo',
@@ -694,7 +694,11 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
             })}
           </div>
           <div className="lp-plan-cta">
-            <button type="button" className="lp-btn lp-btn-ink" onClick={acciones.registrarTaller}>
+            <button
+              type="button"
+              className="lp-btn lp-btn-ink"
+              onClick={() => acciones.registrarTaller(plan)}
+            >
               Continuar con {PLANES[plan].nombre}
             </button>
             <p>Puedes cambiar de plan cuando quieras.</p>
@@ -711,7 +715,7 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
               <button
                 type="button"
                 className="lp-btn lp-btn-ink lp-btn-big"
-                onClick={acciones.registrarTaller}
+                onClick={() => acciones.registrarTaller()}
               >
                 Registrar mi taller
               </button>
@@ -725,7 +729,11 @@ export function Landing({ acciones }: { acciones: AccionesLanding }) {
               <button type="button" className="min-h-touch" onClick={acciones.ingresar}>
                 Iniciar sesión
               </button>
-              <button type="button" className="min-h-touch" onClick={acciones.registrarTaller}>
+              <button
+                type="button"
+                className="min-h-touch"
+                onClick={() => acciones.registrarTaller()}
+              >
                 Registrar taller
               </button>
               <button type="button" className="min-h-touch" onClick={acciones.ingresarCliente}>

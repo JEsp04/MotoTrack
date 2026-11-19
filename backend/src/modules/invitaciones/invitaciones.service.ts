@@ -84,6 +84,22 @@ export async function crearInvitacion(
     if (existe)
       throw new HttpError(409, CORREO_REGISTRADO, [{ field: 'email', message: CORREO_REGISTRADO }]);
   }
+  const pendienteCelular = await prisma.invitacion.findFirst({
+    where: {
+      tallerId: actor.tallerId,
+      telefono: input.telefono,
+      estado: 'pendiente',
+      venceEn: { gt: new Date() },
+    },
+    select: { invitacionId: true },
+  });
+  if (pendienteCelular) {
+    throw new HttpError(
+      409,
+      'Ya existe una invitación pendiente para este celular. Puedes reenviarla desde Invitaciones.',
+      [{ field: 'telefono', message: 'Ya existe una invitación pendiente para este celular' }],
+    );
+  }
   // El código es único: si sale uno repetido, se prueba con otro
   for (let intento = 0; ; intento++) {
     try {

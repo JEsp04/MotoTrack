@@ -34,7 +34,8 @@ export default function LandingLayout() {
           ingresar: () => navigate('/login'),
           ingresarCliente: () => navigate('/login?tab=cliente'),
           crearCuenta: () => navigate('/registro'),
-          registrarTaller: () => navigate('/registro/taller'),
+          registrarTaller: (plan) =>
+            navigate(plan ? `/registro/taller?plan=${plan}` : '/registro/taller'),
         }}
       />
       {titulo && (

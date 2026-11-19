@@ -7,7 +7,7 @@ import { formatFecha } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import type { EstadoInvitacion, Invitacion } from '@/types';
 import { useCancelarInvitacion, useReenviarInvitacion } from '../hooks/use-invitaciones';
-import { EnlaceWhatsApp } from './EnlaceWhatsApp';
+import { BotonCopiarMensaje, EnlaceWhatsApp } from './EnlaceWhatsApp';
 import { MensajePrevio } from './MensajePrevio';
 import { mensajeInvitacion, ROL_INVITADO } from './mensaje';
 
@@ -26,11 +26,12 @@ function detalle(i: Invitacion) {
   return base;
 }
 
-/** HU-67 · Pestaña «Invitaciones» de Usuarios y roles: reenviar o cancelar las pendientes */
+/** HU-67, HU-83 · Pestaña «Invitaciones» de Usuarios y roles: reenviar o cancelar con confirmación */
 export function InvitacionesLista({ invitaciones }: { invitaciones: Invitacion[] }) {
   const reenviar = useReenviarInvitacion();
   const cancelar = useCancelarInvitacion();
   const [reenviada, setReenviada] = useState<Invitacion | null>(null);
+  const [porCancelar, setPorCancelar] = useState<Invitacion | null>(null);
 
   if (invitaciones.length === 0)
     return (
@@ -51,10 +52,12 @@ export function InvitacionesLista({ invitaciones }: { invitaciones: Invitacion[]
     }
   }
 
-  async function alCancelar(i: Invitacion) {
+  async function confirmarCancelar() {
+    if (!porCancelar) return;
     try {
-      await cancelar.mutateAsync(i.publicId);
+      await cancelar.mutateAsync(porCancelar.publicId);
       toast('Invitación cancelada. El enlace ya no funciona.');
+      setPorCancelar(null);
     } catch (error) {
       toast(parseApiError(error).message, 'danger');
     }
@@ -65,7 +68,8 @@ export function InvitacionesLista({ invitaciones }: { invitaciones: Invitacion[]
       <ul aria-label="Invitaciones" className="flex flex-col gap-4">
         {invitaciones.map((i) => {
           const chip = CHIP[i.estado];
-          const abierta = i.estado === 'pendiente' || i.estado === 'vencida';
+          const puedeReenviar = i.estado === 'pendiente' || i.estado === 'vencida';
+          const puedeCancelar = i.estado === 'pendiente';
           return (
             <li key={i.publicId} className="flex flex-col gap-2.5 rounded-md bg-surface-sunken p-4">
               <div className="flex items-start justify-between gap-3">
@@ -83,26 +87,30 @@ export function InvitacionesLista({ invitaciones }: { invitaciones: Invitacion[]
                 <Icon name="message" size={16} className="mt-0.5 shrink-0" />
                 {detalle(i)}
               </p>
-              {abierta && (
+              {(puedeReenviar || puedeCancelar) && (
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    icon="send"
-                    onClick={() => void alReenviar(i)}
-                    aria-label={`Reenviar la invitación de ${i.nombre}`}
-                  >
-                    Reenviar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-danger-text"
-                    onClick={() => void alCancelar(i)}
-                    aria-label={`Cancelar la invitación de ${i.nombre}`}
-                  >
-                    Cancelar
-                  </Button>
+                  {puedeReenviar && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon="send"
+                      onClick={() => void alReenviar(i)}
+                      aria-label={`Reenviar la invitación de ${i.nombre}`}
+                    >
+                      Reenviar
+                    </Button>
+                  )}
+                  {puedeCancelar && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-danger-text"
+                      onClick={() => setPorCancelar(i)}
+                      aria-label={`Cancelar la invitación de ${i.nombre}`}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
                 </div>
               )}
             </li>
@@ -110,11 +118,39 @@ export function InvitacionesLista({ invitaciones }: { invitaciones: Invitacion[]
         })}
       </ul>
       <MensajeReenviado invitacion={reenviada} onClose={() => setReenviada(null)} />
+      <BottomSheet
+        open={Boolean(porCancelar)}
+        title="Cancelar invitación"
+        onClose={() => setPorCancelar(null)}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPorCancelar(null)}>
+              Volver
+            </Button>
+            <Button
+              variant="danger"
+              loading={cancelar.isPending}
+              onClick={() => void confirmarCancelar()}
+            >
+              Sí, cancelar invitación
+            </Button>
+          </>
+        }
+      >
+        {porCancelar && (
+          <p className="text-sm leading-5 text-ink-muted">
+            ¿Seguro que quieres cancelar la invitación de{' '}
+            <b className="text-ink">{porCancelar.nombre}</b>? El código{' '}
+            <b className="font-num text-ink">{porCancelar.codigo}</b> dejará de funcionar y tendrás
+            que crear una nueva si la necesita.
+          </p>
+        )}
+      </BottomSheet>
     </>
   );
 }
 
-/** Después de reenviar: el mensaje de nuevo, para mandarlo por WhatsApp */
+/** Después de reenviar: el mensaje de nuevo, para mandarlo por WhatsApp o copiarlo */
 function MensajeReenviado({
   invitacion,
   onClose,
@@ -144,6 +180,7 @@ function MensajeReenviado({
       }
     >
       <MensajePrevio de={usuario?.taller.nombre ?? ''} texto={texto} />
+      <BotonCopiarMensaje texto={texto} className="w-full" />
     </BottomSheet>
   );
 }

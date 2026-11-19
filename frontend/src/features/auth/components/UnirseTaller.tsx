@@ -10,6 +10,7 @@ import { formatFecha } from '@/lib/format';
 import type { InvitacionValidada, Usuario } from '@/types';
 import { useRegistroInvitacion, useValidarInvitacion } from '../hooks/use-auth';
 import { LIMITES, unirseSchema, type UnirseForm } from '../schemas/auth-schemas';
+import { TerminosSheet } from './TerminosSheet';
 
 /** Solo letras y números en mayúscula, como en el prototipo */
 const limpiarCodigo = (v: string) =>
@@ -50,7 +51,7 @@ function errorDeEstado(i: InvitacionValidada): ErrorCodigo | null {
 
 const NO_VALIDO: ErrorCodigo = {
   titulo: 'Código no válido',
-  texto: 'Revisa el mensaje de invitación: el código tiene 4 caracteres, como 8Q2K.',
+  texto: 'Revisa el mensaje de invitación: el código tiene 4 caracteres, como M4K9.',
 };
 
 /**
@@ -161,6 +162,7 @@ function PasoDatos({
 }) {
   const registro = useRegistroInvitacion();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [verTerminos, setVerTerminos] = useState(false);
   const esAdmin = invitacion.rol === 'admin';
   const taller = invitacion.taller?.nombre ?? 'tu taller';
   const {
@@ -269,8 +271,19 @@ function PasoDatos({
             <Icon name="check" size={14} stroke={3} />
           </span>
           <span>
-            Acepto los términos de uso y la política de tratamiento de datos.
-            <span className="text-danger-text"> *</span>
+            Acepto los{' '}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setVerTerminos(true);
+              }}
+              className="font-semibold text-ink underline decoration-border-strong underline-offset-4"
+            >
+              términos de uso y la política de tratamiento de datos
+            </button>
+            .<span className="text-danger-text"> *</span>
           </span>
         </label>
         {errors.aceptaTerminos && (
@@ -280,6 +293,7 @@ function PasoDatos({
       <Button type="submit" fullWidth loading={registro.isPending}>
         Crear mi cuenta
       </Button>
+      <TerminosSheet open={verTerminos} onClose={() => setVerTerminos(false)} />
     </form>
   );
 }
