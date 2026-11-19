@@ -42,6 +42,8 @@ export default function LoginPage() {
         />
       )}
       <LoginForm
+        key={tab}
+        tab={tab}
         onIngreso={(usuario) => navigate(destinoTrasIngreso(usuario.rol, desde), { replace: true })}
       />
       <AccesoLinks>

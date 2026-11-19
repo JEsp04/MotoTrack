@@ -8,7 +8,10 @@ const DETALLE: Record<RolInvitado, { icon: 'wrench' | 'settings'; texto: string 
     icon: 'wrench',
     texto: 'Sus órdenes asignadas, diagnóstico, cambios de estado y consulta de inventario.',
   },
-  admin: { icon: 'settings', texto: 'Acceso total, incluidos reportes, usuarios y plan.' },
+  admin: {
+    icon: 'settings',
+    texto: 'Acceso total al taller: órdenes, clientes, inventario, usuarios y datos del taller.',
+  },
 };
 
 /** Opción de rol con su explicación (RoleOption del prototipo) */

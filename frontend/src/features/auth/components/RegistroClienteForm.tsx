@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Alert, Button, Input, Select } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
@@ -11,15 +11,18 @@ import {
   registroClienteSchema,
   type RegistroClienteForm as Valores,
 } from '../schemas/auth-schemas';
+import { TerminosSheet } from './TerminosSheet';
 
-/** HU-20 · Registro de un cliente: elige su taller y crea su cuenta. */
+/** HU-20, HU-83 · Registro de un cliente: elige su taller y crea su cuenta. */
 export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usuario) => void }) {
   const registro = useRegistroCliente();
   const talleres = useTalleresPublicos();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [verTerminos, setVerTerminos] = useState(false);
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors },
@@ -66,15 +69,24 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         </Alert>
       )}
 
-      <Select
-        label="Tu taller"
-        required
-        placeholder={talleres.isLoading ? 'Cargando talleres…' : 'Elige tu taller'}
-        disabled={talleres.isLoading}
-        options={opciones}
-        hint="El taller donde llevas tu moto"
-        error={errors.tallerPublicId?.message}
-        {...register('tallerPublicId')}
+      <Controller
+        control={control}
+        name="tallerPublicId"
+        render={({ field }) => (
+          <Select
+            label="Tu taller"
+            required
+            placeholder={talleres.isLoading ? 'Cargando talleres…' : 'Elige tu taller'}
+            options={opciones}
+            hint="El taller donde llevas tu moto"
+            error={errors.tallerPublicId?.message}
+            name={field.name}
+            ref={field.ref}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+          />
+        )}
       />
       <Input
         label="Nombre completo"
@@ -134,9 +146,22 @@ export function RegistroClienteForm({ onRegistro }: { onRegistro: (usuario: Usua
         {...register('confirmar')}
       />
 
+      <p className="text-sm leading-5 text-ink-muted">
+        Al crear tu cuenta aceptas los{' '}
+        <button
+          type="button"
+          onClick={() => setVerTerminos(true)}
+          className="font-semibold text-ink underline decoration-border-strong underline-offset-4"
+        >
+          términos de uso y política de datos
+        </button>
+        .
+      </p>
+
       <Button type="submit" fullWidth loading={registro.isPending}>
         Crear cuenta
       </Button>
+      <TerminosSheet open={verTerminos} onClose={() => setVerTerminos(false)} />
     </form>
   );
 }

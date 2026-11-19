@@ -57,14 +57,15 @@ export function useLogout() {
   return useMutation({ mutationFn: cerrarSesion });
 }
 
-/** HU-22 · Botón "Cerrar sesión": avisa al backend, limpia la sesión y va al ingreso. */
+/** HU-22, HU-83 · Botón "Cerrar sesión": avisa al backend, limpia la sesión y vuelve al ingreso del rol. */
 export function useSalir() {
   const logout = useLogout();
   const navigate = useNavigate();
   return {
     salir: async () => {
+      const eraCliente = useSession.getState().usuario?.rol === 'cliente';
       await logout.mutateAsync();
-      navigate('/login', { replace: true });
+      navigate(eraCliente ? '/login?tab=cliente' : '/login', { replace: true });
       toast('Cerraste sesión');
     },
     saliendo: logout.isPending,

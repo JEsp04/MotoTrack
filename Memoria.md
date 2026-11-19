@@ -6,7 +6,7 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - Se actualiza al **terminar**: estado, sesión activa y una línea nueva en la bitácora.
 - Lo permanente (visión, stack) va en `contexto.md`; las reglas, en `CLAUDE.md`; las tareas, en `PROGRESS.md`; los criterios de aceptación del entregable, en `docs/HISTORIAS.md`; el diseño, en `docs/diseno.md` y `docs/prototipo/`.
 
-Última actualización: lunes 16 de noviembre de 2026.
+Última actualización: jueves 19 de noviembre de 2026.
 
 ---
 
@@ -15,19 +15,20 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 - **Avance del entregable (`docs/HISTORIAS.md`):** 47 de 50 historias en `develop` (106 de 112 puntos, ≈ 95 %). Falta **E7 · Despliegue y entrega (HU-38 a HU-40, 6 pts)**, que desde el 24-oct queda de última.
 - **Segunda etapa (`docs/HISTORIAS-2.md`):** HU-51 a HU-75 (E8 a E11, 25 historias, 59 pts, sin costo) más HU-76 a HU-81 (E12, con costo, solo si se aprueban).
   - **Ronda 1 — COMPLETADA y unida en `develop`:** A (`HU-51` a `HU-53`, PR #27–#29), V (`HU-57` PR #30, `HU-66` PR #32, `HU-62` PR #33), J (`HU-73` PR #34, `HU-69` PR #35, `HU-67` PR #36/#39).
-  - **Rondas 2 y 3 de A — COMPLETADAS:** `HU-54` (PR #43), `HU-55` (PR #44), `HU-64` (PR #45), `HU-68` (PR #46) y `HU-56` (aprobada para `develop`).
+  - **Rondas 2 y 3 de A — COMPLETADAS:** `HU-54` (PR #43), `HU-55` (PR #44), `HU-64` (PR #45), `HU-68` (PR #46) y `HU-56` (PR #48).
+  - **Tercera etapa (`docs/HISTORIAS-3.md`):** `HU-82` (PR #49) y `HU-83` completadas (Fase 1 lista; siguiente `HU-84`).
   - **Pendiente para V y J:** Ronda 2 de V (`HU-58` → `HU-59` → `HU-60`), Ronda 2 de J (`HU-70` → `HU-71` → `HU-72`), Ronda 3 de V (`HU-61` → `HU-63` → `HU-65`) y Ronda 3 de J (`HU-74` → `HU-75`).
-- **Rama `develop`:** último merge unido `c9d4e09 Merge pull request #46 from JEsp04/HU-68` (16-nov, más el PR de `HU-56` al integrarse). GitHub ya tiene `develop` como rama por defecto.
+- **Rama `develop`:** último merge unido `ef3141d Merge pull request #49 from JEsp04/HU-82` (previo a integrar `HU-83`). GitHub ya tiene `develop` como rama por defecto.
   - Incluye además `fix/privacidad-telefono` (PR #42): oculta el teléfono del cliente al mecánico y enmascara el teléfono en invitaciones públicas.
 - **Backend funcionando:**
   - API en TypeScript con Prisma 7 y MySQL (`11` módulos en `src/modules/`).
-  - Además de auth, talleres (`/api/talleres/mio`), equipo, clientes, motos, órdenes y servicios, ya están activos `/api/repuestos` (HU-52/53), `/api/citas` (HU-57), `/api/avisos` (HU-69), `/api/invitaciones` (HU-67) y cotización con repuestos y descuento automático de stock (`HU-56`).
+  - Además de auth, talleres (`/api/talleres/mio`), equipo, clientes, motos, órdenes y servicios, ya están activos `/api/repuestos` (HU-52/53), `/api/citas` (HU-57), `/api/avisos` (HU-69), `/api/invitaciones` (HU-67, con bloqueo de celular duplicado en `HU-83`) y cotización con repuestos y descuento automático de stock (`HU-56`).
   - Hacia afuera solo `publicId` (UUIDv7); los `Int` son internos.
-  - **179 pruebas** contra MySQL real en 13 archivos.
+  - **180 pruebas** contra MySQL real en 13 archivos.
 - **Frontend funcionando, con el diseño nuevo del prototipo:**
   - Fondo blanco y un solo acento amarillo (`check:tokens`); fuentes Geist y Michroma. Componentes `ui` nuevos: `HoldButton`, `Arc`, `Dial`, `QuantityStepper`, `Fab`, `IconButton`, `List`, `Note`, `Page`, `Segmented`, `SelectCard`, `Stepper`, `BottomSheet`, `Tabs`.
-  - Pantallas activas nuevas además de E0–E6.5: «Más» y «Datos del taller» (`/admin/mas`, `/admin/taller`), Invitar usuario y Únete a tu taller (`/admin/equipo/invitar`, `/unirse`, `/i/:codigo`), Inventario y Repuesto nuevo (`/admin/inventario`, `/admin/inventario/nuevo`, `/mecanico/inventario`), Inicio del mecánico (`/mecanico` + `/mecanico/ordenes`), contacto WhatsApp/llamada en orden (`HU-68`), y selector unificado de repuestos y servicios en cotización (`HU-56`).
-  - **141 pruebas** en 14 archivos (Vitest + Testing Library) en verde.
+  - Pantallas activas nuevas además de E0–E6.5: «Más» y «Datos del taller» (`/admin/mas`, `/admin/taller`), Invitar usuario y Únete a tu taller (`/admin/equipo/invitar`, `/unirse`, `/i/:codigo`), Inventario y Repuesto nuevo (`/admin/inventario`, `/admin/inventario/nuevo`, `/mecanico/inventario`), Inicio del mecánico (`/mecanico` + `/mecanico/ordenes`), contacto WhatsApp/llamada en orden (`HU-68`), selector unificado de repuestos y servicios en cotización (`HU-56`), correcciones móviles `HU-82`, y coherencia de acceso, `?plan=`, términos e invitaciones (`HU-83`).
+  - **148 pruebas** en 14 archivos (Vitest + Testing Library) en verde.
 - **Base de datos:** **15 tablas**; **10 migraciones** (`inicial` a `invitaciones`, más `20261116233540_repuesto_en_cotizacion`, que hace opcional `servicioId` y agrega `repuestoId` a `detalle_servicios`).
 - **Aún no desplegado.** En el repositorio no existen `api/index.ts`, `vercel.json` ni la etiqueta `v0.1`. E7 (`HU-38`, `HU-39`, `HU-40`) va al final de la segunda etapa sin costo.
 
@@ -126,3 +127,4 @@ Memoria de trabajo del proyecto: dónde estamos, qué se está haciendo y qué h
 | 16-nov | A: HU-68 · contacto sin costo por WhatsApp y llamada (PR #46): «Llamar» (`tel:`) y «Escribir por WhatsApp» (`wa.me/57…`) en tarjeta Cliente del detalle (ocultos si no hay celular o si entra un mecánico), «Más acciones» → «Compartir cotización» con hallazgos y total, e invalidación de órdenes al editar celular del cliente |
 | 16-nov | A: HU-56 · repuestos en la cotización (PR #48). Migración `20261116233540_repuesto_en_cotizacion` (`detalle_servicios.repuestoId` y `servicioId` opcional), buscador «Buscar repuesto o servicio» (`N en stock`, `Bajo`, `Agotado`), recálculo en backend, salida `OT-<número>` al pasar a `en_reparacion` (sin bloquear si está agotado) y devolución al cancelar después de descontar. Backend 179 pruebas (MySQL real) y frontend 141 pruebas en verde; QA en Chrome aprobado en 390 px y 1280 px |
 | 16-nov | Auditoría exploratoria de usuario y tercera etapa (`docs/HISTORIAS-3.md`, `HU-82` a `HU-91`). A: HU-82 · correcciones móviles (`390 px`), áreas táctiles (`48 px` en `Tabs`, `Segmented`, enlaces de acción y landing), `ActionBar` sticky sin tapar montos ni campos, y corrección de validación prematura en Paso 3 de «Nueva orden». 142 pruebas de frontend en verde y QA verificado en Chrome |
+| 19-nov | A: HU-83 · coherencia de landing, acceso, registro e invitaciones seguras. Bloqueo `409` de invitaciones duplicadas por celular vigente en el taller (`backend/src/modules/invitaciones/`), bandera no sensible `mototrack_sesion` para evitar `401` anónimo en rutas públicas, landing conserva `?plan=` al registrar taller y marca futuras en `PLANES`, `/registro` redirige a `/unirse`, `/login` resetea estado entre pestañas y recuerda `?tab=cliente` al salir, `TerminosSheet` en `/unirse` y `/registro/cliente`, ejemplo `M4K9` en error de código inválido, `Controller` en selector de taller, confirmación antes de cancelar invitaciones y botón «Copiar mensaje». Backend 180 pruebas (MySQL real) y frontend 148 pruebas en verde; QA verificado en Chrome (`1280×800` y `390×844`) |

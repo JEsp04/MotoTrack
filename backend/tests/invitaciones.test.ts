@@ -225,4 +225,37 @@ describe('HU-67 · Invitar usuarios con un código', () => {
     expect(repetido.status).toBe(409);
     expect(repetido.body.errors).toEqual([expect.objectContaining({ field: 'email' })]);
   });
+
+  it('evita duplicar una invitación pendiente para el mismo celular en el mismo taller (HU-83)', async () => {
+    const { admin } = await escenario();
+    const otroTaller = await escenario('Taller Vecino');
+    const primera = await invitar(admin);
+
+    const duplicada = await request(app).post('/api/invitaciones').set(auth(admin)).send(nueva);
+    expect(duplicada.status).toBe(409);
+    expect(duplicada.body.message).toContain('invitación pendiente para este celular');
+    expect(duplicada.body.errors).toEqual([expect.objectContaining({ field: 'telefono' })]);
+
+    // Otro taller sí puede invitar ese celular
+    const enOtroTaller = await request(app)
+      .post('/api/invitaciones')
+      .set(auth(otroTaller.admin))
+      .send(nueva);
+    expect(enOtroTaller.status).toBe(201);
+
+    // Si se cancela o vence en este taller, sí permite crear una nueva
+    await request(app)
+      .post(`/api/invitaciones/${primera.publicId}/cancelar`)
+      .set(auth(admin))
+      .expect(200);
+    const trasCancelar = await request(app).post('/api/invitaciones').set(auth(admin)).send(nueva);
+    expect(trasCancelar.status).toBe(201);
+
+    await prisma.invitacion.update({
+      where: { codigo: trasCancelar.body.data.codigo },
+      data: { venceEn: new Date(Date.now() - DIA_MS) },
+    });
+    const trasVencer = await request(app).post('/api/invitaciones').set(auth(admin)).send(nueva);
+    expect(trasVencer.status).toBe(201);
+  });
 });

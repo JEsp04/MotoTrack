@@ -8,8 +8,21 @@ import type { Usuario } from '@/types';
 import { useLogin } from '../hooks/use-auth';
 import { LIMITES, loginSchema, type LoginForm as LoginValues } from '../schemas/auth-schemas';
 
-/** HU-19 · Formulario de ingreso con correo y contraseña. */
-export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void }) {
+const AYUDA_CLAVE = {
+  cliente:
+    'Pídele a tu taller que te ayude a recuperar el acceso a tu cuenta. Pronto podrás hacerlo tú mismo desde aquí.',
+  taller:
+    'Si eres mecánico, pídele a tu taller (administrador) que te ayude a recuperarla. Si administras el taller, contáctanos por soporte. Pronto podrás hacerlo tú mismo desde aquí.',
+} as const;
+
+/** HU-19, HU-83 · Formulario de ingreso con correo y contraseña. */
+export function LoginForm({
+  tab = 'taller',
+  onIngreso,
+}: {
+  tab?: 'taller' | 'cliente';
+  onIngreso: (usuario: Usuario) => void;
+}) {
   const login = useLogin();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [verAyuda, setVerAyuda] = useState(false);
@@ -71,12 +84,7 @@ export function LoginForm({ onIngreso }: { onIngreso: (usuario: Usuario) => void
             ¿Olvidaste tu contraseña?
           </button>
         </div>
-        {verAyuda && (
-          <Alert tono="info">
-            Pídele a tu taller que te ayude a recuperarla. Pronto podrás hacerlo tú mismo desde
-            aquí.
-          </Alert>
-        )}
+        {verAyuda && <Alert tono="info">{AYUDA_CLAVE[tab]}</Alert>}
       </div>
 
       <Button type="submit" fullWidth loading={login.isPending}>

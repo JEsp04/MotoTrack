@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { errorApi } from '@/test/fixtures';
 import { abrirApp, USUARIOS_PRUEBA } from '@/test/utils';
@@ -60,7 +60,17 @@ describe('HU-67 · Únete a tu taller', () => {
     expect(await screen.findByText('Acepta los términos para crear tu cuenta')).toBeInTheDocument();
     expect(api.registrarConInvitacion).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByLabelText(/Acepto los términos/));
+    await userEvent.click(screen.getByRole('button', { name: /términos de uso/i }));
+    const hoja = await screen.findByRole('dialog', { name: 'Términos y tratamiento de datos' });
+    expect(within(hoja).getByText(/Ley 1581 de 2012/)).toBeInTheDocument();
+    await userEvent.click(within(hoja).getByRole('button', { name: 'Entendido' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', { name: 'Términos y tratamiento de datos' }),
+      ).not.toBeInTheDocument(),
+    );
+
+    await userEvent.click(screen.getByLabelText(/Acepto los/));
     await userEvent.click(screen.getByRole('button', { name: 'Crear mi cuenta' }));
     expect(api.registrarConInvitacion).toHaveBeenCalledWith({
       codigo: '8Q2K',
@@ -92,7 +102,7 @@ describe('HU-67 · Únete a tu taller', () => {
     abrirApp('/unirse?codigo=ZZZZ');
     await userEvent.click(await screen.findByRole('button', { name: 'Validar invitación' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Revisa el mensaje de invitación: el código tiene 4 caracteres, como 8Q2K.',
+      'Revisa el mensaje de invitación: el código tiene 4 caracteres, como M4K9.',
     );
   });
 
