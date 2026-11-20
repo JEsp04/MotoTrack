@@ -15,15 +15,17 @@ const ESTADOS = [
   'cancelada',
 ] as const;
 
-const textoLargo = (campo: string, min: number, max: number) =>
-  z
-    .string({ error: `${campo} es obligatorio` })
+/** «Los hallazgos deben…» / «El motivo debe…» (HU-85: concordancia en plural) */
+const textoLargo = (campo: string, min: number, max: number) => {
+  const plural = /^(los|las)\s/i.test(campo);
+  const obligatorio = `${campo} ${plural ? 'son obligatorios' : 'es obligatorio'}`;
+  const n = plural ? 'n' : '';
+  return z
+    .string({ error: obligatorio })
     .trim()
-    .min(
-      min,
-      min > 1 ? `${campo} debe tener al menos ${min} caracteres` : `${campo} es obligatorio`,
-    )
-    .max(max, `${campo} admite máximo ${max} caracteres`);
+    .min(min, min > 1 ? `${campo} debe${n} tener al menos ${min} caracteres` : obligatorio)
+    .max(max, `${campo} admite${n} máximo ${max} caracteres`);
+};
 
 /** Código de retiro de 4 dígitos (HU-66) */
 const codigoRetiro = z
@@ -76,6 +78,11 @@ export const listarOrdenesSchema = paginacionSchema.extend({
     .optional(),
   /** Placa, número de orden o nombre del cliente */
   q: busquedaSchema,
+});
+
+/** GET /api/ordenes/actividad (HU-85) */
+export const actividadSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(20).default(5),
 });
 
 /** PATCH /api/ordenes/:id/estado (HU-28) */

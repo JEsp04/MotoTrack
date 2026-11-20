@@ -25,6 +25,7 @@ vi.mock('./api/ordenes-api', () => ({
   POR_PAGINA: 20,
   ordenesApi: {
     listar: vi.fn(),
+    actividad: vi.fn(),
     obtener: vi.fn(),
     crear: vi.fn(),
     cambiarEstado: vi.fn(),
@@ -58,6 +59,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   useSession.getState().clearSession();
   repuestos.listar.mockResolvedValue(lista([]));
+  api.actividad.mockResolvedValue([]);
 });
 
 /** Nombre visible de un botón; el de mantener presionado sin la instrucción final */
@@ -373,7 +375,7 @@ describe('HU-32 · Diagnóstico', () => {
     await userEvent.type(hoja.getByLabelText(/Recomendación/), 'Cambiar cadena');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(
-      await hoja.findByText('Los hallazgos debe tener al menos 10 caracteres'),
+      await hoja.findByText('Los hallazgos deben tener al menos 10 caracteres'),
     ).toBeInTheDocument();
     await userEvent.type(hoja.getByLabelText(/Hallazgos/), ' fuerte en la cadena');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
@@ -696,14 +698,18 @@ describe('HU-64 · Inicio del mecánico', () => {
       if (grupo === 'listas') return lista([listaEntrega]);
       return lista([]);
     });
-    api.obtener.mockResolvedValue(
-      ordenDetalle({
-        publicId: aprobada.publicId,
+    api.actividad.mockResolvedValue([
+      {
+        estadoAnterior: 'esperando_aprobacion',
+        estadoNuevo: 'aprobada',
+        observacion: null,
+        creadoEn: '2026-10-10T16:00:00.000Z',
+        usuario: { publicId: 'u1', nombre: 'Laura Martínez', rol: 'cliente' },
+        ordenPublicId: aprobada.publicId,
         numero: 21,
-        estado: 'aprobada',
-        moto: { ...ordenDetalle().moto, placa: 'APR21D' },
-      }),
-    );
+        placa: 'APR21D',
+      },
+    ]);
     api.cambiarEstado.mockImplementation(async () => {
       aprobada = { ...aprobada, estado: 'en_reparacion' };
       return ordenDetalle({
@@ -1031,5 +1037,114 @@ describe('HU-84 · Seguimiento completo del cliente y contacto con el taller', (
     await userEvent.click(within(dialog).getByRole('button', { name: /Copiar mensaje/ }));
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(writeText.mock.calls[0]?.[0]).toContain('Cotización orden #44');
+  });
+});
+
+describe('HU-85 · Inicio del mecánico y panel del taller', () => {
+  it('las lecturas del mecánico llevan su filtro y la cola no muestra las listas', async () => {
+    sesionDePrueba('mecanico');
+    const reparando = ordenResumen({ numero: 31, estado: 'en_reparacion' });
+    const registrada = ordenResumen({ numero: 32, estado: 'registrada' });
+    const lista1 = ordenResumen({ numero: 33, estado: 'lista_entrega' });
+    api.listar.mockImplementation(async ({ grupo }) => {
+      if (grupo === 'en_proceso') return lista([reparando, registrada]);
+      if (grupo === 'listas') return lista([lista1]);
+      return lista([]);
+    });
+    abrirApp('/mecanico');
+    const resumen = await screen.findByRole('list', { name: 'Resumen de mi día' });
+    expect(within(resumen).getByRole('link', { name: 'En reparación: 1' })).toHaveAttribute(
+      'href',
+      '/mecanico/ordenes?grupo=en_proceso&estado=en_reparacion',
+    );
+    expect(within(resumen).getByRole('link', { name: 'Listas: 1' })).toHaveAttribute(
+      'href',
+      '/mecanico/ordenes?grupo=listas',
+    );
+    const cola = screen.getByRole('list', { name: 'Mi cola de trabajo' });
+    expect(within(cola).getByText('#32')).toBeInTheDocument();
+    expect(within(cola).queryByText('#33')).not.toBeInTheDocument();
+    // La actividad sale de una sola consulta, sin pedir el detalle de cada orden
+    expect(api.actividad).toHaveBeenCalledWith(5);
+    expect(api.obtener).not.toHaveBeenCalled();
+  });
+
+  it('la lista aplica el estado de la URL y se puede quitar el filtro', async () => {
+    sesionDePrueba('mecanico');
+    api.listar.mockResolvedValue(lista([ordenResumen({ estado: 'en_reparacion' })]));
+    abrirApp('/mecanico/ordenes?grupo=en_proceso&estado=en_reparacion');
+    await screen.findByRole('list', { name: 'Órdenes' });
+    expect(api.listar).toHaveBeenCalledWith({
+      grupo: 'en_proceso',
+      estado: 'en_reparacion',
+      q: '',
+      page: 1,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar filtro' }));
+    await waitFor(() =>
+      expect(api.listar).toHaveBeenLastCalledWith({
+        grupo: 'en_proceso',
+        estado: undefined,
+        q: '',
+        page: 1,
+      }),
+    );
+  });
+
+  it('el mecánico ve en solo lectura la orden de un compañero', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({
+      estado: 'en_reparacion',
+      mecanico: { publicId: 'otro', nombre: 'Felipe Ríos' },
+    });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    expect(
+      await screen.findByText('Orden asignada a Felipe Ríos · solo lectura'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Mantén para/ })).not.toBeInTheDocument();
+  });
+
+  it('no deja enviar a aprobación una cotización sin ítems', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'diagnosticada', servicios: [], costoTotal: 0 });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    expect(await screen.findByText(/Agrega al menos un ítem en «Servicios»/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Mantén para enviar a aprobación/ })).toBeDisabled();
+  });
+
+  it('el panel enlaza las lecturas, resalta la atrasada, muestra el stock crítico y el # de las entregadas', async () => {
+    sesionDePrueba('admin');
+    repuestos.listar.mockImplementation(async (params) =>
+      params?.critico ? { data: [], meta: { page: 1, limit: 1, total: 2 } } : lista([]),
+    );
+    const atrasada = ordenResumen({
+      numero: 40,
+      estado: 'en_reparacion',
+      fechaEstimadaEntrega: '2026-11-01',
+      atrasada: true,
+    });
+    const entregada = ordenResumen({
+      numero: 38,
+      estado: 'entregada',
+      fechaEntrega: '2026-11-18T20:00:00.000Z',
+    });
+    api.listar.mockImplementation(async ({ grupo }) => {
+      if (grupo === 'en_proceso') return lista([atrasada]);
+      if (grupo === 'cerradas') return lista([entregada]);
+      return lista([]);
+    });
+    abrirApp('/admin');
+    expect(await screen.findByText('Atrasada · 1 nov')).toBeInTheDocument();
+    const resumen = screen.getByRole('list', { name: 'Resumen del taller' });
+    expect(within(resumen).getByRole('link', { name: /espera al cliente/ })).toHaveAttribute(
+      'href',
+      '/admin/ordenes?grupo=por_aprobar',
+    );
+    expect(
+      await screen.findByRole('link', { name: /2 repuestos en stock crítico/ }),
+    ).toHaveAttribute('href', '/admin/inventario?filtro=critico');
+    expect(screen.getByText('#38 · 18 nov')).toBeInTheDocument();
   });
 });

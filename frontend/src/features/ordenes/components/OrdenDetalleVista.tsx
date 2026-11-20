@@ -153,6 +153,11 @@ function Contenido({
   const retiroSinReparacion =
     actor === 'admin' && orden.estado === 'cancelada' && orden.retiroPendiente;
   const telefonoCliente = rol === 'admin' ? orden.moto.cliente.telefono?.trim() || null : null;
+  // HU-85: un mecánico que abre la orden de un compañero solo la consulta
+  const soloLecturaDeOtro = rol === 'mecanico' && actor !== 'mecanico_asignado';
+  // HU-85: no se envía a aprobación una cotización sin ítems
+  const sinItems = orden.servicios.length === 0;
+  const bloqueaEnvio = (a: Accion) => a.a === 'esperando_aprobacion' && sinItems;
 
   /** Las acciones sin texto obligatorio se confirman manteniendo presionado, sin hoja (HU-48) */
   async function cambiarDirecto(a: Accion) {
@@ -226,6 +231,9 @@ function Contenido({
       </div>
 
       <Page narrow pb="actionbar">
+        {soloLecturaDeOtro && (
+          <Note icon="lock">Orden asignada a {orden.mecanico.nombre} · solo lectura</Note>
+        )}
         {pestana === 'resumen' && (
           <Resumen
             orden={orden}
@@ -309,6 +317,11 @@ function Contenido({
       {acciones.length > 0 || registrarDiagnostico ? (
         <ActionBar columna label="Acciones de la orden">
           {errorAccion && <Alert>{errorAccion}</Alert>}
+          {acciones.some(bloqueaEnvio) && (
+            <Note icon="alert" tono="accent">
+              Agrega al menos un ítem en «Servicios» antes de enviar la cotización al cliente.
+            </Note>
+          )}
           {registrarDiagnostico && (
             <Button fullWidth icon="search" onClick={() => setDiagnosticando(true)}>
               Registrar diagnóstico
@@ -340,7 +353,7 @@ function Contenido({
                 doneLabel={texto.soltar}
                 variant={i === 0 && !registrarDiagnostico ? 'primary' : 'soft'}
                 loading={cambiar.isPending && cambiar.variables?.estado === a.a}
-                disabled={cambiar.isPending}
+                disabled={cambiar.isPending || bloqueaEnvio(a)}
                 onConfirm={() => cambiarDirecto(a)}
                 fullWidth
               />

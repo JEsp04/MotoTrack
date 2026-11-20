@@ -10,6 +10,8 @@ const router = Router();
 
 router.use(requireAuth);
 router.get('/', ordenes.listar);
+// HU-85 · Antes de /:id para que «actividad» no se lea como un id
+router.get('/actividad', ordenes.actividad);
 router.get('/:id', ordenes.obtener);
 router.post('/', requireRole('admin'), ordenes.crear);
 router.patch('/:id/estado', ordenes.cambiarEstado);

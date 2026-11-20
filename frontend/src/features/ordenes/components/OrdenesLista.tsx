@@ -13,13 +13,15 @@ import {
 } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { useDebounce } from '@/lib/use-debounce';
+import { ESTADOS_ORDEN, LISTA_ESTADOS } from '@/lib/estados-orden';
 import { LIMITES } from '@/lib/validaciones';
-import type { Rol } from '@/types';
+import type { EstadoOrden, Rol } from '@/types';
 import { GRUPOS, type GrupoId } from '../estados';
 import { useConteoOrdenes, useOrdenes } from '../hooks/use-ordenes';
 import { OrdenCard } from './OrdenCard';
 
 const esGrupo = (v: string | null): v is GrupoId => GRUPOS.some((g) => g.id === v);
+const esEstado = (v: string | null): v is EstadoOrden => LISTA_ESTADOS.some((e) => e === v);
 
 /**
  * HU-30, HU-47 · Pantalla de órdenes (OrdersScreen del prototipo): buscador, filtros en
@@ -30,16 +32,21 @@ export function OrdenesLista({ rol, titulo }: { rol: Rol; titulo: string }) {
   const [params, setParams] = useSearchParams();
   const grupoUrl = params.get('grupo');
   const grupo: GrupoId = esGrupo(grupoUrl) ? grupoUrl : 'todas';
+  // HU-85: las lecturas del inicio llegan con un estado puntual (?estado=en_reparacion)
+  const estadoUrl = params.get('estado');
+  const estado = esEstado(estadoUrl) ? estadoUrl : undefined;
   const [texto, setTexto] = useState(params.get('q') ?? '');
   const q = useDebounce(texto.trim(), 300);
-  const ordenes = useOrdenes(grupo, q);
+  const ordenes = useOrdenes(grupo, q, estado);
   const conteo = useConteoOrdenes();
 
-  function actualizar(cambios: { grupo?: GrupoId; q?: string }) {
+  /** Cambiar de pestaña quita el estado puntual; escribir en el buscador lo conserva */
+  function actualizar(cambios: { grupo?: GrupoId; q?: string; sinEstado?: boolean }) {
     const g = cambios.grupo ?? grupo;
     const t = cambios.q ?? texto;
     const nuevos: Record<string, string> = {};
     if (g !== 'todas') nuevos.grupo = g;
+    if (estado && !cambios.grupo && !cambios.sinEstado) nuevos.estado = estado;
     if (t.trim()) nuevos.q = t.trim();
     setParams(nuevos, { replace: true });
   }
@@ -80,6 +87,16 @@ export function OrdenesLista({ rol, titulo }: { rol: Rol; titulo: string }) {
           value={grupo}
           onChange={(g) => actualizar({ grupo: g })}
         />
+        {estado && (
+          <div className="flex items-center justify-between gap-2 rounded-2xl bg-surface-sunken py-1 pr-1 pl-3.5 text-sm">
+            <span>
+              Solo «<span className="font-semibold">{ESTADOS_ORDEN[estado].label}</span>»
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => actualizar({ sinEstado: true })}>
+              Quitar filtro
+            </Button>
+          </div>
+        )}
 
         {ordenes.isPending && <SkeletonList rows={4} />}
         {ordenes.isError && (

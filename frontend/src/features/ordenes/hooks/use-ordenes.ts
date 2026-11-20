@@ -15,10 +15,10 @@ import {
 import type { GrupoId } from '../estados';
 
 /** HU-30 · Lista con pestañas, buscador y "Ver más" */
-export function useOrdenes(grupo: GrupoId, q: string) {
+export function useOrdenes(grupo: GrupoId, q: string, estado?: EstadoOrden) {
   return useInfiniteQuery({
-    queryKey: ['ordenes', 'lista', grupo, q],
-    queryFn: ({ pageParam }) => ordenesApi.listar({ grupo, q, page: pageParam }),
+    queryKey: ['ordenes', 'lista', grupo, q, estado ?? null],
+    queryFn: ({ pageParam }) => ordenesApi.listar({ grupo, estado, q, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: ({ meta }) =>
       meta.page * meta.limit < meta.total ? meta.page + 1 : undefined,
@@ -200,28 +200,14 @@ export function useInicioMecanico() {
   return useQuery({
     queryKey: ['ordenes', 'lista', 'inicio-mecanico'],
     queryFn: async () => {
-      const [enProceso, porAprobar, listas, cerradas] = await Promise.all(
-        (['en_proceso', 'por_aprobar', 'listas', 'cerradas'] as const).map((grupo) =>
+      const [enProceso, porAprobar, listas] = await Promise.all(
+        (['en_proceso', 'por_aprobar', 'listas'] as const).map((grupo) =>
           ordenesApi.listar({ grupo, page: 1, limit: 50 }),
         ),
       );
       const abiertas = [...porAprobar!.data, ...enProceso!.data, ...listas!.data];
-      const candidatas = [...abiertas, ...cerradas!.data].slice(0, 4);
-      const detalles = await Promise.all(
-        candidatas.map((o) => ordenesApi.obtener(o.publicId).catch(() => null)),
-      );
-      const actividad = detalles
-        .filter((d): d is OrdenDetalle => Boolean(d))
-        .flatMap((d) =>
-          d.historial.map((ev) => ({
-            ...ev,
-            ordenPublicId: d.publicId,
-            numero: d.numero,
-            placa: d.moto.placa,
-          })),
-        )
-        .sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime())
-        .slice(0, 5);
+      // HU-85: una sola consulta en lugar de pedir el detalle de cada orden (N+1)
+      const actividad = await ordenesApi.actividad(5).catch(() => []);
 
       return { abiertas, actividad };
     },

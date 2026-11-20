@@ -291,6 +291,34 @@ export async function listarOrdenes(usuario: UsuarioAutenticado, query: ListarOr
   };
 }
 
+// ─── HU-85 · Actividad reciente ────────────────────────────────────────────
+
+/**
+ * Últimos cambios de estado de las órdenes que el usuario puede ver, con número y placa,
+ * en una sola consulta (antes el inicio del mecánico pedía el detalle de cada orden).
+ */
+export async function actividadReciente(usuario: UsuarioAutenticado, limit: number) {
+  const eventos = await prisma.historialOrden.findMany({
+    where: { orden: filtroVisibles(usuario) },
+    select: {
+      estadoAnterior: true,
+      estadoNuevo: true,
+      observacion: true,
+      creadoEn: true,
+      usuario: { select: { publicId: true, nombre: true, rol: true } },
+      orden: { select: { publicId: true, numero: true, moto: { select: { placa: true } } } },
+    },
+    orderBy: [{ creadoEn: 'desc' }, { historialOrdenId: 'desc' }],
+    take: limit,
+  });
+  return eventos.map(({ orden, ...ev }) => ({
+    ...ev,
+    ordenPublicId: orden.publicId,
+    numero: orden.numero,
+    placa: orden.moto.placa,
+  }));
+}
+
 // ─── HU-31 · Detalle ───────────────────────────────────────────────────────
 
 export async function obtenerOrden(usuario: UsuarioAutenticado, publicId: string) {

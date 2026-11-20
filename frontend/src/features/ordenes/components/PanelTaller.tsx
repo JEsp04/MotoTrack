@@ -1,11 +1,19 @@
 import { Link } from 'react-router';
-import { Arc, Button, EmptyState, Fab, Initials, Plate, Skeleton } from '@/components/ui';
+import { Arc, Button, EmptyState, Fab, Icon, Initials, Plate, Skeleton } from '@/components/ui';
+import { useResumenInventario } from '@/features/repuestos';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
 import { formatDia, formatPesos } from '@/lib/format';
 import type { OrdenResumen } from '@/types';
 import { rutaOrden } from '../estados';
 import { usePanelTaller } from '../hooks/use-ordenes';
+
+/** «18 nov», para la fecha de entrega en «Entregadas recientemente» (HU-85) */
+const diaCorto = (iso: string) =>
+  new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' })
+    .format(new Date(iso))
+    .replace('.', '')
+    .replace(' de ', ' ');
 
 /** Monto como en el panel del prototipo: «$956.000» (sin espacio) en Michroma */
 const monto = (v: number) => formatPesos(v).replace('$ ', '$');
@@ -39,6 +47,8 @@ const hoy = () => {
  */
 export function PanelTaller() {
   const { data, isPending, isError, refetch } = usePanelTaller();
+  const inventario = useResumenInventario();
+  const criticos = inventario.data?.criticos ?? 0;
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
@@ -57,6 +67,23 @@ export function PanelTaller() {
           />
         )}
       </div>
+
+      {/* HU-85: acceso directo al stock crítico */}
+      {criticos > 0 && (
+        <Link
+          to="/admin/inventario?filtro=critico"
+          className="flex min-h-touch items-center gap-2.5 rounded-2xl bg-accent-soft px-3.5 py-2.5 text-sm text-ink transition-transform duration-150 ease-out active:scale-[0.99]"
+        >
+          <Icon name="box" className="shrink-0 text-accent-text" />
+          <span className="min-w-0 flex-1">
+            <span className="font-semibold">
+              {criticos} {criticos === 1 ? 'repuesto' : 'repuestos'} en stock crítico.
+            </span>{' '}
+            Revisa el inventario antes de cotizar.
+          </span>
+          <Icon name="chevronRight" className="shrink-0 text-ink-muted" />
+        </Link>
+      )}
 
       {isPending && (
         <div
@@ -115,13 +142,20 @@ export function PanelTaller() {
               <li key={o.publicId} className="border-b border-border">
                 <Link
                   to={rutaOrden('admin', o.publicId)}
-                  className="grid grid-cols-[86px_minmax(0,1fr)_auto] items-center gap-4 px-1 py-3 text-[15px] md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                  className="grid min-h-touch grid-cols-[86px_minmax(0,1fr)_auto] items-center gap-4 px-1 py-3 text-[15px] md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_auto]"
                 >
                   <span className="justify-self-start rounded-[6px] border-[1.5px] border-border-strong bg-surface-sunken px-2 pt-1 pb-1 font-num text-xs leading-none tracking-[0.12em] text-ink-muted">
                     {o.moto.placa}
                   </span>
-                  <span className="truncate">
-                    {o.moto.marca} {o.moto.referencia}
+                  {/* HU-85: número y fecha de entrega para distinguir varias entregas de la misma moto */}
+                  <span className="min-w-0">
+                    <span className="block truncate">
+                      {o.moto.marca} {o.moto.referencia}
+                    </span>
+                    <span className="block truncate text-sm text-ink-muted">
+                      #{o.numero}
+                      {o.fechaEntrega ? ` · ${diaCorto(o.fechaEntrega)}` : ''}
+                    </span>
                   </span>
                   <span className="hidden truncate text-sm text-ink-muted md:block">
                     {o.moto.cliente.nombre}, con {o.mecanico.nombre.split(' ')[0]}
@@ -134,7 +168,8 @@ export function PanelTaller() {
         </section>
       )}
 
-      <Fab label="Nueva orden" to="/admin/ordenes/nueva" />
+      {/* En escritorio ya está «Recibir moto» en la barra superior (HU-85) */}
+      <Fab label="Nueva orden" to="/admin/ordenes/nueva" className="lg:hidden" />
     </div>
   );
 }
@@ -150,18 +185,28 @@ function Lecturas({
 }) {
   const sinRepuesto = abiertas.filter((o) => o.estado === 'pendiente_repuesto').length;
   const cotizado = abiertas.reduce((s, o) => s + o.costoTotal, 0);
+  // HU-85: cada lectura abre «Órdenes» con su filtro
   const lecturas = [
-    { n: String(total), label: 'adentro' },
-    { n: String(porAprobar), label: 'espera al cliente', hot: true },
-    { n: String(sinRepuesto), label: 'sin repuesto' },
-    { n: monto(cotizado), label: 'cotizado abierto' },
+    { n: String(total), label: 'adentro', to: '/admin/ordenes' },
+    {
+      n: String(porAprobar),
+      label: 'espera al cliente',
+      hot: true,
+      to: '/admin/ordenes?grupo=por_aprobar',
+    },
+    {
+      n: String(sinRepuesto),
+      label: 'sin repuesto',
+      to: '/admin/ordenes?grupo=en_proceso&estado=pendiente_repuesto',
+    },
+    { n: monto(cotizado), label: 'cotizado abierto', to: '/admin/ordenes' },
   ];
   return (
     <ul className="grid grid-cols-2 gap-2.5 md:flex md:gap-2" aria-label="Resumen del taller">
       {lecturas.map((l) => (
         <li key={l.label}>
           <Link
-            to="/admin/ordenes"
+            to={l.to}
             className="flex flex-col items-start gap-0.5 rounded-[18px] bg-surface-sunken px-3.5 py-3 text-ink transition-transform duration-150 ease-out active:scale-[0.97] md:bg-transparent md:px-3 md:py-1.5"
           >
             <span
@@ -186,6 +231,9 @@ function Pie({ orden: o }: { orden: OrdenResumen }) {
   if (o.estado === 'esperando_aprobacion')
     return <Bandera tono="accent">Espera al cliente</Bandera>;
   if (o.estado === 'pendiente_repuesto') return <Bandera tono="danger">Falta repuesto</Bandera>;
+  // HU-85: la atrasada resalta en rojo
+  if (o.atrasada && o.fechaEstimadaEntrega)
+    return <Bandera tono="danger">{`Atrasada · ${formatDia(o.fechaEstimadaEntrega)}`}</Bandera>;
   if (o.estado === 'registrada')
     return <span className="min-w-0 truncate">{primer} debe diagnosticar</span>;
   if (o.estado === 'lista_entrega')
@@ -213,6 +261,7 @@ function Bahia({ orden: o }: { orden: OrdenResumen }) {
         espera
           ? 'bg-surface shadow-[0_24px_40px_-28px_var(--color-ink)] ring-[1.5px] ring-ink ring-inset'
           : 'bg-surface-sunken hover:bg-surface-2',
+        o.atrasada && !espera && 'ring-[1.5px] ring-danger ring-inset',
       )}
     >
       <span className="flex items-center justify-between">
@@ -227,7 +276,14 @@ function Bahia({ orden: o }: { orden: OrdenResumen }) {
           </span>
         </span>
         <span className="min-w-0">
-          <span className="block text-[17px] font-semibold tracking-[-0.01em]">{label}</span>
+          <span
+            className={cn(
+              'block text-[17px] font-semibold tracking-[-0.01em]',
+              o.atrasada && 'text-danger-text',
+            )}
+          >
+            {label}
+          </span>
           <span className="block truncate text-sm leading-5 text-ink-muted">
             {o.moto.marca} {o.moto.referencia}
           </span>
