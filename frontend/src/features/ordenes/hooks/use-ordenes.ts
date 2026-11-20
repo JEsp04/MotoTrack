@@ -79,6 +79,15 @@ export function useOrden(publicId: string) {
   });
 }
 
+/** HU-90 · Seguimiento público por enlace (no necesita sesión) */
+export function useSeguimientoPublico(publicId: string) {
+  return useQuery({
+    queryKey: ['seguimiento', publicId],
+    queryFn: () => ordenesApi.seguimiento(publicId),
+    retry: false,
+  });
+}
+
 export function useCatalogoServicios(activo = true) {
   return useQuery({
     queryKey: ['servicios'],

@@ -51,6 +51,7 @@ import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
 import { EntregaSheet } from './EntregaSheet';
+import { ComprobanteServicio } from './ComprobanteServicio';
 import { HistorialEstados } from './HistorialEstados';
 import { RetiroSheet } from './RetiroSheet';
 import { SeguimientoCliente } from './SeguimientoCliente';
@@ -577,6 +578,8 @@ function Resumen({
           ]}
         />
       </Card>
+      {/* HU-90 · Comprobante para imprimir o guardar en PDF */}
+      <ComprobanteServicio orden={orden} />
     </>
   );
 }

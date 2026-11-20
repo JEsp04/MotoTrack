@@ -6,40 +6,28 @@ import {
   AppBar,
   BottomSheet,
   Button,
-  ButtonLink,
   Card,
   DataList,
   HoldButton,
   Note,
   Page,
-  Plate,
   SelectCard,
   Textarea,
 } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
-import { cn } from '@/lib/cn';
-import { ESTADOS_ORDEN } from '@/lib/estados-orden';
 import { formatDia, formatFecha, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
-import { enlaceTelefono, enlaceWhatsApp } from '@/lib/whatsapp';
-import type { ContactoTaller, OrdenDetalle } from '@/types';
+import type { OrdenDetalle } from '@/types';
 import { accionesPara, type Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
-import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, MOTIVOS_RECHAZO } from '../textos';
+import { ETIQUETA_ESTADO, MOTIVOS_RECHAZO } from '../textos';
 import { CalificarServicio } from './CalificarServicio';
+import { ComprobanteServicio } from './ComprobanteServicio';
 import { HistorialEstados } from './HistorialEstados';
+import { CotizacionCard, EncabezadoSeguimiento, TarjetaTaller } from './SeguimientoPartes';
 import { TarjetaRetiro } from './TarjetaRetiro';
 
-/** «$ 132.000» → «$132.000», como el monto grande del prototipo */
-const montoGrande = (n: number) => formatPesos(n).replace(/^\$\s/, '$');
 const km = new Intl.NumberFormat('es-CO');
-
-/** Línea pequeña de la isla: en qué va la orden (HU-84 distingue aprobada de en reparación) */
-function detalleIsla(orden: OrdenDetalle, paso: number, taller: string) {
-  if (orden.estado === 'cancelada') return 'Sin reparación';
-  if (orden.estado === 'aprobada') return 'En turno para iniciar la reparación';
-  return `Paso ${paso} de 6 en ${taller}`;
-}
 
 /**
  * HU-34, HU-49, HU-84 · Seguimiento del cliente (TrackingScreen del prototipo): isla oscura con
@@ -58,13 +46,11 @@ export function SeguimientoCliente({
   const cambiar = useCambiarEstado(orden.publicId);
   const [rechazando, setRechazando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { paso, label } = ESTADOS_ORDEN[orden.estado];
   const cancelada = orden.estado === 'cancelada';
   const esperando = orden.estado === 'esperando_aprobacion';
   const acciones = accionesPara(orden.estado, 'cliente_dueno');
   const aprobar = acciones.find((a) => a.a === 'aprobada');
   const rechazar = acciones.find((a) => a.a === 'cancelada');
-  const hayCotizacion = orden.servicios.length > 0;
   // HU-84: el motivo queda en la observación del cambio a «cancelada»
   const motivoCancelacion = cancelada
     ? orden.historial.find((h) => h.estadoNuevo === 'cancelada')?.observacion
@@ -87,52 +73,7 @@ export function SeguimientoCliente({
     <>
       <AppBar title={`Orden #${orden.numero}`} subtitle={taller} onBack={() => navigate(-1)} />
 
-      {/* Encabezado del cliente (.mt-cl-hero) */}
-      <section aria-label="Seguimiento de tu moto" className="border-b border-border">
-        <div className="mx-auto flex w-full max-w-form flex-col gap-1.5 px-4 pt-3.5 pb-5 lg:px-8">
-          <div className="isla" role="status">
-            <span className="p" aria-hidden="true">
-              {orden.moto.placa.slice(0, 3)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <b>{esperando ? 'Esperando tu aprobación' : label}</b>
-              <small>{detalleIsla(orden, paso, taller)}</small>
-              {/* HU-62 · Como en la isla de la landing: «Entrega estimada: 18 sep» */}
-              {orden.fechaEstimadaEntrega &&
-                !['entregada', 'cerrada', 'cancelada'].includes(orden.estado) && (
-                  <small>
-                    Entrega estimada: {formatDia(orden.fechaEstimadaEntrega)}
-                    {orden.atrasada ? ' · atrasada' : ''}
-                  </small>
-                )}
-              {!cancelada && (
-                <div className="segs" aria-hidden="true">
-                  {[1, 2, 3, 4, 5, 6].map((k) => (
-                    <i key={k} className={k < paso ? 'ok' : k === paso ? 'now' : undefined} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm leading-5 text-ink-muted">
-              Tu {orden.moto.marca} {orden.moto.referencia}
-            </p>
-            <Plate placa={orden.moto.placa} />
-          </div>
-          {orden.costoTotal > 0 && (
-            <p
-              className={cn(
-                'font-num text-[40px] leading-[1.1] tracking-[-0.02em]',
-                cancelada && 'text-ink-muted line-through',
-              )}
-            >
-              {montoGrande(orden.costoTotal)}
-            </p>
-          )}
-          <p className="text-[17px] leading-[1.4]">{MENSAJE_CLIENTE[orden.estado]?.texto}</p>
-        </div>
-      </section>
+      <EncabezadoSeguimiento orden={orden} taller={taller} />
 
       <Page narrow pb={esperando ? 'actionbar' : undefined}>
         {orden.retiroPendiente && <TarjetaRetiro orden={orden} />}
@@ -153,56 +94,15 @@ export function SeguimientoCliente({
           </Note>
         )}
         {contactoArriba && contacto}
-        {(hayCotizacion || orden.diagnostico) && (
-          <Card
-            title={cancelada ? 'Cotización rechazada' : 'Cotización'}
-            action={
-              <span className="text-sm text-ink-muted">
-                {orden.servicios.length} {orden.servicios.length === 1 ? 'ítem' : 'ítems'}
-              </span>
-            }
-          >
-            {orden.diagnostico && (
-              <p className="mb-2 rounded-[14px] bg-bg px-3 py-2 text-sm leading-5 text-ink-muted">
-                <span className="font-semibold text-ink">Qué encontró el mecánico: </span>
-                {orden.diagnostico.hallazgos}
-              </p>
-            )}
-            {orden.diagnostico?.trabajoRecomendado && (
-              <p className="mb-2 rounded-[14px] bg-bg px-3 py-2 text-sm leading-5 text-ink-muted">
-                <span className="font-semibold text-ink">Trabajo recomendado: </span>
-                {orden.diagnostico.trabajoRecomendado}
-              </p>
-            )}
-            <ul className="flex flex-col">
-              {orden.servicios.map((s) => (
-                <li
-                  key={s.publicId}
-                  className={cn(
-                    'flex items-start gap-3 border-b border-border py-3 last:border-b-0',
-                    cancelada && 'text-ink-muted',
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p>{s.repuesto?.nombre ?? s.servicio?.nombre ?? 'Ítem'}</p>
-                    <p className="text-sm leading-5 text-ink-muted">
-                      {s.cantidad} × {formatPesos(s.precioUnitario)}
-                    </p>
-                  </div>
-                  <span className="font-semibold whitespace-nowrap">{formatPesos(s.subtotal)}</span>
-                </li>
-              ))}
-            </ul>
-            {hayCotizacion && (
-              <div className="flex items-baseline justify-between border-t-2 border-ink pt-3">
-                <span className="font-semibold">Total</span>
-                <span className={cn('font-num text-[22px]', cancelada && 'line-through')}>
-                  {formatPesos(orden.costoTotal)}
-                </span>
-              </div>
-            )}
-          </Card>
-        )}
+        <CotizacionCard
+          items={orden.servicios.map((s) => ({
+            ...s,
+            nombre: s.repuesto?.nombre ?? s.servicio?.nombre ?? 'Ítem',
+          }))}
+          diagnostico={orden.diagnostico}
+          costoTotal={orden.costoTotal}
+          cancelada={cancelada}
+        />
         <Card title="Tu orden">
           <DataList
             items={[
@@ -221,6 +121,8 @@ export function SeguimientoCliente({
             ]}
           />
         </Card>
+        {/* HU-90 · Comprobante para imprimir o guardar en PDF */}
+        <ComprobanteServicio orden={orden} />
         {/* HU-89 · Al entregar o cerrar la orden, el cliente califica el servicio */}
         {(orden.estado === 'entregada' || orden.estado === 'cerrada') && (
           <CalificarServicio orden={orden} taller={taller} />
@@ -262,44 +164,6 @@ export function SeguimientoCliente({
         />
       )}
     </>
-  );
-}
-
-/**
- * HU-84 · Tarjeta «Taller» del prototipo: nombre, dirección, horario y teléfono, con los
- * botones para escribir por WhatsApp (`wa.me`, sin costo) o llamar (`tel:`).
- */
-function TarjetaTaller({ taller, orden }: { taller: ContactoTaller; orden: OrdenDetalle }) {
-  const mensaje = `Hola ${taller.nombre}, les escribo por la orden #${orden.numero} de mi ${orden.moto.marca} ${orden.moto.referencia} (${orden.moto.placa}).`;
-  return (
-    <Card title="Taller">
-      <div className="flex flex-col gap-1">
-        <p className="font-semibold">{taller.nombre}</p>
-        {taller.direccion && <p className="text-sm leading-5 text-ink-muted">{taller.direccion}</p>}
-        {taller.horarioAtencion && (
-          <p className="text-sm leading-5 text-ink-muted">Horario: {taller.horarioAtencion}</p>
-        )}
-        <p className="text-sm leading-5 text-ink-muted">{taller.telefono}</p>
-      </div>
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        <ButtonLink
-          href={enlaceWhatsApp(taller.telefono, mensaje)}
-          externo
-          icon="message"
-          className="sm:flex-1"
-        >
-          Escribir por WhatsApp
-        </ButtonLink>
-        <ButtonLink
-          href={enlaceTelefono(taller.telefono)}
-          variant="light"
-          icon="phone"
-          className="sm:flex-1"
-        >
-          Llamar al taller
-        </ButtonLink>
-      </div>
-    </Card>
   );
 }
 

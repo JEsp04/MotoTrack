@@ -19,9 +19,18 @@ export function enlaceTelefono(telefono: string) {
   return `tel:${digitos}`;
 }
 
+/**
+ * HU-90 · Enlace público de seguimiento `/s/<publicId>`: el cliente ve su orden sin iniciar
+ * sesión (el publicId es imposible de adivinar). Usa el dominio desde donde se abrió la app.
+ */
+export function enlaceSeguimiento(publicId: string) {
+  return `${window.location.origin}/s/${publicId}`;
+}
+
 /** Mensaje inicial para escribirle al cliente desde el detalle de su orden (HU-68). */
 export function mensajeOrdenWhatsApp(
   orden: {
+    publicId?: string;
     numero: number;
     estado: EstadoOrden;
     codigoRetiro?: string | null;
@@ -32,10 +41,13 @@ export function mensajeOrdenWhatsApp(
   const nombre = orden.moto.cliente.nombre.split(' ')[0] || 'cliente';
   const origen = taller ? ` de ${taller}` : '';
   const saludo = `Hola ${nombre}, te escribimos${origen} sobre tu ${orden.moto.marca} ${orden.moto.referencia} (${orden.moto.placa}, orden #${orden.numero}).`;
+  const seguimiento = orden.publicId
+    ? `\nSigue tu orden aquí: ${enlaceSeguimiento(orden.publicId)}`
+    : '';
   if (orden.estado === 'lista_entrega' && orden.codigoRetiro) {
-    return `${saludo}\nTu moto ya está lista para entrega. Tu código de retiro es ${orden.codigoRetiro}.`;
+    return `${saludo}\nTu moto ya está lista para entrega. Tu código de retiro es ${orden.codigoRetiro}.${seguimiento}`;
   }
-  return saludo;
+  return `${saludo}${seguimiento}`;
 }
 
 /** Mensaje con hallazgos, servicios y total para compartir la cotización por WhatsApp (HU-68). */
@@ -63,5 +75,6 @@ export function mensajeCotizacionWhatsApp(orden: OrdenDetalle, taller?: string) 
     lineas.push('', 'Aún no hay diagnóstico ni servicios registrados.');
   }
   lineas.push('', `Total estimado: ${formatPesos(orden.costoTotal)}`);
+  lineas.push('', `Sigue tu orden aquí: ${enlaceSeguimiento(orden.publicId)}`);
   return lineas.join('\n');
 }

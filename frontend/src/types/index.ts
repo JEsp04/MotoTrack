@@ -244,6 +244,33 @@ export interface OrdenDetalle extends Omit<OrdenResumen, 'moto'> {
   resena: Resena | null;
 }
 
+/**
+ * HU-90 · Lo que ve quien abre el enlace `/s/:id` sin sesión. Sin datos del cliente, sin
+ * mecánico, sin historial y sin código de retiro.
+ */
+export interface SeguimientoPublico {
+  publicId: string;
+  numero: number;
+  estado: EstadoOrden;
+  motivoIngreso: string;
+  costoTotal: number;
+  fechaIngreso: string;
+  fechaEstimadaEntrega: string | null;
+  atrasada: boolean;
+  fechaEntrega: string | null;
+  moto: { placa: string; marca: string; referencia: string; modelo: number };
+  taller: ContactoTaller;
+  diagnostico: { hallazgos: string; trabajoRecomendado: string } | null;
+  servicios: Array<{
+    publicId: string;
+    nombre: string;
+    tipo: 'servicio' | 'repuesto';
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }>;
+}
+
 /** HU-89 · Seguimiento de una reseña por parte del taller */
 export type EstadoResena = 'pendiente' | 'revisada' | 'adaptada';
 

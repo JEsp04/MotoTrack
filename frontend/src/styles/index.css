@@ -1478,3 +1478,13 @@
     }
   }
 }
+
+/* HU-90 · Comprobante imprimible: mientras existe, solo se ve él (sin menús ni barras) */
+body:has(> .comprobante) > #root {
+  display: none;
+}
+@media print {
+  @page {
+    margin: 14mm;
+  }
+}

@@ -25,6 +25,8 @@ export const routes: RouteObject[] = [
   {
     errorElement: <RouteErrorPage />,
     children: [
+      // HU-90 · Seguimiento público por enlace: abre con o sin sesión
+      { path: '/s/:id', element: page(() => import('@/pages/SeguimientoPublicoPage')) },
       // Landing con el panel de ingreso o registro encima (HU-45)
       {
         element: <GuestOnly />,

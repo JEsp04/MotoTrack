@@ -1,5 +1,6 @@
 import { http } from '@/lib/http';
 import type {
+  SeguimientoPublico,
   ApiList,
   ApiResponse,
   EstadoOrden,
@@ -79,6 +80,12 @@ export const ordenesApi = {
   actividad: (limit = 5) =>
     http
       .get<ApiResponse<EventoActividad[]>>('/ordenes/actividad', { params: { limit } })
+      .then((r) => r.data.data),
+
+  /** HU-90 · Público: el resumen de la orden para el enlace `/s/:id` (sin sesión) */
+  seguimiento: (publicId: string) =>
+    http
+      .get<ApiResponse<SeguimientoPublico>>(`/ordenes/seguimiento/${publicId}`)
       .then((r) => r.data.data),
 
   obtener: (publicId: string) =>

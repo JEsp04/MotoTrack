@@ -37,6 +37,7 @@ vi.mock('./api/ordenes-api', () => ({
     quitarServicio: vi.fn(),
     catalogo: vi.fn(),
     calificar: vi.fn(),
+    seguimiento: vi.fn(),
   },
 }));
 vi.mock('@/features/clientes/api/clientes-api', () => ({
@@ -1270,5 +1271,90 @@ describe('HU-89 · Calificar el servicio', () => {
     abrirApp(`/cliente/ordenes/${orden.publicId}`);
     await screen.findByText('Tu moto está en reparación.');
     expect(screen.queryByText('Califica tu experiencia')).not.toBeInTheDocument();
+  });
+});
+
+describe('HU-90 · Seguimiento público y comprobante', () => {
+  const publico = {
+    publicId: '0192f0a0-0000-7000-8000-0000000s0001',
+    numero: 12,
+    estado: 'esperando_aprobacion' as const,
+    motivoIngreso: 'Frenos largos',
+    costoTotal: 85000,
+    fechaIngreso: '2026-11-18T15:00:00.000Z',
+    fechaEstimadaEntrega: null,
+    atrasada: false,
+    fechaEntrega: null,
+    moto: { placa: 'KLM45F', marca: 'Yamaha', referencia: 'NMAX 155', modelo: 2023 },
+    taller: {
+      nombre: 'Moto Express',
+      telefono: '6044441234',
+      direccion: 'Cra. 76 #33-20',
+      horarioAtencion: null,
+    },
+    diagnostico: { hallazgos: 'Pastillas gastadas', trabajoRecomendado: 'Cambiar pastillas' },
+    servicios: [
+      {
+        publicId: '0192f0a0-0000-7000-8000-0000000s0002',
+        nombre: 'Pastillas de freno',
+        tipo: 'repuesto' as const,
+        cantidad: 1,
+        precioUnitario: 85000,
+        subtotal: 85000,
+      },
+    ],
+  };
+
+  it('sin sesión, /s/:id muestra el estado, la cotización y el contacto del taller', async () => {
+    api.seguimiento.mockResolvedValue(publico);
+    abrirApp(`/s/${publico.publicId}`);
+    expect(await screen.findByRole('heading', { name: 'Orden #12' })).toBeInTheDocument();
+    expect(api.seguimiento).toHaveBeenCalledWith(publico.publicId);
+    expect(screen.getByText('Pastillas de freno')).toBeInTheDocument();
+    expect(screen.getByText('Cra. 76 #33-20')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Escribir por WhatsApp' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('wa.me/576044441234'),
+    );
+    expect(screen.getAllByRole('link', { name: 'Iniciar sesión' })[0]).toHaveAttribute(
+      'href',
+      '/login?tab=cliente',
+    );
+    // Solo lectura: nada para aprobar sin sesión
+    expect(screen.queryByRole('button', { name: /aprobar/i })).not.toBeInTheDocument();
+  });
+
+  it('un enlace que no existe muestra «No encontramos esta orden»', async () => {
+    api.seguimiento.mockRejectedValue(errorApi(404, { message: 'No encontramos esta orden' }));
+    abrirApp('/s/no-existe');
+    expect(await screen.findByText('No encontramos esta orden')).toBeInTheDocument();
+    expect(
+      screen.getByText('Revisa que el enlace esté completo o pídele uno nuevo al taller.'),
+    ).toBeInTheDocument();
+  });
+
+  it('«Imprimir comprobante» arma el recibo con los ítems y el total y abre la impresión', async () => {
+    const imprimir = vi.spyOn(window, 'print').mockImplementation(() => {});
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({ costoTotal: 65000 });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Imprimir comprobante' }));
+    const recibo = await screen.findByRole('article', {
+      name: `Comprobante de la orden #${orden.numero}`,
+    });
+    expect(imprimir).toHaveBeenCalledTimes(1);
+    expect(within(recibo).getByText('Comprobante de servicio')).toBeInTheDocument();
+    expect(within(recibo).getByText('$ 65.000')).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new Event('afterprint'));
+    });
+    expect(
+      screen.queryByRole('article', { name: `Comprobante de la orden #${orden.numero}` }),
+    ).not.toBeInTheDocument();
+    imprimir.mockRestore();
   });
 });
