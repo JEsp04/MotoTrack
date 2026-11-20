@@ -1,11 +1,14 @@
 import { Link } from 'react-router';
-import { Plate, StatusBadge } from '@/components/ui';
+import { Icon, Plate, StatusBadge } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { formatPesos } from '@/lib/format';
+import { formatDia, formatPesos } from '@/lib/format';
 import type { OrdenResumen } from '@/types';
 import { MENSAJE_CLIENTE } from '../textos';
 
-/** Tarjeta de una orden abierta en el inicio del cliente (.mt-corder del prototipo) */
+/**
+ * Tarjeta de una orden abierta en el inicio del cliente (.mt-corder del prototipo).
+ * HU-84: muestra la entrega estimada y la resalta en rojo si está atrasada.
+ */
 export function OrdenClienteCard({ orden, taller }: { orden: OrdenResumen; taller: string }) {
   const espera = orden.estado === 'esperando_aprobacion';
   // HU-66: lista para recoger, o cancelada con la moto aún en el taller
@@ -35,6 +38,18 @@ export function OrdenClienteCard({ orden, taller }: { orden: OrdenResumen; talle
         <Plate placa={orden.moto.placa} />
       </div>
       <StatusBadge estado={orden.estado} size="lg" />
+      {orden.fechaEstimadaEntrega && !lista && (
+        <p
+          className={cn(
+            'inline-flex items-center gap-1.5 text-sm leading-5',
+            orden.atrasada ? 'font-semibold text-danger-text' : 'text-ink-muted',
+          )}
+        >
+          <Icon name={orden.atrasada ? 'alert' : 'clock'} size={16} />
+          {orden.atrasada ? 'Atrasada · estaba para el ' : 'Entrega estimada: '}
+          {formatDia(orden.fechaEstimadaEntrega)}
+        </p>
+      )}
       <p>{MENSAJE_CLIENTE[orden.estado]?.texto}</p>
       <span
         className={cn(

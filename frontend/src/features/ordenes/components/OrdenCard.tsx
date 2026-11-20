@@ -9,6 +9,7 @@ import { rutaOrden } from '../estados';
  * Tarjeta de una orden (OrderCard del prototipo): placa, moto y cliente; estado y número;
  * abajo el mecánico y la entrega estimada («Atrasada · 5 nov» si ya pasó, HU-62).
  * Sin fecha estimada, muestra el día de ingreso.
+ * HU-84: el cliente ve el motivo de ingreso en lugar de su propio nombre.
  */
 export function OrdenCard({ orden, rol }: { orden: OrdenResumen; rol: Rol }) {
   return (
@@ -24,7 +25,7 @@ export function OrdenCard({ orden, rol }: { orden: OrdenResumen; rol: Rol }) {
               {orden.moto.marca} {orden.moto.referencia}
             </span>
             <span className="block truncate text-sm leading-5 text-ink-muted">
-              {orden.moto.cliente.nombre}
+              {rol === 'cliente' ? orden.motivoIngreso : orden.moto.cliente.nombre}
             </span>
           </span>
         </span>

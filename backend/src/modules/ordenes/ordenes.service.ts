@@ -236,11 +236,23 @@ function sinTelefonoParaMecanico<
   return { ...orden, moto: { ...orden.moto, cliente } };
 }
 
+/** HU-84 · Datos de contacto del taller que recibe el cliente dueño en el detalle */
+const contactoTaller = {
+  nombre: true,
+  telefono: true,
+  direccion: true,
+  horarioAtencion: true,
+} satisfies Prisma.TallerSelect;
+
 /** Respuesta del detalle, sin los Int */
 async function detalle(usuario: UsuarioAutenticado, ordenServicioId: number) {
   const orden = await prisma.ordenServicio.findUniqueOrThrow({
     where: { ordenServicioId },
-    select: ordenDetalle,
+    select: {
+      ...ordenDetalle,
+      // HU-84: solo el cliente necesita el contacto del taller (admin y mecánico ya están ahí)
+      ...(usuario.rol === 'cliente' && { taller: { select: contactoTaller } }),
+    },
   });
   return sinTelefonoParaMecanico(usuario, conRetiro(usuario, conEntrega(orden)));
 }

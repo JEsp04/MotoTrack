@@ -86,6 +86,16 @@ describe('HU-25 · Buscar y ver clientes', () => {
     expect(screen.getByText('En reparación')).toBeInTheDocument();
   });
 
+  it('HU-84 · la tarjeta de contacto trae Llamar y WhatsApp', async () => {
+    const detalle = clienteDetalle({ telefono: '3104445566' });
+    api.obtener.mockResolvedValue(detalle);
+    abrirApp(`/admin/clientes/${detalle.publicId}`);
+    const llamar = await screen.findByRole('link', { name: 'Llamar' });
+    expect(llamar).toHaveAttribute('href', 'tel:3104445566');
+    const wa = screen.getByRole('link', { name: 'WhatsApp' });
+    expect(wa.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/573104445566\?text=Hola%20Laura/);
+  });
+
   it('un cliente de otro taller (404) muestra un aviso claro', async () => {
     api.obtener.mockRejectedValue(errorApi(404, { message: 'No encontramos ese cliente' }));
     abrirApp('/admin/clientes/no-existe');

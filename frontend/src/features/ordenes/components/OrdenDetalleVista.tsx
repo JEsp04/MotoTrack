@@ -27,9 +27,9 @@ import {
 } from '@/components/ui';
 import { useSession } from '@/features/auth';
 import { parseApiError } from '@/lib/api-error';
-import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN, PASOS } from '@/lib/estados-orden';
 import { formatDia, formatFecha, formatPesos } from '@/lib/format';
+import { copiarTexto } from '@/lib/portapapeles';
 import { toast } from '@/lib/toast';
 import {
   enlaceTelefono,
@@ -44,36 +44,12 @@ import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
 import { EntregaSheet } from './EntregaSheet';
+import { HistorialEstados } from './HistorialEstados';
 import { RetiroSheet } from './RetiroSheet';
 import { SeguimientoCliente } from './SeguimientoCliente';
 import { ServicioSheet } from './ServicioSheet';
 
 const km = new Intl.NumberFormat('es-CO');
-const ROL: Record<Rol, string> = {
-  admin: 'Admin',
-  mecanico: 'Mecánico',
-  cliente: 'Cliente',
-};
-
-/** Fecha corta del historial, como en el prototipo: «17 oct · 8:20» */
-function fechaCorta(iso: string) {
-  const d = new Date(iso);
-  const dia = new Intl.DateTimeFormat('es-CO', {
-    day: 'numeric',
-    month: 'short',
-    timeZone: 'America/Bogota',
-  })
-    .format(d)
-    .replace('.', '')
-    .replace(' de ', ' ');
-  const hora = new Intl.DateTimeFormat('es-CO', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'America/Bogota',
-  }).format(d);
-  return `${dia} · ${hora}`;
-}
 
 type Pestana = 'resumen' | 'diagnostico' | 'servicios' | 'historial';
 
@@ -326,50 +302,7 @@ function Contenido({
           />
         )}
 
-        {pestana === 'historial' && (
-          <Card
-            title="Historial de estados"
-            action={
-              <span className="text-sm text-ink-muted">
-                {orden.historial.length} {orden.historial.length === 1 ? 'cambio' : 'cambios'}
-              </span>
-            }
-          >
-            <ol className="m-0 list-none p-0" aria-label="Historial de estados">
-              {orden.historial.map((h, i) => (
-                <li key={`${h.creadoEn}-${i}`} className="relative flex gap-3 pb-4 last:pb-0">
-                  <span className="flex w-6 shrink-0 flex-col items-center" aria-hidden="true">
-                    <span
-                      className={cn(
-                        'mt-1.5 size-3 shrink-0 rounded-full',
-                        h.estadoNuevo === 'esperando_aprobacion' ? 'bg-accent' : 'bg-ink',
-                      )}
-                    />
-                    {i < orden.historial.length - 1 && (
-                      <span className="mt-1 w-0.5 flex-1 bg-border" />
-                    )}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="font-semibold">{ETIQUETA_ESTADO[h.estadoNuevo]}</span>
-                      <span className="shrink-0 text-sm text-ink-muted">
-                        {fechaCorta(h.creadoEn)}
-                      </span>
-                    </div>
-                    <p className="text-sm leading-5 text-ink-muted">
-                      {h.usuario.nombre} ({ROL[h.usuario.rol]})
-                    </p>
-                    {h.observacion && (
-                      <p className="mt-1.5 rounded-sm bg-surface px-3 py-2 text-sm leading-5">
-                        {h.observacion}
-                      </p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </Card>
-        )}
+        {pestana === 'historial' && <HistorialEstados historial={orden.historial} />}
       </Page>
 
       {/* Barra de acciones (.mt-actionbar): primero la principal */}
@@ -475,6 +408,17 @@ function Contenido({
               subtitle="Enviar hallazgos y total por WhatsApp"
               href={enlaceWhatsApp(telefonoCliente, mensajeCotizacionWhatsApp(orden, taller))}
               onClick={() => setMenuAcciones(false)}
+            />
+            {/* HU-84 · Respaldo en computador: copiar el mismo mensaje para pegarlo donde sea */}
+            <ListItem
+              icon="clipboard"
+              title="Copiar mensaje"
+              subtitle="Copiar la cotización para pegarla en otro chat"
+              chevron={false}
+              onClick={() => {
+                setMenuAcciones(false);
+                void copiarTexto(mensajeCotizacionWhatsApp(orden, taller), 'Cotización copiada');
+              }}
             />
           </List>
         </BottomSheet>

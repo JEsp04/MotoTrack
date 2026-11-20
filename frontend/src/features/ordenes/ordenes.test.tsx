@@ -933,3 +933,103 @@ describe('HU-82 · Correcciones móviles, áreas táctiles y barras fijas', () =
     expect(screen.queryByText('Elige el mecánico', { selector: 'p' })).not.toBeInTheDocument();
   });
 });
+
+describe('HU-84 · Seguimiento completo del cliente y contacto con el taller', () => {
+  const contacto = {
+    nombre: 'Moto Express',
+    telefono: '3001234567',
+    direccion: 'Cra 45 #30-12, Medellín',
+    horarioAtencion: 'Lun-vie 8:00-18:00; sáb 8:00-12:00',
+  };
+
+  it('en espera de aprobación muestra WhatsApp, llamar, dirección y horario del taller', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({ estado: 'esperando_aprobacion', taller: contacto });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+
+    const wa = await screen.findByRole('link', { name: 'Escribir por WhatsApp' });
+    expect(wa.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/573001234567\?text=/);
+    expect(decodeURIComponent(wa.getAttribute('href') ?? '')).toContain('orden #12');
+    expect(screen.getByRole('link', { name: 'Llamar al taller' })).toHaveAttribute(
+      'href',
+      'tel:3001234567',
+    );
+    expect(screen.getByText('Cra 45 #30-12, Medellín')).toBeInTheDocument();
+    expect(screen.getByText('Horario: Lun-vie 8:00-18:00; sáb 8:00-12:00')).toBeInTheDocument();
+    // Resumen completo de la orden
+    const resumen = screen.getByRole('heading', { name: 'Tu orden' }).closest('section')!;
+    expect(within(resumen).getByText('Andrés Gómez')).toBeInTheDocument();
+    expect(within(resumen).getByText('12.900 km')).toBeInTheDocument();
+    expect(screen.getByText('Cambiar pastillas')).toBeInTheDocument();
+  });
+
+  it('una orden cancelada muestra el motivo y el historial', async () => {
+    sesionDePrueba('cliente');
+    const base = ordenDetalle();
+    const orden = ordenDetalle({
+      estado: 'cancelada',
+      taller: contacto,
+      historial: [
+        {
+          estadoAnterior: 'esperando_aprobacion',
+          estadoNuevo: 'cancelada',
+          observacion: 'El precio es muy alto',
+          creadoEn: '2026-10-11T15:00:00.000Z',
+          usuario: { publicId: 'u1', nombre: 'Laura Martínez', rol: 'cliente' },
+        },
+        ...base.historial,
+      ],
+    });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+
+    expect(await screen.findByText('Motivo de la cancelación:')).toBeInTheDocument();
+    const historial = screen.getByRole('list', { name: 'Historial de estados' });
+    expect(within(historial).getAllByRole('listitem')).toHaveLength(base.historial.length + 1);
+    expect(within(historial).getByText('El precio es muy alto')).toBeInTheDocument();
+  });
+
+  it('distingue «aprobada» (en turno) de «en reparación» (paso 4 de 6)', async () => {
+    sesionDePrueba('cliente');
+    const aprobada = ordenDetalle({ estado: 'aprobada', taller: contacto });
+    api.obtener.mockResolvedValue(aprobada);
+    abrirApp(`/cliente/ordenes/${aprobada.publicId}`);
+    expect(await screen.findByText('En turno para iniciar la reparación')).toBeInTheDocument();
+    cleanup();
+
+    const enReparacion = ordenDetalle({ estado: 'en_reparacion', taller: contacto });
+    api.obtener.mockResolvedValue(enReparacion);
+    abrirApp(`/cliente/ordenes/${enReparacion.publicId}`);
+    expect(await screen.findByText('Paso 4 de 6 en Moto Express')).toBeInTheDocument();
+  });
+
+  it('en «Mis órdenes» el cliente busca y ve el motivo en lugar de su nombre', async () => {
+    sesionDePrueba('cliente');
+    api.listar.mockResolvedValue(lista([ordenResumen({ motivoIngreso: 'Ruido en el freno' })]));
+    abrirApp('/cliente/ordenes');
+    const ul = await screen.findByRole('list', { name: 'Órdenes' });
+    expect(within(ul).getByText('Ruido en el freno')).toBeInTheDocument();
+    expect(within(ul).queryByText('Laura Martínez')).not.toBeInTheDocument();
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar orden' }), 'KLM');
+    await waitFor(() =>
+      expect(api.listar).toHaveBeenLastCalledWith({ grupo: 'todas', q: 'KLM', page: 1 }),
+    );
+  });
+
+  it('«Compartir cotización» también permite copiar el mensaje', async () => {
+    sesionDePrueba('admin');
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const orden = ordenDetalle({ numero: 44 });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Más acciones' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Orden #44' });
+    await userEvent.click(within(dialog).getByRole('button', { name: /Copiar mensaje/ }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(writeText.mock.calls[0]?.[0]).toContain('Cotización orden #44');
+  });
+});
