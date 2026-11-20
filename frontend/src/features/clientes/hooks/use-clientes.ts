@@ -20,10 +20,12 @@ export function useClientes(q: string) {
   });
 }
 
-export function useCliente(publicId: string) {
+/** `activo` en false no consulta (por ejemplo, sin cliente todavía) */
+export function useCliente(publicId: string, activo = true) {
   return useQuery({
     queryKey: ['clientes', 'detalle', publicId],
     queryFn: () => clientesApi.obtener(publicId),
+    enabled: activo,
   });
 }
 

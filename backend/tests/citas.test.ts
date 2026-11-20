@@ -599,3 +599,53 @@ describe('HU-59 · Pedir una cita como cliente', () => {
     expect(despues.body.data.horas.map((h: { hora: string }) => h.hora)).not.toContain('09:00');
   });
 });
+
+describe('HU-58 · Recibir la moto que llega a su cita', () => {
+  async function conCita() {
+    const e = await conMotos();
+    const cita = await request(app)
+      .post('/api/citas')
+      .set(auth(e.admin))
+      .send({ motoPublicId: e.motoLaura.publicId, fechaHora: a(martes, '9:00'), motivo: 'Frenos' });
+    expect(cita.status).toBe(201);
+    return { ...e, citaId: cita.body.data.publicId as string };
+  }
+
+  const recibir = (e: Awaited<ReturnType<typeof conCita>>, extra: Record<string, unknown> = {}) =>
+    request(app)
+      .post('/api/ordenes')
+      .set(auth(e.admin))
+      .send({
+        motoPublicId: e.motoLaura.publicId,
+        mecanicoPublicId: e.mecanico.publicId,
+        motivoIngreso: 'Frenos: chillan al frenar',
+        kilometrajeIngreso: 100,
+        citaPublicId: e.citaId,
+        ...extra,
+      });
+
+  it('la cita queda atendida y relacionada con la orden creada', async () => {
+    const e = await conCita();
+    const orden = await recibir(e);
+    expect(orden.status).toBe(201);
+
+    const cita = await request(app).get(`/api/citas/${e.citaId}`).set(auth(e.admin));
+    expect(cita.body.data.estado).toBe('atendida');
+    expect(cita.body.data.orden).toEqual({
+      publicId: orden.body.data.publicId,
+      numero: orden.body.data.numero,
+    });
+  });
+
+  it('una cita de otra moto (400) o ya atendida (409) no crea la orden', async () => {
+    const e = await conCita();
+    const otraMoto = await recibir(e, { motoPublicId: e.motoSofia.publicId });
+    expect(otraMoto.status).toBe(400);
+    expect(otraMoto.body.errors[0].field).toBe('citaPublicId');
+
+    await prisma.cita.updateMany({ data: { estado: 'cancelada' } });
+    const cerrada = await recibir(e);
+    expect(cerrada.status).toBe(409);
+    expect(await prisma.ordenServicio.count()).toBe(0);
+  });
+});

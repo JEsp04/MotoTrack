@@ -123,6 +123,8 @@ function Mas({ usuario }: { usuario: Usuario }) {
           </List>
         ) : (
           <List>
+            {/* HU-58 · La agenda en solo lectura */}
+            <ListItem icon="calendar" title="Citas" to="/mecanico/citas" />
             <ListItem icon="box" title="Inventario" to="/mecanico/inventario" />
           </List>
         )}
