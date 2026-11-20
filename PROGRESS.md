@@ -184,7 +184,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 - [x] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1] · PR #33
 - [~] HU-63 · Reasignar el mecánico de una orden *(deseable)* · 1 pt · [V, ronda 3] · rama `HU-63`, en revisión
 - [x] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2] · PR #45
-- [ ] HU-65 · Inicio del cliente · 2 pts · [V, ronda 3]
+- [~] HU-65 · Inicio del cliente · 2 pts · [V, ronda 3] · rama `HU-65`, en revisión
 - [x] HU-66 · Código de retiro para entregar la moto · 2 pts · [V, ronda 1] · PR #32
 - [x] HU-67 · Invitar usuarios al taller con un código · 3 pts · [J, ronda 1] · PR #36 y PR #39
 - [x] HU-68 · Contactar al cliente por WhatsApp sin costo *(deseable)* · 1 pt · [A, ronda 3, al inicio: J la necesita] · PR #46
