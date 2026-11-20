@@ -118,6 +118,12 @@ export const ordenesApi = {
       })
       .then((r) => r.data.data.filter((o) => o.retiroPendiente)),
   /** HU-62 · Solo el admin. null la borra. */
+  /** HU-63 · Pasar la orden a otro mecánico activo (solo admin, orden abierta) */
+  reasignarMecanico: (publicId: string, mecanicoPublicId: string) =>
+    http
+      .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/mecanico`, { mecanicoPublicId })
+      .then(detalle),
+
   cambiarEntrega: (publicId: string, fechaEstimadaEntrega: string | null) =>
     http
       .patch<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/entrega`, { fechaEstimadaEntrega })

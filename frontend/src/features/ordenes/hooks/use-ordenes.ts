@@ -149,6 +149,16 @@ export function useRegistrarRetiro(publicId: string) {
   });
 }
 
+/** HU-63 · Reasignar el mecánico */
+export function useReasignarMecanico(publicId: string) {
+  const alGuardar = useAlGuardar();
+  return useMutation({
+    mutationFn: (mecanicoPublicId: string) =>
+      ordenesApi.reasignarMecanico(publicId, mecanicoPublicId),
+    onSuccess: alGuardar,
+  });
+}
+
 export function useCambiarEntrega(publicId: string) {
   const alGuardar = useAlGuardar();
   return useMutation({
