@@ -1,5 +1,5 @@
 import { http } from '@/lib/http';
-import type { ApiResponse, EstadoRegistro, Integrante } from '@/types';
+import type { ApiResponse, ClaveRestablecida, EstadoRegistro, Integrante } from '@/types';
 
 export interface NuevoMecanicoBody {
   nombre: string;
@@ -19,5 +19,11 @@ export const equipoApi = {
   cambiarEstado: (publicId: string, estado: EstadoRegistro) =>
     http
       .patch<ApiResponse<Integrante>>(`/usuarios/${publicId}`, { estado })
+      .then((r) => r.data.data),
+
+  /** HU-86 · Clave temporal para un integrante del equipo */
+  restablecerClave: (publicId: string) =>
+    http
+      .post<ApiResponse<ClaveRestablecida>>(`/usuarios/${publicId}/reset-password`)
       .then((r) => r.data.data),
 };

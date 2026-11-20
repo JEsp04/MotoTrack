@@ -13,5 +13,7 @@ router.get('/', clientes.listar);
 router.get('/:id', clientes.obtener);
 router.post('/', clientes.crear);
 router.patch('/:id', clientes.actualizar);
+// HU-86 · Clave temporal para un cliente con cuenta
+router.post('/:id/reset-password', clientes.restablecerClave);
 
 export default router;

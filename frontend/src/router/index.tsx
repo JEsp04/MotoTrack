@@ -120,6 +120,8 @@ export const routes: RouteObject[] = [
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'inventario', element: inventario },
           { path: 'perfil', element: perfil },
+          // HU-86 · «Más» del mecánico en celular; «Mi cuenta» queda en /mecanico/perfil
+          { path: 'mas', element: perfil },
         ],
       },
 

@@ -42,7 +42,7 @@ describe('HU-73 · Menú «Más» y datos del taller', () => {
 
   it('el mecánico no ve la tarjeta del taller ni las opciones del admin', async () => {
     sesionDePrueba('mecanico');
-    abrirApp('/mecanico/perfil');
+    abrirApp('/mecanico/mas');
     await screen.findByRole('heading', { name: 'Más' });
     expect(screen.queryByRole('link', { name: /Datos del taller/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Usuarios y roles' })).not.toBeInTheDocument();

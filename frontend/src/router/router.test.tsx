@@ -43,7 +43,7 @@ describe('Rutas y guardas (HU-11, HU-22)', () => {
       'href',
       '/mecanico/ordenes',
     );
-    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/mecanico/perfil');
+    expect(screen.getByRole('link', { name: 'Más' })).toHaveAttribute('href', '/mecanico/mas');
   });
 
   it('la opción de la página actual queda marcada', async () => {

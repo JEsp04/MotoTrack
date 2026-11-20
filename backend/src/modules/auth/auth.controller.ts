@@ -1,7 +1,13 @@
 import type { Request, Response } from 'express';
 import { usuarioActual } from '../../middlewares/auth.js';
 import { registroInvitacionSchema } from '../invitaciones/invitaciones.schemas.js';
-import { loginSchema, registerClienteSchema, registerTallerSchema } from './auth.schemas.js';
+import {
+  actualizarPerfilSchema,
+  cambiarPasswordSchema,
+  loginSchema,
+  registerClienteSchema,
+  registerTallerSchema,
+} from './auth.schemas.js';
 import * as authService from './auth.service.js';
 import { opcionesCookieRefresh, REFRESH_COOKIE } from './auth.tokens.js';
 
@@ -55,4 +61,18 @@ export async function logout(req: Request, res: Response) {
 export async function me(req: Request, res: Response) {
   const { usuarioId, tallerId } = usuarioActual(req);
   res.json({ data: await authService.obtenerPerfil(usuarioId, tallerId) });
+}
+
+/** HU-86 · Editar mis datos */
+export async function actualizarPerfil(req: Request, res: Response) {
+  const { usuarioId, tallerId } = usuarioActual(req);
+  const input = actualizarPerfilSchema.parse(req.body);
+  res.json({ data: await authService.actualizarPerfil(usuarioId, tallerId, input) });
+}
+
+/** HU-86 · Cambiar mi contraseña: las demás sesiones se cierran y esta sigue con una nueva */
+export async function cambiarPassword(req: Request, res: Response) {
+  const { usuarioId, tallerId } = usuarioActual(req);
+  const input = cambiarPasswordSchema.parse(req.body);
+  responderSesion(res, await authService.cambiarPassword(usuarioId, tallerId, input));
 }

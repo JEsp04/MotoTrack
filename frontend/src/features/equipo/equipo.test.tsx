@@ -7,7 +7,12 @@ import { abrirApp, sesionDePrueba } from '@/test/utils';
 import { equipoApi } from './api/equipo-api';
 
 vi.mock('./api/equipo-api', () => ({
-  equipoApi: { listar: vi.fn(), crearMecanico: vi.fn(), cambiarEstado: vi.fn() },
+  equipoApi: {
+    listar: vi.fn(),
+    crearMecanico: vi.fn(),
+    cambiarEstado: vi.fn(),
+    restablecerClave: vi.fn(),
+  },
 }));
 const api = vi.mocked(equipoApi);
 
@@ -99,5 +104,41 @@ describe('HU-23 · Equipo', () => {
     await waitFor(() =>
       expect(api.cambiarEstado).toHaveBeenCalledWith(andres.publicId, 'inactivo'),
     );
+  });
+});
+
+describe('HU-86 · Restablecer la contraseña de un mecánico', () => {
+  it('confirma, muestra la clave temporal y el enlace de WhatsApp con el mensaje', async () => {
+    const andres = mecanico();
+    api.listar.mockResolvedValue([andres]);
+    api.restablecerClave.mockResolvedValue({
+      nombre: 'Andrés Gómez',
+      telefono: '3002223344',
+      claveTemporal: 'k7m4p2xa',
+    });
+    abrirApp('/admin/equipo');
+    await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Andrés Gómez' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña' }));
+    const d = within(await screen.findByRole('dialog', { name: 'Restablecer contraseña' }));
+    expect(api.restablecerClave).not.toHaveBeenCalled();
+    await userEvent.click(d.getByRole('button', { name: 'Restablecer' }));
+
+    const lista = within(await screen.findByRole('dialog', { name: 'Clave temporal lista' }));
+    expect(api.restablecerClave).toHaveBeenCalledWith(andres.publicId);
+    expect(lista.getByText('k7m4p2xa')).toBeInTheDocument();
+    const enlace = lista.getByRole('link', { name: /Enviar por WhatsApp/ });
+    expect(enlace).toHaveAttribute('href', expect.stringContaining('wa.me/573002223344'));
+    expect(decodeURIComponent(enlace.getAttribute('href') ?? '')).toContain(
+      'Tu clave temporal es: k7m4p2xa',
+    );
+  });
+
+  it('un mecánico desactivado no tiene la opción', async () => {
+    api.listar.mockResolvedValue([mecanico({ estado: 'inactivo' })]);
+    abrirApp('/admin/equipo');
+    await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Andrés Gómez' }));
+    expect(
+      screen.queryByRole('button', { name: 'Restablecer contraseña' }),
+    ).not.toBeInTheDocument();
   });
 });

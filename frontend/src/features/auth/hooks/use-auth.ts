@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router';
 import { toast } from '@/lib/toast';
 import {
   authApi,
+  type CambiarPasswordBody,
   type LoginBody,
+  type PerfilBody,
   type RegistroClienteBody,
   type RegistroInvitacionBody,
   type RegistroTallerBody,
@@ -70,6 +72,25 @@ export function useSalir() {
     },
     saliendo: logout.isPending,
   };
+}
+
+/** HU-86 · Guarda mis datos y los refleja de inmediato en la sesión activa */
+export function useActualizarPerfil() {
+  return useMutation({
+    mutationFn: (body: PerfilBody) => authApi.actualizarPerfil(body),
+    onSuccess: (usuario) => {
+      const { accessToken } = useSession.getState();
+      if (accessToken) useSession.getState().setSession(accessToken, usuario);
+    },
+  });
+}
+
+/** HU-86 · Cambia la contraseña y sigue con la sesión nueva que entrega el backend */
+export function useCambiarPassword() {
+  return useMutation({
+    mutationFn: (body: CambiarPasswordBody) => authApi.cambiarPassword(body),
+    onSuccess: guardarSesion,
+  });
 }
 
 /** Lista de talleres para que el cliente elija el suyo al registrarse. */

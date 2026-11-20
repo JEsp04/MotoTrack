@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { ActionBar, Alert, AppBar, Button, Input, Page, SkeletonList } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
@@ -22,6 +22,10 @@ export function DatosTallerForm() {
   const navigate = useNavigate();
   const taller = useMiTaller();
   const actualizar = useActualizarTaller();
+  const { key } = useLocation();
+  // HU-86: al guardar vuelve a donde estaba (en computador se entra desde el menú del avatar);
+  // si se abrió directo, va a «Más»
+  const volver = () => void (key === 'default' ? navigate('/admin/mas') : navigate(-1));
 
   return (
     <>
@@ -32,7 +36,7 @@ export function DatosTallerForm() {
         ) : taller.isError ? (
           <Alert>{parseApiError(taller.error).message}</Alert>
         ) : (
-          <Formulario taller={taller.data} onGuardado={() => void navigate('/admin/mas')} />
+          <Formulario taller={taller.data} onGuardado={volver} />
         )}
       </Page>
       <ActionBar>
