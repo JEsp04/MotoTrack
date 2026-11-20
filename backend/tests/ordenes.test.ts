@@ -324,6 +324,58 @@ describe('HU-31 · Detalle', () => {
   });
 });
 
+describe('HU-84 · Contacto del taller para el cliente', () => {
+  it('el cliente dueño recibe nombre, teléfono, dirección y horario del taller', async () => {
+    const p = await preparar();
+    await prisma.taller.update({
+      where: { tallerId: p.taller.tallerId },
+      data: {
+        telefono: '3001234567',
+        direccion: 'Cra 45 #30-12, Medellín',
+        horarioAtencion: 'Lun-vie 8:00-18:00; sáb 8:00-12:00',
+      },
+    });
+    const orden = await p.ordenEn('esperando_aprobacion');
+    const res = await request(app)
+      .get(`/api/ordenes/${orden.publicId}`)
+      .set(auth(p.usuarioCliente));
+    expect(res.status).toBe(200);
+    expect(res.body.data.taller).toEqual({
+      nombre: 'Moto Express',
+      telefono: '3001234567',
+      direccion: 'Cra 45 #30-12, Medellín',
+      horarioAtencion: 'Lun-vie 8:00-18:00; sáb 8:00-12:00',
+    });
+    expect(res.body.data.taller).not.toHaveProperty('tallerId');
+  });
+
+  it('admin y mecánico no reciben el bloque de contacto del taller', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('registrada');
+    for (const usuario of [p.admin, p.mecanico]) {
+      const res = await request(app).get(`/api/ordenes/${orden.publicId}`).set(auth(usuario));
+      expect(res.status).toBe(200);
+      expect(res.body.data).not.toHaveProperty('taller');
+    }
+  });
+
+  it('la orden cancelada trae el motivo en el historial para el cliente', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('esperando_aprobacion');
+    const res = await request(app)
+      .patch(`/api/ordenes/${orden.publicId}/estado`)
+      .set(auth(p.usuarioCliente))
+      .send({ estado: 'cancelada', observacion: 'El precio es muy alto' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.estado).toBe('cancelada');
+    expect(res.body.data.taller.nombre).toBe('Moto Express');
+    expect(res.body.data.historial[0]).toMatchObject({
+      estadoNuevo: 'cancelada',
+      observacion: 'El precio es muy alto',
+    });
+  });
+});
+
 describe('HU-32 · Diagnóstico', () => {
   const diag = {
     hallazgos: 'Pastillas de freno gastadas',

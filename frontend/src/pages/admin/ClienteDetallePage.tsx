@@ -4,6 +4,7 @@ import {
   Alert,
   AppBar,
   Button,
+  ButtonLink,
   Card,
   DataList,
   EmptyState,
@@ -17,9 +18,11 @@ import {
   SkeletonList,
   StatusBadge,
 } from '@/components/ui';
+import { useSession } from '@/features/auth';
 import { ClienteSheet, useCliente } from '@/features/clientes';
 import { MotoSheet } from '@/features/motos';
 import { parseApiError } from '@/lib/api-error';
+import { enlaceTelefono, enlaceWhatsApp } from '@/lib/whatsapp';
 import type { Moto } from '@/types';
 
 /** HU-25 · Detalle de un cliente: datos, motos (HU-26) y órdenes. */
@@ -27,6 +30,7 @@ export default function ClienteDetallePage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const cliente = useCliente(id);
+  const taller = useSession((s) => s.usuario?.taller.nombre) ?? 'el taller';
   const [editando, setEditando] = useState(false);
   const [motoSheet, setMotoSheet] = useState<{ open: boolean; moto: Moto | null }>({
     open: false,
@@ -89,6 +93,29 @@ export default function ClienteDetallePage() {
         }
       />
       <Page>
+        {/* HU-84 · Contacto rápido, como en el prototipo: Llamar y WhatsApp sobre «Contacto» */}
+        <div className="flex gap-2">
+          <ButtonLink
+            href={enlaceTelefono(c.telefono)}
+            variant="secondary"
+            icon="phone"
+            className="flex-1"
+          >
+            Llamar
+          </ButtonLink>
+          <ButtonLink
+            href={enlaceWhatsApp(
+              c.telefono,
+              `Hola ${c.nombre.split(' ')[0]}, te escribimos de ${taller}.`,
+            )}
+            externo
+            variant="secondary"
+            icon="message"
+            className="flex-1"
+          >
+            WhatsApp
+          </ButtonLink>
+        </div>
         <Card title="Contacto">
           <DataList
             items={[

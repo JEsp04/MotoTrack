@@ -6,7 +6,9 @@ import {
   AppBar,
   BottomSheet,
   Button,
+  ButtonLink,
   Card,
+  DataList,
   HoldButton,
   Note,
   Page,
@@ -19,21 +21,38 @@ import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
 import { formatDia, formatFecha, formatPesos } from '@/lib/format';
 import { toast } from '@/lib/toast';
-import type { OrdenDetalle } from '@/types';
+import { enlaceTelefono, enlaceWhatsApp } from '@/lib/whatsapp';
+import type { ContactoTaller, OrdenDetalle } from '@/types';
 import { accionesPara, type Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
-import { TarjetaRetiro } from './TarjetaRetiro';
 import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, MOTIVOS_RECHAZO } from '../textos';
+import { HistorialEstados } from './HistorialEstados';
+import { TarjetaRetiro } from './TarjetaRetiro';
 
 /** «$ 132.000» → «$132.000», como el monto grande del prototipo */
 const montoGrande = (n: number) => formatPesos(n).replace(/^\$\s/, '$');
+const km = new Intl.NumberFormat('es-CO');
+
+/** Línea pequeña de la isla: en qué va la orden (HU-84 distingue aprobada de en reparación) */
+function detalleIsla(orden: OrdenDetalle, paso: number, taller: string) {
+  if (orden.estado === 'cancelada') return 'Sin reparación';
+  if (orden.estado === 'aprobada') return 'En turno para iniciar la reparación';
+  return `Paso ${paso} de 6 en ${taller}`;
+}
 
 /**
- * HU-34, HU-49 · Seguimiento del cliente (TrackingScreen del prototipo): isla oscura con los
- * 6 pasos, el total grande, la cotización y, si espera su respuesta, aprobar o rechazar
- * manteniendo presionado.
+ * HU-34, HU-49, HU-84 · Seguimiento del cliente (TrackingScreen del prototipo): isla oscura con
+ * los 6 pasos, el total grande, la cotización, los datos de la orden, el contacto del taller,
+ * el historial y, si espera su respuesta, aprobar o rechazar manteniendo presionado.
  */
-export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; taller: string }) {
+export function SeguimientoCliente({
+  orden,
+  taller: tallerSesion,
+}: {
+  orden: OrdenDetalle;
+  taller: string;
+}) {
+  const taller = orden.taller?.nombre ?? tallerSesion;
   const navigate = useNavigate();
   const cambiar = useCambiarEstado(orden.publicId);
   const [rechazando, setRechazando] = useState(false);
@@ -45,6 +64,13 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
   const aprobar = acciones.find((a) => a.a === 'aprobada');
   const rechazar = acciones.find((a) => a.a === 'cancelada');
   const hayCotizacion = orden.servicios.length > 0;
+  // HU-84: el motivo queda en la observación del cambio a «cancelada»
+  const motivoCancelacion = cancelada
+    ? orden.historial.find((h) => h.estadoNuevo === 'cancelada')?.observacion
+    : null;
+  // Cuando el cliente más lo necesita (decidir, recoger o una demora), el contacto va arriba
+  const contactoArriba = esperando || orden.retiroPendiente || orden.atrasada;
+  const contacto = orden.taller && <TarjetaTaller taller={orden.taller} orden={orden} />;
 
   async function aprobarOrden() {
     setError(null);
@@ -69,7 +95,7 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
             </span>
             <div className="min-w-0 flex-1">
               <b>{esperando ? 'Esperando tu aprobación' : label}</b>
-              <small>{cancelada ? 'Sin reparación' : `Paso ${paso} de 6 en ${taller}`}</small>
+              <small>{detalleIsla(orden, paso, taller)}</small>
               {/* HU-62 · Como en la isla de la landing: «Entrega estimada: 18 sep» */}
               {orden.fechaEstimadaEntrega &&
                 !['entregada', 'cerrada', 'cancelada'].includes(orden.estado) && (
@@ -114,11 +140,18 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
             Retiraste tu moto el {formatFecha(orden.fechaEntrega).replace(/ de \d{4}$/, '')}.
           </Note>
         )}
+        {cancelada && motivoCancelacion && (
+          <Note icon="alert" tono="danger">
+            <span className="font-semibold">Motivo de la cancelación: </span>
+            {motivoCancelacion}
+          </Note>
+        )}
         {esperando && (
           <Note icon="clock" tono="accent">
             El taller espera tu respuesta para empezar. Si tienes dudas, escríbele antes de decidir.
           </Note>
         )}
+        {contactoArriba && contacto}
         {(hayCotizacion || orden.diagnostico) && (
           <Card
             title={cancelada ? 'Cotización rechazada' : 'Cotización'}
@@ -132,6 +165,12 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
               <p className="mb-2 rounded-[14px] bg-bg px-3 py-2 text-sm leading-5 text-ink-muted">
                 <span className="font-semibold text-ink">Qué encontró el mecánico: </span>
                 {orden.diagnostico.hallazgos}
+              </p>
+            )}
+            {orden.diagnostico?.trabajoRecomendado && (
+              <p className="mb-2 rounded-[14px] bg-bg px-3 py-2 text-sm leading-5 text-ink-muted">
+                <span className="font-semibold text-ink">Trabajo recomendado: </span>
+                {orden.diagnostico.trabajoRecomendado}
               </p>
             )}
             <ul className="flex flex-col">
@@ -163,6 +202,26 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
             )}
           </Card>
         )}
+        <Card title="Tu orden">
+          <DataList
+            items={[
+              ['Motivo', orden.motivoIngreso],
+              ['Ingreso', formatFecha(orden.fechaIngreso)],
+              ['Kilometraje', `${km.format(orden.kilometrajeIngreso)} km`],
+              ['Mecánico', orden.mecanico.nombre],
+              !!orden.fechaEstimadaEntrega && [
+                'Entrega estimada',
+                <span key="e" className={orden.atrasada ? 'text-danger-text' : undefined}>
+                  {formatDia(orden.fechaEstimadaEntrega)}
+                  {orden.atrasada ? ' · atrasada' : ''}
+                </span>,
+              ],
+              !!orden.fechaEntrega && ['Entregada', formatFecha(orden.fechaEntrega)],
+            ]}
+          />
+        </Card>
+        {!contactoArriba && contacto}
+        {orden.historial.length > 0 && <HistorialEstados historial={orden.historial} />}
       </Page>
 
       {esperando && aprobar && (
@@ -198,6 +257,44 @@ export function SeguimientoCliente({ orden, taller }: { orden: OrdenDetalle; tal
         />
       )}
     </>
+  );
+}
+
+/**
+ * HU-84 · Tarjeta «Taller» del prototipo: nombre, dirección, horario y teléfono, con los
+ * botones para escribir por WhatsApp (`wa.me`, sin costo) o llamar (`tel:`).
+ */
+function TarjetaTaller({ taller, orden }: { taller: ContactoTaller; orden: OrdenDetalle }) {
+  const mensaje = `Hola ${taller.nombre}, les escribo por la orden #${orden.numero} de mi ${orden.moto.marca} ${orden.moto.referencia} (${orden.moto.placa}).`;
+  return (
+    <Card title="Taller">
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold">{taller.nombre}</p>
+        {taller.direccion && <p className="text-sm leading-5 text-ink-muted">{taller.direccion}</p>}
+        {taller.horarioAtencion && (
+          <p className="text-sm leading-5 text-ink-muted">Horario: {taller.horarioAtencion}</p>
+        )}
+        <p className="text-sm leading-5 text-ink-muted">{taller.telefono}</p>
+      </div>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <ButtonLink
+          href={enlaceWhatsApp(taller.telefono, mensaje)}
+          externo
+          icon="message"
+          className="sm:flex-1"
+        >
+          Escribir por WhatsApp
+        </ButtonLink>
+        <ButtonLink
+          href={enlaceTelefono(taller.telefono)}
+          variant="light"
+          icon="phone"
+          className="sm:flex-1"
+        >
+          Llamar al taller
+        </ButtonLink>
+      </div>
+    </Card>
   );
 }
 

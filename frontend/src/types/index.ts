@@ -193,6 +193,14 @@ export interface EventoHistorial {
   usuario: { publicId: string; nombre: string; rol: Rol };
 }
 
+/** HU-84 · Contacto del taller que recibe el cliente en el detalle de su orden */
+export interface ContactoTaller {
+  nombre: string;
+  telefono: string;
+  direccion: string | null;
+  horarioAtencion: string | null;
+}
+
 /** Detalle de una orden (HU-31) */
 export interface OrdenDetalle extends Omit<OrdenResumen, 'moto'> {
   kilometrajeIngreso: number;
@@ -216,6 +224,8 @@ export interface OrdenDetalle extends Omit<OrdenResumen, 'moto'> {
   servicios: ServicioDeOrden[];
   /** Del más reciente al más antiguo */
   historial: EventoHistorial[];
+  /** HU-84 · Solo llega al cliente dueño */
+  taller?: ContactoTaller;
 }
 
 /** Servicio del catálogo del taller (HU-33) */

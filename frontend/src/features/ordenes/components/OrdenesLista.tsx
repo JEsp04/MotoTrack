@@ -58,23 +58,22 @@ export function OrdenesLista({ rol, titulo }: { rol: Rol; titulo: string }) {
         }
       />
       <Page pb={rol === 'admin' ? 'fab' : undefined}>
-        {rol !== 'cliente' && (
-          <div role="search">
-            <Input
-              label="Buscar orden"
-              hideLabel
-              type="search"
-              placeholder={rol === 'admin' ? 'Placa, cliente o número' : 'Placa o número'}
-              autoComplete="off"
-              maxLength={LIMITES.busqueda}
-              value={texto}
-              onChange={(e) => {
-                setTexto(e.target.value);
-                actualizar({ q: e.target.value });
-              }}
-            />
-          </div>
-        )}
+        {/* HU-84: el cliente también busca entre sus órdenes por placa o número */}
+        <div role="search">
+          <Input
+            label="Buscar orden"
+            hideLabel
+            type="search"
+            placeholder={rol === 'admin' ? 'Placa, cliente o número' : 'Placa o número'}
+            autoComplete="off"
+            maxLength={LIMITES.busqueda}
+            value={texto}
+            onChange={(e) => {
+              setTexto(e.target.value);
+              actualizar({ q: e.target.value });
+            }}
+          />
+        </div>
         <Tabs
           label="Filtrar órdenes"
           tabs={GRUPOS.map((g) => ({ id: g.id, label: g.label, count: conteo.data?.[g.id] }))}

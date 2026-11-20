@@ -88,3 +88,26 @@ describe('HU-26 · El cliente agrega su moto', () => {
     );
   });
 });
+
+describe('HU-84 · Inicio del cliente', () => {
+  it('muestra la entrega estimada y resalta la orden atrasada', async () => {
+    api.listar.mockResolvedValue(lista([moto()]));
+    ordenes.listar.mockImplementation(async ({ grupo }) =>
+      lista(
+        grupo === 'en_proceso'
+          ? [
+              ordenResumen({
+                estado: 'en_reparacion',
+                fechaEstimadaEntrega: '2026-11-01',
+                atrasada: true,
+              }),
+            ]
+          : [],
+      ),
+    );
+    abrirApp('/cliente');
+    const orden = await screen.findByRole('link', { name: /^Orden #12/ });
+    const aviso = within(orden).getByText(/Atrasada · estaba para el 1 nov/);
+    expect(aviso).toHaveClass('text-danger-text');
+  });
+});
