@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Alert, EmptyState, List, ListItem, Plate, SkeletonList } from '@/components/ui';
+import {
+  Alert,
+  ButtonLink,
+  EmptyState,
+  Icon,
+  List,
+  ListItem,
+  Plate,
+  SkeletonList,
+} from '@/components/ui';
 import { SelectorTaller, useSession } from '@/features/auth';
 import { MotoSheet, useMotos } from '@/features/motos';
 import { OrdenClienteCard, useMisOrdenesActivas } from '@/features/ordenes';
@@ -71,7 +80,12 @@ export default function MotosPage() {
                     text={
                       lista.length
                         ? 'Cuando dejes tu moto en el taller, verás aquí su estado y la cotización.'
-                        : 'Agrega tu moto para empezar.'
+                        : 'Agrega tu moto y pide una cita para empezar.'
+                    }
+                    action={
+                      <ButtonLink href="/cliente/citas/nueva" icon="calendar">
+                        Pedir cita
+                      </ButtonLink>
                     }
                   />
                 </div>
@@ -100,6 +114,29 @@ export default function MotosPage() {
                 />
               </List>
             )}
+          </div>
+
+          {/* HU-59 · Pide una cita (columna derecha en computador) */}
+          <div className="flex min-w-0 flex-col gap-4">
+            <section className="flex flex-col gap-3 rounded-md bg-surface-sunken p-4">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ink text-accent"
+                >
+                  <Icon name="calendar" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-lg leading-6 font-semibold">Pide una cita</h2>
+                  <p className="text-sm leading-5 text-ink-muted">
+                    Elige día y hora libres en {taller}.
+                  </p>
+                </div>
+              </div>
+              <ButtonLink href="/cliente/citas/nueva" icon="plus" fullWidth>
+                Pedir cita
+              </ButtonLink>
+            </section>
           </div>
         </div>
       </div>

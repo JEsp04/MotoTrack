@@ -362,6 +362,37 @@ export interface RepuestoDetalle extends Repuesto {
   movimientos: MovimientoStock[];
 }
 
+/** Estados de una cita (HU-57). atendida y cancelada son finales */
+export type EstadoCita = 'programada' | 'confirmada' | 'atendida' | 'cancelada';
+
+/** Cita tal como la devuelve /api/citas (HU-57) */
+export interface Cita {
+  publicId: string;
+  /** Fecha y hora en UTC */
+  fechaHora: string;
+  motivo: string;
+  detalle: string | null;
+  estado: EstadoCita;
+  /** El cliente quiere que le recuerden un día antes (el envío real queda para E12) */
+  recordatorio: boolean;
+  creadoEn: string;
+  actualizadoEn: string;
+  moto: { publicId: string; placa: string; marca: string; referencia: string };
+  /** El mecánico no recibe el teléfono */
+  cliente: { publicId: string; nombre: string; telefono?: string };
+  orden: { publicId: string; numero: number } | null;
+  creadoPor: { publicId: string; nombre: string; rol: Rol };
+}
+
+/** Horas libres de un día (GET /api/citas/horas-libres, HU-57) */
+export interface HorasLibres {
+  fecha: string;
+  /** false si el taller no atiende ese día */
+  abierto: boolean;
+  /** hora «09:00» en Colombia y fechaHora en UTC */
+  horas: Array<{ hora: string; fechaHora: string }>;
+}
+
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────
 
 export interface ApiResponse<T> {
