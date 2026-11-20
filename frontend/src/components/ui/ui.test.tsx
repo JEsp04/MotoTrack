@@ -95,4 +95,16 @@ describe('QuantityStepper', () => {
     await userEvent.click(mas);
     expect(onChange).toHaveBeenCalledWith(2);
   });
+
+  it('deja escribir el número y lo ajusta al máximo (HU-87)', async () => {
+    const onChange = vi.fn();
+    render(<QuantityStepper value={1} min={0} max={100} label="Cantidad" onChange={onChange} />);
+    const campo = screen.getByRole('textbox', { name: 'Cantidad' });
+    expect(campo).toHaveAttribute('inputmode', 'numeric');
+    await userEvent.clear(campo);
+    await userEvent.type(campo, '24');
+    expect(onChange).toHaveBeenLastCalledWith(24);
+    await userEvent.type(campo, '9');
+    expect(onChange).toHaveBeenLastCalledWith(100);
+  });
 });

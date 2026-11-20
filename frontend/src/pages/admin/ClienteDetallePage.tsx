@@ -148,7 +148,12 @@ export default function ClienteDetallePage() {
               key={m.publicId}
               leading={<Plate placa={m.placa} />}
               title={`${m.marca} ${m.referencia}`}
-              subtitle={`${m.modelo} · ${km.format(m.kilometraje)} km`}
+              subtitle={
+                m.ordenActiva
+                  ? `${m.modelo} · Orden #${m.ordenActiva.numero} abierta`
+                  : `${m.modelo} · ${km.format(m.kilometraje)} km`
+              }
+              trailing={m.ordenActiva ? <StatusBadge estado={m.ordenActiva.estado} /> : undefined}
               onClick={() => setMotoSheet({ open: true, moto: m })}
               aria-label={`Editar la moto ${m.placa}`}
             />

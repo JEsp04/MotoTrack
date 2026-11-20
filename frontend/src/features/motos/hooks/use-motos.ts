@@ -36,3 +36,12 @@ export function useActualizarMoto() {
     onSuccess: refrescar,
   });
 }
+
+/** HU-87 · Elimina una moto registrada por error */
+export function useEliminarMoto() {
+  const refrescar = useRefrescar();
+  return useMutation({
+    mutationFn: (publicId: string) => motosApi.eliminar(publicId),
+    onSuccess: refrescar,
+  });
+}

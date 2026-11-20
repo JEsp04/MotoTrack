@@ -5,11 +5,12 @@ import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
 import { restablecerPassword } from '../auth/auth.service.js';
-import type { ActualizarMecanicoInput, CrearMecanicoInput } from './usuarios.schemas.js';
+import type { ActualizarIntegranteInput, CrearMecanicoInput } from './usuarios.schemas.js';
 
 const BCRYPT_COSTO = 12;
 const CORREO_REGISTRADO = 'Este correo ya está registrado';
-const NO_ENCONTRADO = 'No encontramos ese mecánico';
+const NO_ENCONTRADO = 'No encontramos a esa persona en tu equipo';
+const SIN_ADMIN = 'El taller debe tener al menos un administrador activo';
 
 /** Lo que se muestra de un integrante del equipo. Nunca passwordHash ni los Int. */
 const integrante = {
@@ -62,34 +63,60 @@ export async function crearMecanico(tallerId: number, input: CrearMecanicoInput)
 }
 
 /**
- * PATCH /api/usuarios/:id · Solo mecánicos del mismo taller (si es de otro taller: 404).
- * Al desactivarlo se cierran sus sesiones; su historial se conserva.
+ * PATCH /api/usuarios/:id · Admins y mecánicos del mismo taller (de otro taller: 404).
+ * HU-87: el admin también corrige el rol (mecánico ↔ admin), pero el taller nunca queda sin
+ * un administrador activo (400). Al desactivar o cambiar el rol se cierran sus sesiones, para
+ * que vuelva a ingresar con los permisos nuevos; su historial se conserva.
  */
-export async function actualizarMecanico(
+export async function actualizarIntegrante(
   tallerId: number,
   publicId: string,
-  input: ActualizarMecanicoInput,
+  input: ActualizarIntegranteInput,
 ) {
   if (!esPublicId(publicId)) throw HttpError.notFound(NO_ENCONTRADO);
-  const mecanico = await prisma.usuario.findFirst({
-    where: { publicId, tallerId, rol: 'mecanico' },
-    select: { usuarioId: true },
+  const integranteActual = await prisma.usuario.findFirst({
+    where: { publicId, tallerId, rol: { in: ['admin', 'mecanico'] } },
+    select: { usuarioId: true, rol: true, estado: true },
   });
-  if (!mecanico) throw HttpError.notFound(NO_ENCONTRADO);
+  if (!integranteActual) throw HttpError.notFound(NO_ENCONTRADO);
+
+  const cambiaRol = input.rol !== undefined && input.rol !== integranteActual.rol;
+  const rolFinal = input.rol ?? integranteActual.rol;
+  const estadoFinal = input.estado ?? integranteActual.estado;
+  const dejaDeSerAdmin =
+    integranteActual.rol === 'admin' &&
+    integranteActual.estado === 'activo' &&
+    (rolFinal !== 'admin' || estadoFinal !== 'activo');
 
   return prisma.$transaction(async (tx) => {
+    if (dejaDeSerAdmin) {
+      const otrosAdmins = await tx.usuario.count({
+        where: {
+          tallerId,
+          rol: 'admin',
+          estado: 'activo',
+          usuarioId: { not: integranteActual.usuarioId },
+        },
+      });
+      if (otrosAdmins === 0) {
+        throw HttpError.badRequest(SIN_ADMIN, [
+          { field: input.rol !== undefined ? 'rol' : 'estado', message: SIN_ADMIN },
+        ]);
+      }
+    }
     const actualizado = await tx.usuario.update({
-      where: { usuarioId: mecanico.usuarioId },
+      where: { usuarioId: integranteActual.usuarioId },
       data: {
         nombre: input.nombre,
         telefono: input.telefono,
+        rol: input.rol,
         estado: input.estado,
       },
       select: integrante,
     });
-    if (input.estado === 'inactivo') {
+    if (input.estado === 'inactivo' || cambiaRol) {
       await tx.refreshToken.updateMany({
-        where: { usuarioId: mecanico.usuarioId, revocadoEn: null },
+        where: { usuarioId: integranteActual.usuarioId, revocadoEn: null },
         data: { revocadoEn: new Date() },
       });
     }

@@ -134,9 +134,28 @@ export async function actualizarMoto(
   const where: Prisma.MotoWhereInput = { publicId, tallerId: usuario.tallerId };
   if (usuario.rol === 'cliente') where.clienteId = await clienteDelUsuario(usuario);
 
-  const moto = await prisma.moto.findFirst({ where, select: { motocicletaId: true } });
+  const moto = await prisma.moto.findFirst({
+    where,
+    select: {
+      motocicletaId: true,
+      placa: true,
+      ordenes: {
+        where: { estado: { notIn: ESTADOS_CERRADOS } },
+        select: { numero: true },
+        take: 1,
+      },
+    },
+  });
   if (!moto) throw HttpError.notFound(MOTO_NO_ENCONTRADA);
-  if (input.placa) await placaDisponible(usuario.tallerId, input.placa, moto.motocicletaId);
+  if (input.placa && input.placa !== moto.placa) {
+    // HU-87 · Con una orden abierta, la placa queda fija (la orden y sus avisos la muestran)
+    const abierta = moto.ordenes[0];
+    if (abierta) {
+      const mensaje = `No puedes cambiar la placa: la moto tiene la orden #${abierta.numero} abierta`;
+      throw new HttpError(409, mensaje, [{ field: 'placa', message: mensaje }]);
+    }
+    await placaDisponible(usuario.tallerId, input.placa, moto.motocicletaId);
+  }
 
   try {
     const actualizada = await prisma.moto.update({
@@ -149,4 +168,32 @@ export async function actualizarMoto(
     if (esDuplicado(error, 'placa')) throw errorPlaca();
     throw error;
   }
+}
+
+/**
+ * DELETE /api/motos/:id (HU-87) · Para borrar una moto registrada por error.
+ * Admin: cualquiera del taller. Cliente: solo las suyas (si no, 404).
+ * Si ya tiene órdenes o citas, se conserva su historial y responde 409.
+ */
+export async function eliminarMoto(usuario: UsuarioAutenticado, publicId: string) {
+  if (!esPublicId(publicId)) throw HttpError.notFound(MOTO_NO_ENCONTRADA);
+  const where: Prisma.MotoWhereInput = { publicId, tallerId: usuario.tallerId };
+  if (usuario.rol === 'cliente') where.clienteId = await clienteDelUsuario(usuario);
+
+  const moto = await prisma.moto.findFirst({
+    where,
+    select: { motocicletaId: true, _count: { select: { ordenes: true, citas: true } } },
+  });
+  if (!moto) throw HttpError.notFound(MOTO_NO_ENCONTRADA);
+  if (moto._count.ordenes > 0) {
+    throw HttpError.conflict(
+      'No se puede eliminar: esta moto ya tiene órdenes de servicio. Su historial se conserva.',
+    );
+  }
+  if (moto._count.citas > 0) {
+    throw HttpError.conflict(
+      'No se puede eliminar: esta moto tiene citas registradas. Su historial se conserva.',
+    );
+  }
+  await prisma.moto.delete({ where: { motocicletaId: moto.motocicletaId } });
 }

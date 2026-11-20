@@ -24,7 +24,7 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ En `develop`: `HU-62`, `HU-64`, `HU-66`, `HU-67`, `HU-68` · faltan V (`HU-61`, `63`, `65`) |
 | E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J · `HU-69` y `HU-73` en `develop` · faltan rondas 2 y 3 (`HU-70` a `72`, `74`, `75`) |
 | E12 · Funciones con costo | HU-76 a HU-81 | 21 | ⛔ Solo si se aprueba el gasto |
-| E13 · Experiencia, reseñas y mejoras | HU-82 a HU-91 | 26 | ⏳ A · `HU-82` y `HU-83` completadas; `HU-84` a `HU-86` en revisión; siguen `HU-87` a `HU-91` (`docs/HISTORIAS-3.md`) |
+| E13 · Experiencia, reseñas y mejoras | HU-82 a HU-91 | 26 | ⏳ A · `HU-82` y `HU-83` completadas; `HU-84` a `HU-87` en revisión; siguen `HU-88` a `HU-91` (`docs/HISTORIAS-3.md`) |
 | E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ De última: A (HU-38), V (HU-39), J (HU-40) |
 
 **Avance del primer entregable:** 47 de 50 historias unidas · 106 de 112 puntos (≈ 95 %). Faltan las 3 historias de E7 (6 puntos), todas obligatorias.
@@ -221,7 +221,7 @@ Nacida de la auditoría exploratoria del 16-nov-2026 (`RES-01` a `RES-22`). Sin 
 - [~] HU-84 · Seguimiento completo del cliente y contacto directo con el taller · 3 pts · [A, fase 2]
 - [~] HU-85 · Mejoras operativas del Panel del taller (`/admin`) e Inicio del mecánico (`/mecanico`) · 2 pts · [A, fase 2]
 - [~] HU-86 · Autogestión de perfil, cambio de contraseña y restablecimiento asistido por el taller · 3 pts · [A, fase 3]
-- [ ] HU-87 · Gestión completa de inventario, motos, clientes y equipo (editar, ajustar con motivo e inactivar) · 3 pts · [A, fase 3]
+- [~] HU-87 · Gestión completa de inventario, motos, clientes y equipo (editar, ajustar con motivo e inactivar) · 3 pts · [A, fase 3]
 - [ ] HU-88 · Ítems adicionales en una orden aprobada o en reparación (Ampliación de cotización) · 3 pts · [A, fase 3]
 - [ ] HU-89 · Reseñas y calificación del servicio al entregar o cerrar la orden · 3 pts · [A, fase 4, migración `resenas_orden`]
 - [ ] HU-90 · Seguimiento público sin cuenta y comprobante de servicio imprimible *(deseable)* · 2 pts · [A, fase 4]

@@ -16,11 +16,15 @@ export const crearMecanicoSchema = z.object({
   password: passwordSchema,
 });
 
-/** PATCH /api/usuarios/:id · Datos básicos o activar / desactivar */
-export const actualizarMecanicoSchema = z
+/**
+ * PATCH /api/usuarios/:id · Datos básicos, rol (HU-87) o activar / desactivar.
+ * El taller nunca queda sin un administrador activo (lo revisa el servicio).
+ */
+export const actualizarIntegranteSchema = z
   .object({
     nombre: texto('El nombre', 150).optional(),
     telefono: telefonoEditable,
+    rol: z.enum(['admin', 'mecanico'], { error: 'El rol debe ser admin o mecanico' }).optional(),
     estado: z
       .enum(['activo', 'inactivo'], { error: 'El estado debe ser activo o inactivo' })
       .optional(),
@@ -32,4 +36,4 @@ export const listarUsuariosSchema = z.object({
 });
 
 export type CrearMecanicoInput = z.infer<typeof crearMecanicoSchema>;
-export type ActualizarMecanicoInput = z.infer<typeof actualizarMecanicoSchema>;
+export type ActualizarIntegranteInput = z.infer<typeof actualizarIntegranteSchema>;

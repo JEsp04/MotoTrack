@@ -1,3 +1,4 @@
+export { EditarIntegranteSheet } from './components/EditarIntegranteSheet';
 export { InvitacionesLista } from './components/InvitacionesLista';
 export { InvitarUsuario } from './components/InvitarUsuario';
 export { NuevoMecanicoSheet } from './components/NuevoMecanicoSheet';

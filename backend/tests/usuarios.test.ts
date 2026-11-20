@@ -113,12 +113,13 @@ describe('HU-23 · Equipo del taller (/api/usuarios)', () => {
     expect(res.status).toBe(404);
   });
 
-  it('no permite cambiar a un admin con este endpoint', async () => {
+  it('el único admin no puede desactivarse (HU-87: el taller no queda sin admin)', async () => {
     const { admin } = await escenario();
     const res = await request(app)
       .patch(`/api/usuarios/${admin.publicId}`)
       .set(auth(admin))
       .send({ estado: 'inactivo' });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('El taller debe tener al menos un administrador activo');
   });
 });

@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EstadoRegistro } from '@/types';
-import { equipoApi, type NuevoMecanicoBody } from '../api/equipo-api';
+import {
+  equipoApi,
+  type ActualizarIntegranteBody,
+  type NuevoMecanicoBody,
+} from '../api/equipo-api';
 
 const CLAVE = ['equipo'] as const;
 
@@ -21,6 +25,16 @@ export function useCambiarEstado() {
   return useMutation({
     mutationFn: ({ publicId, estado }: { publicId: string; estado: EstadoRegistro }) =>
       equipoApi.cambiarEstado(publicId, estado),
+    onSuccess: () => qc.invalidateQueries({ queryKey: CLAVE }),
+  });
+}
+
+/** HU-87 · Corrige nombre, celular o rol */
+export function useActualizarIntegrante() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ publicId, body }: { publicId: string; body: ActualizarIntegranteBody }) =>
+      equipoApi.actualizar(publicId, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: CLAVE }),
   });
 }

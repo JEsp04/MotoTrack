@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { usuarioActual } from '../../middlewares/auth.js';
 import {
-  actualizarMecanicoSchema,
+  actualizarIntegranteSchema,
   crearMecanicoSchema,
   listarUsuariosSchema,
 } from './usuarios.schemas.js';
@@ -21,8 +21,8 @@ export async function crear(req: Request, res: Response) {
 
 export async function actualizar(req: Request<{ id: string }>, res: Response) {
   const { tallerId } = usuarioActual(req);
-  const input = actualizarMecanicoSchema.parse(req.body);
-  res.json({ data: await usuariosService.actualizarMecanico(tallerId, req.params.id, input) });
+  const input = actualizarIntegranteSchema.parse(req.body);
+  res.json({ data: await usuariosService.actualizarIntegrante(tallerId, req.params.id, input) });
 }
 
 /** HU-86 · Restablecer la contraseña de un integrante */
