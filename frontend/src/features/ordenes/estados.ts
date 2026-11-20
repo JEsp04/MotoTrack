@@ -39,7 +39,11 @@ const cancelar: Accion = {
   },
 };
 
-/** Transiciones que se hacen con un botón. registrada → diagnosticada ocurre al guardar el diagnóstico. */
+/**
+ * Transiciones que se hacen con un botón. registrada → diagnosticada ocurre al guardar el
+ * diagnóstico, y la vuelta a esperando_aprobacion de HU-88, al agregar un ítem adicional.
+ * HU-88: el admin también puede iniciar y avanzar la reparación si el mecánico no puede.
+ */
 export const ACCIONES: Record<EstadoOrden, Accion[]> = {
   registrada: [cancelar],
   diagnosticada: [
@@ -85,7 +89,7 @@ export const ACCIONES: Record<EstadoOrden, Accion[]> = {
   aprobada: [
     {
       a: 'en_reparacion',
-      actores: ['mecanico_asignado'],
+      actores: ['mecanico_asignado', 'admin'],
       label: 'Iniciar reparación',
       variante: 'primary',
     },
@@ -94,13 +98,13 @@ export const ACCIONES: Record<EstadoOrden, Accion[]> = {
   en_reparacion: [
     {
       a: 'lista_entrega',
-      actores: ['mecanico_asignado'],
+      actores: ['mecanico_asignado', 'admin'],
       label: 'Lista para entregar',
       variante: 'primary',
     },
     {
       a: 'pendiente_repuesto',
-      actores: ['mecanico_asignado'],
+      actores: ['mecanico_asignado', 'admin'],
       label: 'Falta repuesto',
       variante: 'secondary',
       observacion: {
@@ -117,7 +121,12 @@ export const ACCIONES: Record<EstadoOrden, Accion[]> = {
     cancelar,
   ],
   pendiente_repuesto: [
-    { a: 'en_reparacion', actores: ['mecanico_asignado'], label: 'Reanudar', variante: 'primary' },
+    {
+      a: 'en_reparacion',
+      actores: ['mecanico_asignado', 'admin'],
+      label: 'Reanudar',
+      variante: 'primary',
+    },
     cancelar,
   ],
   lista_entrega: [
@@ -137,6 +146,16 @@ export const ACCIONES: Record<EstadoOrden, Accion[]> = {
 
 /** Estados en los que se edita el diagnóstico y los servicios */
 export const ESTADOS_EDITABLES: EstadoOrden[] = ['registrada', 'diagnosticada'];
+
+/**
+ * HU-88 · Estados en los que se agrega un ítem adicional: la orden vuelve a
+ * `esperando_aprobacion` por el nuevo total (el backend lo hace al agregar el ítem).
+ */
+export const ESTADOS_AMPLIABLES: EstadoOrden[] = [
+  'aprobada',
+  'en_reparacion',
+  'pendiente_repuesto',
+];
 
 /** Qué papel tiene el usuario frente a la orden */
 export function actorDe(

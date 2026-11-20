@@ -16,7 +16,15 @@ export interface Transicion {
   observacionObligatoria?: string;
   /** Solo ocurre al guardar el diagnóstico, no desde PATCH /estado */
   soloPorDiagnostico?: boolean;
+  /** HU-88 · Solo ocurre al agregar un ítem adicional, no desde PATCH /estado */
+  soloPorAmpliacion?: boolean;
 }
+
+/**
+ * HU-88 · Ampliación de cotización: al agregar un ítem a una orden ya aprobada, vuelve a pedir
+ * aprobación del nuevo total. Solo la dispara POST /ordenes/:id/servicios.
+ */
+const AMPLIAR: Transicion = { actores: ['admin', 'mecanico_asignado'], soloPorAmpliacion: true };
 
 const CANCELAR: Transicion = {
   actores: ['admin'],
@@ -39,20 +47,24 @@ export const TRANSICIONES: Record<EstadoOrden, Partial<Record<EstadoOrden, Trans
       observacionObligatoria: 'Escribe el motivo del rechazo',
     },
   },
+  // HU-88: el admin también puede iniciar y avanzar la reparación si el mecánico no puede
   aprobada: {
-    en_reparacion: { actores: ['mecanico_asignado'] },
+    en_reparacion: { actores: ['mecanico_asignado', 'admin'] },
+    esperando_aprobacion: AMPLIAR,
     cancelada: CANCELAR,
   },
   en_reparacion: {
     pendiente_repuesto: {
-      actores: ['mecanico_asignado'],
+      actores: ['mecanico_asignado', 'admin'],
       observacionObligatoria: 'Escribe qué repuesto falta',
     },
-    lista_entrega: { actores: ['mecanico_asignado'] },
+    lista_entrega: { actores: ['mecanico_asignado', 'admin'] },
+    esperando_aprobacion: AMPLIAR,
     cancelada: CANCELAR,
   },
   pendiente_repuesto: {
-    en_reparacion: { actores: ['mecanico_asignado'] },
+    en_reparacion: { actores: ['mecanico_asignado', 'admin'] },
+    esperando_aprobacion: AMPLIAR,
     cancelada: CANCELAR,
   },
   lista_entrega: {
@@ -91,6 +103,16 @@ export const ESTADOS_SIN_ATRASO: EstadoOrden[] = ['lista_entrega', ...ESTADOS_CE
 
 /** Estados en los que todavía se puede editar el diagnóstico y los servicios */
 export const ESTADOS_EDITABLES: EstadoOrden[] = ['registrada', 'diagnosticada'];
+
+/**
+ * HU-88 · Estados en los que se puede agregar un ítem adicional: la orden vuelve a
+ * `esperando_aprobacion` por el nuevo total. Aquí ya no se quitan ítems.
+ */
+export const ESTADOS_AMPLIABLES: EstadoOrden[] = [
+  'aprobada',
+  'en_reparacion',
+  'pendiente_repuesto',
+];
 
 /** Pestañas de la lista (HU-30) */
 export const GRUPOS = {

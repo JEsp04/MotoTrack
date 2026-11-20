@@ -9,6 +9,7 @@ import { nuevoCodigoRetiro } from './codigo-retiro.js';
 import {
   actorDe,
   ESTADOS_CERRADOS,
+  ESTADOS_AMPLIABLES,
   ESTADOS_EDITABLES,
   ESTADOS_SIN_ATRASO,
   ETIQUETAS,
@@ -432,10 +433,16 @@ export async function cambiarEstado(
   const orden = await buscarOrden(usuario, publicId);
   const transicion = TRANSICIONES[orden.estado][input.estado];
 
-  if (!transicion || (transicion.soloPorDiagnostico && !opciones.porDiagnostico)) {
+  if (
+    !transicion ||
+    (transicion.soloPorDiagnostico && !opciones.porDiagnostico) ||
+    transicion.soloPorAmpliacion
+  ) {
     const msg = transicion?.soloPorDiagnostico
       ? 'Para diagnosticar la orden, guarda el diagnóstico'
-      : `No se puede pasar de ${ETIQUETAS[orden.estado]} a ${ETIQUETAS[input.estado]}`;
+      : transicion?.soloPorAmpliacion
+        ? 'Para pedir una nueva aprobación, agrega el ítem adicional en «Servicios»'
+        : `No se puede pasar de ${ETIQUETAS[orden.estado]} a ${ETIQUETAS[input.estado]}`;
     throw HttpError.conflict(msg);
   }
   exigirActor(orden.actor, transicion.actores);
@@ -666,10 +673,15 @@ export async function guardarDiagnostico(
 
 // ─── HU-33 · Servicios y costo ─────────────────────────────────────────────
 
-async function ordenEditableParaServicios(usuario: UsuarioAutenticado, publicId: string) {
+async function ordenEditableParaServicios(
+  usuario: UsuarioAutenticado,
+  publicId: string,
+  opciones: { ampliar?: boolean } = {},
+) {
   const orden = await buscarOrden(usuario, publicId);
   exigirActor(orden.actor, ['admin', 'mecanico_asignado']);
-  if (!ESTADOS_EDITABLES.includes(orden.estado)) {
+  const ampliable = opciones.ampliar && ESTADOS_AMPLIABLES.includes(orden.estado);
+  if (!ESTADOS_EDITABLES.includes(orden.estado) && !ampliable) {
     throw HttpError.conflict(
       `Los servicios ya no se pueden cambiar: la orden está ${ETIQUETAS[orden.estado]}`,
     );
@@ -694,15 +706,16 @@ export async function agregarServicio(
   publicId: string,
   input: AgregarServicioInput,
 ) {
-  const orden = await ordenEditableParaServicios(usuario, publicId);
+  const orden = await ordenEditableParaServicios(usuario, publicId, { ampliar: true });
   let servicioId: number | undefined;
   let repuestoId: number | undefined;
+  let nombre = '';
   let precioUnitario = input.precioUnitario;
 
   if (input.servicioPublicId) {
     const servicio = await prisma.servicio.findFirst({
       where: { publicId: input.servicioPublicId, tallerId: usuario.tallerId, estado: 'activo' },
-      select: { servicioId: true, precioBase: true },
+      select: { servicioId: true, nombre: true, precioBase: true },
     });
     if (!servicio) {
       throw HttpError.badRequest('Datos inválidos', [
@@ -710,11 +723,12 @@ export async function agregarServicio(
       ]);
     }
     servicioId = servicio.servicioId;
+    nombre = servicio.nombre;
     precioUnitario ??= servicio.precioBase;
   } else if (input.repuestoPublicId) {
     const repuesto = await prisma.repuesto.findFirst({
       where: { publicId: input.repuestoPublicId, tallerId: usuario.tallerId, activo: true },
-      select: { repuestoId: true, precioVenta: true },
+      select: { repuestoId: true, nombre: true, precioVenta: true },
     });
     if (!repuesto) {
       throw HttpError.badRequest('Datos inválidos', [
@@ -722,6 +736,7 @@ export async function agregarServicio(
       ]);
     }
     repuestoId = repuesto.repuestoId;
+    nombre = repuesto.nombre;
     precioUnitario ??= repuesto.precioVenta;
   }
 
@@ -737,6 +752,18 @@ export async function agregarServicio(
       },
     });
     await recalcularTotal(tx, orden.id);
+    // HU-88 · Ampliación: la orden vuelve a pedir aprobación del nuevo total y avisa al cliente.
+    // Al aprobar y volver a reparación, solo se descuenta del inventario lo que falte.
+    if (ESTADOS_AMPLIABLES.includes(orden.estado)) {
+      await aplicarCambio(
+        tx,
+        orden.id,
+        usuario.usuarioId,
+        orden.estado,
+        'esperando_aprobacion',
+        `Ítem adicional agregado a la cotización (${nombre}). Esperando aprobación del nuevo total`,
+      );
+    }
   });
   return detalle(usuario, orden.id);
 }

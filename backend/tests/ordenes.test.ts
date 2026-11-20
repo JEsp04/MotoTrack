@@ -73,7 +73,7 @@ describe('HU-28 · Motor de estados', () => {
         const t = TRANSICIONES[de][a];
         const quien = t ? p.actores[t.actores[0]!] : p.admin;
         const res = await cambiar(orden.publicId, quien, { estado: a, observacion: 'Motivo' });
-        const esperado = t && !t.soloPorDiagnostico ? 200 : 409;
+        const esperado = t && !t.soloPorDiagnostico && !t.soloPorAmpliacion ? 200 : 409;
         if (res.status !== esperado) resultados.push(`${de} → ${a}: ${res.status}`);
       }
     }
@@ -120,11 +120,18 @@ describe('HU-28 · Motor de estados', () => {
     expect(res.status).toBe(403);
   });
 
-  it('el rol equivocado recibe 403 (el admin no inicia la reparación)', async () => {
+  it('el rol equivocado recibe 403 (el mecánico no entrega la moto)', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('lista_entrega');
+    const res = await cambiar(orden.publicId, p.mecanico, { estado: 'entregada' });
+    expect(res.status).toBe(403);
+  });
+
+  it('HU-88 · el admin puede iniciar la reparación si el mecánico no puede', async () => {
     const p = await preparar();
     const orden = await p.ordenEn('aprobada');
     const res = await cambiar(orden.publicId, p.admin, { estado: 'en_reparacion' });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
   });
 
   it('cancelar sin motivo o pedir repuesto sin decir cuál responde 400', async () => {
@@ -854,5 +861,147 @@ describe('HU-85 · Actividad reciente y mensajes', () => {
       field: 'hallazgos',
       message: 'Los hallazgos deben tener al menos 10 caracteres',
     });
+  });
+});
+
+describe('HU-88 · Ítem adicional en una orden aprobada o en reparación', () => {
+  it('agregar un repuesto en reparación pide aprobar el nuevo total y al volver solo descuenta lo nuevo', async () => {
+    const p = await preparar();
+    const [pastillas, cadena] = await Promise.all([
+      prisma.repuesto.create({
+        data: {
+          tallerId: p.taller.tallerId,
+          nombre: 'Pastillas delanteras',
+          precioVenta: 68000,
+          stock: 5,
+          stockMinimo: 1,
+        },
+      }),
+      prisma.repuesto.create({
+        data: {
+          tallerId: p.taller.tallerId,
+          nombre: 'Kit de arrastre 428',
+          precioVenta: 120000,
+          stock: 3,
+          stockMinimo: 1,
+        },
+      }),
+    ]);
+    const orden = await p.ordenEn('diagnosticada');
+    const url = `/api/ordenes/${orden.publicId}/servicios`;
+    await request(app)
+      .post(url)
+      .set(auth(p.mecanico))
+      .send({ repuestoPublicId: pastillas.publicId, cantidad: 2 })
+      .expect(201);
+    await cambiar(orden.publicId, p.mecanico, { estado: 'esperando_aprobacion' }).expect(200);
+    await cambiar(orden.publicId, p.usuarioCliente, { estado: 'aprobada' }).expect(200);
+    await cambiar(orden.publicId, p.mecanico, { estado: 'en_reparacion' }).expect(200);
+    expect(
+      (await prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: pastillas.repuestoId } }))
+        .stock,
+    ).toBe(3);
+
+    // El mecánico descubre que también hace falta el kit de arrastre
+    const ampliada = await request(app)
+      .post(url)
+      .set(auth(p.mecanico))
+      .send({ repuestoPublicId: cadena.publicId });
+    expect(ampliada.status).toBe(201);
+    expect(ampliada.body.data).toMatchObject({
+      estado: 'esperando_aprobacion',
+      costoTotal: 256000,
+    });
+    const h = await prisma.historialOrden.findFirstOrThrow({
+      where: { ordenServicioId: orden.ordenServicioId },
+      orderBy: { historialOrdenId: 'desc' },
+    });
+    expect(h).toMatchObject({
+      estadoAnterior: 'en_reparacion',
+      estadoNuevo: 'esperando_aprobacion',
+      observacion:
+        'Ítem adicional agregado a la cotización (Kit de arrastre 428). Esperando aprobación del nuevo total',
+    });
+    const aviso = await prisma.aviso.findFirstOrThrow({
+      where: { usuarioId: p.usuarioCliente.usuarioId },
+      orderBy: { avisoId: 'desc' },
+    });
+    expect(aviso).toMatchObject({ tipo: 'cotizacion', titulo: 'Tu cotización cambió' });
+
+    // Se aprueba de nuevo y vuelve a reparación: solo sale el kit, no otra vez las pastillas
+    await cambiar(orden.publicId, p.usuarioCliente, { estado: 'aprobada' }).expect(200);
+    await cambiar(orden.publicId, p.mecanico, { estado: 'en_reparacion' }).expect(200);
+    const [pDb, cDb] = await Promise.all([
+      prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: pastillas.repuestoId } }),
+      prisma.repuesto.findUniqueOrThrow({ where: { repuestoId: cadena.repuestoId } }),
+    ]);
+    expect(pDb.stock).toBe(3);
+    expect(cDb.stock).toBe(2);
+    const salidas = await prisma.movimientoStock.findMany({
+      where: { ordenServicioId: orden.ordenServicioId, tipo: 'salida' },
+    });
+    expect(salidas.map((m) => [m.repuestoId, m.cantidad])).toEqual([
+      [pastillas.repuestoId, 2],
+      [cadena.repuestoId, 1],
+    ]);
+  });
+
+  it('el admin agrega un servicio en una orden aprobada o con repuesto pendiente', async () => {
+    const p = await preparar();
+    for (const estado of ['aprobada', 'pendiente_repuesto'] as const) {
+      const orden = await p.ordenEn(estado);
+      const res = await request(app)
+        .post(`/api/ordenes/${orden.publicId}/servicios`)
+        .set(auth(p.admin))
+        .send({ servicioPublicId: p.cadena.publicId });
+      expect(res.status).toBe(201);
+      expect(res.body.data.estado).toBe('esperando_aprobacion');
+    }
+  });
+
+  it('en otros estados no se agregan ítems, y en una ampliación no se quitan', async () => {
+    const p = await preparar();
+    for (const estado of ['esperando_aprobacion', 'lista_entrega', 'entregada'] as const) {
+      const orden = await p.ordenEn(estado);
+      const res = await request(app)
+        .post(`/api/ordenes/${orden.publicId}/servicios`)
+        .set(auth(p.admin))
+        .send({ servicioPublicId: p.aceite.publicId });
+      expect(res.status).toBe(409);
+    }
+    const enReparacion = await p.ordenEn('en_reparacion');
+    const detalle = await prisma.detalleServicio.create({
+      data: {
+        ordenServicioId: enReparacion.ordenServicioId,
+        servicioId: p.aceite.servicioId,
+        precioUnitario: 40000,
+        subtotal: 40000,
+      },
+    });
+    await request(app)
+      .delete(`/api/ordenes/${enReparacion.publicId}/servicios/${detalle.publicId}`)
+      .set(auth(p.admin))
+      .expect(409);
+  });
+
+  it('pedir la nueva aprobación desde el cambio de estado responde 409', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('en_reparacion');
+    const res = await cambiar(orden.publicId, p.mecanico, { estado: 'esperando_aprobacion' });
+    expect(res.status).toBe(409);
+    expect(res.body.message).toMatch(/agrega el ítem adicional/);
+  });
+
+  it('el cliente o un mecánico no asignado no pueden ampliar', async () => {
+    const p = await preparar();
+    const otro = await crearUsuario(p.taller.tallerId, 'mecanico', 'otro@motoexpress.co');
+    const orden = await p.ordenEn('en_reparacion');
+    for (const quien of [p.usuarioCliente, otro]) {
+      const res = await request(app)
+        .post(`/api/ordenes/${orden.publicId}/servicios`)
+        .set(auth(quien))
+        .send({ servicioPublicId: p.aceite.publicId });
+      expect(res.status).toBe(403);
+    }
   });
 });
