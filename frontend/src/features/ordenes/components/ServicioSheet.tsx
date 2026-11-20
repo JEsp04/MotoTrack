@@ -33,11 +33,16 @@ interface Props {
   open: boolean;
   ordenPublicId: string;
   onClose: () => void;
+  /** HU-88 · Ítem adicional en una orden ya aprobada: vuelve a pedir aprobación */
+  ampliacion?: boolean;
 }
 
 type Elegido = { tipo: 'servicio'; item: ServicioCatalogo } | { tipo: 'repuesto'; item: Repuesto };
 
-/** HU-33, HU-56 · Agregar un repuesto o servicio a la cotización; el total lo recalcula el backend */
+/**
+ * HU-33, HU-56 · Agregar un repuesto o servicio a la cotización; el total lo recalcula el backend.
+ * HU-88 · Con `ampliacion`, es un ítem adicional: la orden vuelve a pedir aprobación del cliente.
+ */
 export function ServicioSheet(props: Props) {
   return props.open ? <Formulario {...props} /> : null;
 }
@@ -48,7 +53,7 @@ function stockBadge(r: Repuesto) {
   return undefined;
 }
 
-function Formulario({ ordenPublicId, onClose }: Props) {
+function Formulario({ ordenPublicId, onClose, ampliacion = false }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const [elegido, setElegido] = useState<Elegido | null>(null);
   const q = useDebounce(busqueda.trim(), 250);
@@ -88,7 +93,14 @@ function Formulario({ ordenPublicId, onClose }: Props) {
           ? { repuestoPublicId: elegido.item.publicId, ...datos }
           : { servicioPublicId: elegido.item.publicId, ...datos },
       );
-      toast(elegido.tipo === 'repuesto' ? 'Repuesto agregado' : 'Servicio agregado', 'success');
+      toast(
+        ampliacion
+          ? 'Ítem agregado. La orden espera que el cliente apruebe el nuevo total.'
+          : elegido.tipo === 'repuesto'
+            ? 'Repuesto agregado'
+            : 'Servicio agregado',
+        'success',
+      );
       onClose();
     } catch (error) {
       const e = parseApiError(error);
@@ -110,7 +122,7 @@ function Formulario({ ordenPublicId, onClose }: Props) {
   return (
     <BottomSheet
       open
-      title="Agregar a la cotización"
+      title={ampliacion ? 'Ítem adicional' : 'Agregar a la cotización'}
       onClose={onClose}
       footer={
         elegido ? (
@@ -119,7 +131,7 @@ function Formulario({ ordenPublicId, onClose }: Props) {
               Cancelar
             </Button>
             <Button type="submit" form="form-servicio" loading={agregar.isPending}>
-              Agregar
+              {ampliacion ? 'Agregar y pedir aprobación' : 'Agregar'}
             </Button>
           </>
         ) : (
@@ -129,6 +141,12 @@ function Formulario({ ordenPublicId, onClose }: Props) {
         )
       }
     >
+      {ampliacion && (
+        <Note tono="accent" icon="alert">
+          La orden volverá a «Esperando aprobación» y el cliente debe aprobar el nuevo total antes
+          de seguir con la reparación.
+        </Note>
+      )}
       {!elegido ? (
         <div className="flex flex-col gap-3">
           <Input

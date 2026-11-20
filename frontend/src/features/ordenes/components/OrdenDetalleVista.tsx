@@ -38,7 +38,14 @@ import {
   mensajeOrdenWhatsApp,
 } from '@/lib/whatsapp';
 import type { OrdenDetalle, Rol } from '@/types';
-import { accionesPara, actorDe, ESTADOS_EDITABLES, type Accion, type Actor } from '../estados';
+import {
+  accionesPara,
+  actorDe,
+  ESTADOS_AMPLIABLES,
+  ESTADOS_EDITABLES,
+  type Accion,
+  type Actor,
+} from '../estados';
 import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-ordenes';
 import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
@@ -143,6 +150,10 @@ function Contenido({
   const editable = ESTADOS_EDITABLES.includes(orden.estado);
   const puedeDiagnosticar = actor === 'mecanico_asignado' && editable;
   const puedeEditarServicios = editable && (actor === 'admin' || actor === 'mecanico_asignado');
+  // HU-88 · Ítem adicional en una orden aprobada o en reparación (vuelve a pedir aprobación)
+  const puedeAmpliar =
+    ESTADOS_AMPLIABLES.includes(orden.estado) &&
+    (actor === 'admin' || actor === 'mecanico_asignado');
   // HU-62 · El admin pone o cambia la entrega estimada mientras la moto siga en el taller
   const puedeCambiarEntrega =
     actor === 'admin' && !['entregada', 'cerrada', 'cancelada'].includes(orden.estado);
@@ -306,6 +317,7 @@ function Contenido({
           <Servicios
             orden={orden}
             editable={puedeEditarServicios}
+            ampliable={puedeAmpliar}
             onAgregar={() => setAgregandoServicio(true)}
           />
         )}
@@ -406,6 +418,7 @@ function Contenido({
       <ServicioSheet
         open={agregandoServicio}
         ordenPublicId={orden.publicId}
+        ampliacion={puedeAmpliar}
         onClose={() => setAgregandoServicio(false)}
       />
       {telefonoCliente && (
@@ -572,10 +585,13 @@ function Resumen({
 function Servicios({
   orden,
   editable,
+  ampliable,
   onAgregar,
 }: {
   orden: OrdenDetalle;
   editable: boolean;
+  /** HU-88 · Se puede agregar un ítem adicional (no quitar) */
+  ampliable: boolean;
   onAgregar: () => void;
 }) {
   const quitar = useQuitarServicio(orden.publicId);
@@ -652,6 +668,17 @@ function Servicios({
             <span className="font-num text-[22px]">{formatPesos(orden.costoTotal)}</span>
           </div>
         </>
+      )}
+      {ampliable && (
+        <div className="mt-4 flex flex-col gap-3">
+          <Note tono="accent" icon="alert">
+            ¿Encontraste otro daño? Agrégalo aquí. La orden volverá a «Esperando aprobación» y el
+            cliente debe aprobar el nuevo total antes de seguir.
+          </Note>
+          <Button variant="secondary" icon="plus" onClick={onAgregar}>
+            Agregar ítem adicional
+          </Button>
+        </div>
       )}
     </Card>
   );

@@ -37,6 +37,14 @@ export function avisoParaCliente(
         texto: `${r}. Estamos preparando tu cotización.`,
       };
     case 'esperando_aprobacion':
+      // HU-88 · Ampliación de una cotización ya aprobada
+      if (de === 'aprobada' || de === 'en_reparacion' || de === 'pendiente_repuesto') {
+        return {
+          tipo: 'cotizacion',
+          titulo: 'Tu cotización cambió',
+          texto: `${r}. Encontramos algo más por arreglar. Revisa y aprueba el nuevo total.`,
+        };
+      }
       return {
         tipo: 'cotizacion',
         titulo: 'Cotización lista para aprobar',

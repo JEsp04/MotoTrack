@@ -87,7 +87,7 @@ async function mantener(boton: HTMLElement) {
 }
 
 describe('HU-28 · Estados en el frontend', () => {
-  it('tiene las mismas transiciones que el backend (sin la del diagnóstico)', () => {
+  it('tiene las mismas transiciones que el backend (sin la del diagnóstico ni la ampliación de HU-88)', () => {
     const esperado: Record<EstadoOrden, EstadoOrden[]> = {
       registrada: ['cancelada'],
       diagnosticada: ['esperando_aprobacion', 'cancelada'],
@@ -1146,5 +1146,64 @@ describe('HU-85 · Inicio del mecánico y panel del taller', () => {
       await screen.findByRole('link', { name: /2 repuestos en stock crítico/ }),
     ).toHaveAttribute('href', '/admin/inventario?filtro=critico');
     expect(screen.getByText('#38 · 18 nov')).toBeInTheDocument();
+  });
+});
+
+describe('HU-88 · Ítem adicional en una orden aprobada o en reparación', () => {
+  it('en reparación, el mecánico agrega un ítem adicional con el aviso de nueva aprobación', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'en_reparacion', costoTotal: 40000 });
+    const kit = repuesto({ nombre: 'Kit de arrastre 428', precioVenta: 120000, stock: 3 });
+    api.obtener.mockResolvedValue(orden);
+    api.catalogo.mockResolvedValue([]);
+    repuestos.listar.mockResolvedValue(lista([kit]));
+    api.agregarServicio.mockResolvedValue({
+      ...orden,
+      estado: 'esperando_aprobacion',
+      costoTotal: 160000,
+    });
+    const user = userEvent.setup();
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+
+    await user.click(await screen.findByRole('tab', { name: 'Servicios' }));
+    // En reparación ya no se quitan ítems; solo se agregan como adicionales
+    expect(screen.queryByRole('button', { name: /^Quitar/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agregar' })).not.toBeInTheDocument();
+    expect(screen.getByText(/volverá a «Esperando aprobación»/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Agregar ítem adicional' }));
+
+    const hoja = within(await screen.findByRole('dialog', { name: 'Ítem adicional' }));
+    expect(hoja.getByText(/el cliente debe aprobar el nuevo total/)).toBeInTheDocument();
+    await user.click(await hoja.findByRole('button', { name: /Kit de arrastre 428/ }));
+    await user.click(hoja.getByRole('button', { name: 'Agregar y pedir aprobación' }));
+    await waitFor(() =>
+      expect(api.agregarServicio).toHaveBeenCalledWith(orden.publicId, {
+        repuestoPublicId: kit.publicId,
+        cantidad: 1,
+        precioUnitario: undefined,
+      }),
+    );
+  });
+
+  it('el admin puede iniciar la reparación y agregar ítems adicionales', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({ estado: 'aprobada' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    await screen.findByRole('tab', { name: 'Servicios' });
+    expect(botones()).toContain('Mantén para iniciar la reparación');
+    await userEvent.click(screen.getByRole('tab', { name: 'Servicios' }));
+    expect(screen.getByRole('button', { name: 'Agregar ítem adicional' })).toBeInTheDocument();
+  });
+
+  it('en «Lista para entregar» ya no se agregan ítems', async () => {
+    sesionDePrueba('mecanico');
+    const orden = ordenDetalle({ estado: 'lista_entrega' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/mecanico/ordenes/${orden.publicId}`);
+    await userEvent.click(await screen.findByRole('tab', { name: 'Servicios' }));
+    expect(
+      screen.queryByRole('button', { name: 'Agregar ítem adicional' }),
+    ).not.toBeInTheDocument();
   });
 });
