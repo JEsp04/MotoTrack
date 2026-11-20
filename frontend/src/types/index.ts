@@ -410,6 +410,47 @@ export interface HorasLibres {
   horas: Array<{ hora: string; fechaHora: string }>;
 }
 
+// ─── HU-79 · Asistente IA de diagnóstico ──────────────────────────────────
+
+/** Cupo diario de consultas del usuario (GET /api/asistente) */
+export interface CupoAsistente {
+  limite: number;
+  usados: number;
+  restantes: number;
+}
+
+export interface EstadoAsistente extends CupoAsistente {
+  /** false si el backend no tiene la llave de la API */
+  disponible: boolean;
+}
+
+export interface MensajeAsistente {
+  rol: 'usuario' | 'asistente';
+  texto: string;
+}
+
+export type UrgenciaIA = 'alta' | 'media' | 'baja';
+
+export interface DiagnosticoIA {
+  titulo: string;
+  urgencia: UrgenciaIA;
+  resumen: string;
+  causas: string[];
+  pruebas: string[];
+  costoEstimado: string;
+  consejo: string;
+  motivoCita: string;
+  /** «Es una sugerencia… el diagnóstico real lo hace el mecánico» */
+  aviso: string;
+}
+
+export interface RespuestaAsistente extends CupoAsistente {
+  tipo: 'pregunta' | 'diagnostico';
+  texto: string;
+  opciones: string[];
+  diagnostico: DiagnosticoIA | null;
+}
+
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────
 
 export interface ApiResponse<T> {

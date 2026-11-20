@@ -28,6 +28,13 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     // HU-58 · Agenda en solo lectura (en celular está en «Más»)
     { to: '/mecanico/citas', label: 'Citas', icon: 'calendar', donde: 'escritorio' },
     { to: '/mecanico/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
+    // HU-79 · Asistente IA de diagnóstico
+    {
+      to: '/mecanico/asistente',
+      label: 'Asistente',
+      labelEscritorio: 'Asistente IA',
+      icon: 'sparkle',
+    },
     { to: '/mecanico/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
   cliente: [
@@ -35,6 +42,8 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     { to: '/cliente/ordenes', label: 'Órdenes', icon: 'clipboard' },
     // HU-60 · Mis citas (pestaña «Citas» del prototipo)
     { to: '/cliente/citas', label: 'Citas', icon: 'calendar' },
+    // HU-79 · Asistente IA de diagnóstico (como en el prototipo)
+    { to: '/cliente/asistente', label: 'Asistente', icon: 'sparkle' },
     { to: '/cliente/perfil', label: 'Cuenta', icon: 'user' },
   ],
 };
