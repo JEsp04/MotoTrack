@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import asistenteRoutes from './modules/asistente/asistente.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import avisosRoutes from './modules/avisos/avisos.routes.js';
 import citasRoutes from './modules/citas/citas.routes.js';
@@ -31,5 +32,6 @@ router.use('/repuestos', repuestosRoutes);
 router.use('/citas', citasRoutes);
 router.use('/avisos', avisosRoutes);
 router.use('/resenas', resenasRoutes);
+router.use('/asistente', asistenteRoutes);
 
 export default router;

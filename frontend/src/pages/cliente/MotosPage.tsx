@@ -141,6 +141,27 @@ export default function MotosPage() {
                 Pedir cita
               </ButtonLink>
             </section>
+
+            {/* HU-79 · Asistente IA de diagnóstico (tarjeta del inicio en el prototipo) */}
+            <section className="flex flex-col gap-3 rounded-md bg-surface-sunken p-4">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ink text-accent"
+                >
+                  <Icon name="sparkle" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-lg leading-6 font-semibold">¿Algo raro en tu moto?</h2>
+                  <p className="text-sm leading-5 text-ink-muted">
+                    Cuéntale al asistente y recibe un posible diagnóstico antes de ir al taller.
+                  </p>
+                </div>
+              </div>
+              <ButtonLink href="/cliente/asistente" variant="light" icon="message" fullWidth>
+                Preguntar al asistente
+              </ButtonLink>
+            </section>
           </div>
         </div>
       </div>

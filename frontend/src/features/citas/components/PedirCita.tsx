@@ -44,13 +44,19 @@ const sameInstant = (a: string, b: string) => Date.parse(a) === Date.parse(b);
 
 const esMotivoDeLista = (m: string): m is MotivoCita => MOTIVOS_CITA.some((x) => x === m);
 
+/** HU-79 · Motivo (y moto) que sugiere el asistente IA al tocar «Pedir cita» */
+export interface SugerenciaCita {
+  motivo: string;
+  motoId?: string;
+}
+
 /** Valores con que arranca el formulario: vacío para pedir, los de la cita para reprogramar */
-function valoresIniciales(cita?: Cita) {
+function valoresIniciales(cita?: Cita, sugerencia?: SugerenciaCita) {
   if (!cita) {
     return {
-      moto: null,
-      motivo: null,
-      nota: '',
+      moto: sugerencia?.motoId ?? null,
+      motivo: sugerencia ? ('Otro' as MotivoCita) : null,
+      nota: sugerencia?.motivo.slice(0, LIMITES.motivoCita) ?? '',
       dia: null,
       hora: null,
       recordatorio: true,
@@ -85,7 +91,15 @@ const chip = (on: boolean) =>
  * recordatorio, resumen y «Confirmar cita». Al confirmar abre «Cita agendada».
  * HU-60 · Con `cita`, la misma pantalla es «Reprogramar cita» y guarda con «Guardar cambios».
  */
-export function PedirCita({ volverA, cita }: { volverA: string; cita?: Cita }) {
+export function PedirCita({
+  volverA,
+  cita,
+  sugerencia,
+}: {
+  volverA: string;
+  cita?: Cita;
+  sugerencia?: SugerenciaCita;
+}) {
   const navigate = useNavigate();
   const usuario = useSession((s) => s.usuario);
   const taller = useMiTaller();
@@ -95,7 +109,7 @@ export function PedirCita({ volverA, cita }: { volverA: string; cita?: Cita }) {
   const guardando = crear.isPending || actualizar.isPending;
 
   // HU-60 · Al reprogramar, el formulario arranca con los datos de la cita
-  const [inicial] = useState(() => valoresIniciales(cita));
+  const [inicial] = useState(() => valoresIniciales(cita, sugerencia));
   const hoy = hoyColombia();
   const proximos = diasParaCita(hoy);
   const dias =
@@ -233,6 +247,11 @@ export function PedirCita({ volverA, cita }: { volverA: string; cita?: Cita }) {
         {/* 2. Motivo */}
         <section className="flex flex-col gap-2">
           <Etiqueta>2. Motivo</Etiqueta>
+          {sugerencia && !cita && (
+            <Note icon="sparkle">
+              Sugerido por el asistente IA: <b>{sugerencia.motivo}</b>. Puedes cambiarlo.
+            </Note>
+          )}
           <div className="flex flex-wrap gap-2">
             {MOTIVOS_CITA.map((m) => (
               <button

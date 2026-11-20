@@ -126,6 +126,7 @@ model Taller {
   avisos           Aviso[]
   invitaciones     Invitacion[]
   resenas          ResenaOrden[]
+  consultasIA      ConsultaAsistente[]
 
   @@map("talleres")
 }
@@ -145,19 +146,20 @@ model Usuario {
   creadoEn      DateTime       @default(now())
   actualizadoEn DateTime       @updatedAt
 
-  taller               Taller            @relation(fields: [tallerId], references: [tallerId])
+  taller               Taller              @relation(fields: [tallerId], references: [tallerId])
   /// HU-91 · Fichas de cliente de la cuenta (una por taller); `tallerId` es el taller activo
   clientes             Cliente[]
   refreshTokens        RefreshToken[]
-  ordenesAsignadas     OrdenServicio[]   @relation("MecanicoAsignado")
-  ordenesCreadas       OrdenServicio[]   @relation("CreadaPor")
+  ordenesAsignadas     OrdenServicio[]     @relation("MecanicoAsignado")
+  ordenesCreadas       OrdenServicio[]     @relation("CreadaPor")
   diagnosticos         Diagnostico[]
   historialOrdenes     HistorialOrden[]
   movimientosStock     MovimientoStock[]
   citasCreadas         Cita[]
   avisos               Aviso[]
-  invitacionesEnviadas Invitacion[]      @relation("InvitacionesEnviadas")
-  invitacionAceptada   Invitacion?       @relation("InvitacionAceptada")
+  invitacionesEnviadas Invitacion[]        @relation("InvitacionesEnviadas")
+  invitacionAceptada   Invitacion?         @relation("InvitacionAceptada")
+  consultasIA          ConsultaAsistente[]
 
   @@index([tallerId, rol])
   @@map("usuarios")
@@ -559,4 +561,22 @@ model ResenaOrden {
   @@index([tallerId, estado, creadoEn])
   @@index([tallerId, calificacion])
   @@map("resenas_orden")
+}
+
+// ─── HU-79 · Asistente IA de diagnóstico ──────────────────────────────────
+
+/// Una respuesta del asistente IA. Solo sirve para contar el límite diario de cada usuario;
+/// no guarda la conversación.
+model ConsultaAsistente {
+  consultaAsistenteId Int      @id @default(autoincrement())
+  tallerId            Int
+  usuarioId           Int
+  creadoEn            DateTime @default(now())
+
+  taller  Taller  @relation(fields: [tallerId], references: [tallerId])
+  usuario Usuario @relation(fields: [usuarioId], references: [usuarioId], onDelete: Cascade)
+
+  @@index([usuarioId, creadoEn])
+  @@index([tallerId])
+  @@map("consultas_asistente")
 }

@@ -17,6 +17,7 @@ function page(loader: () => Promise<{ default: ComponentType }>) {
 const perfil = page(() => import('@/pages/PerfilPage'));
 const ordenDetalle = page(() => import('@/pages/OrdenDetallePage'));
 const inventario = page(() => import('@/pages/InventarioPage'));
+const asistente = page(() => import('@/pages/AsistentePage'));
 
 /** Pantallas sin barra inferior en celular (como en el prototipo): tienen su propia barra de acciones */
 const SIN_NAV = { sinNav: true };
@@ -133,6 +134,7 @@ export const routes: RouteObject[] = [
           { path: 'ordenes', element: page(() => import('@/pages/mecanico/OrdenesPage')) },
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'inventario', element: inventario },
+          { path: 'asistente', element: asistente },
           { path: 'perfil', element: perfil },
           // HU-86 · «Más» del mecánico en celular; «Mi cuenta» queda en /mecanico/perfil
           { path: 'mas', element: perfil },
@@ -148,6 +150,7 @@ export const routes: RouteObject[] = [
           { index: true, element: page(() => import('@/pages/cliente/MotosPage')) },
           { path: 'ordenes', element: page(() => import('@/pages/cliente/OrdenesPage')) },
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
+          { path: 'asistente', element: asistente },
           { path: 'perfil', element: perfil },
           // HU-59 · Pedir una cita y su confirmación
           { path: 'citas', element: page(() => import('@/pages/cliente/MisCitasPage')) },

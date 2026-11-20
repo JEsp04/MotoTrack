@@ -57,6 +57,18 @@ TEST_DATABASE_URL=mysql://root:TU_CLAVE@localhost:3306/mototrack_test
 
 El nombre debe terminar en `_test`; si no, las pruebas se niegan a correr.
 
+## Asistente IA (HU-79)
+
+El asistente de diagnóstico usa la API de Claude, que cobra por uso. Es opcional: sin llave, la pantalla avisa que no está activado y el resto de la app funciona igual. Para encenderlo, pon en `backend/.env`:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...      # se crea en console.anthropic.com > API Keys
+ANTHROPIC_MODEL=claude-haiku-5-5  # el más barato; claude-opus-5-5 responde mejor
+ASISTENTE_LIMITE_DIARIO=10        # respuestas por usuario y por día
+```
+
+La llave vive solo en el backend. Las pruebas nunca llaman a la API: simulan el modelo.
+
 ## Comandos útiles (en `backend/` o `frontend/`)
 
 | Comando | Qué hace |

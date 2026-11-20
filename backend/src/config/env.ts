@@ -10,6 +10,13 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRES: z.string().default('15m'),
   JWT_REFRESH_EXPIRES: z.string().default('7d'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  // HU-79 · Asistente IA. Sin llave, el asistente queda apagado y la app funciona igual.
+  ANTHROPIC_API_KEY: z
+    .string()
+    .optional()
+    .transform((v) => v?.trim() || undefined),
+  ANTHROPIC_MODEL: z.string().trim().min(1).default('claude-haiku-5-5'),
+  ASISTENTE_LIMITE_DIARIO: z.coerce.number().int().min(1).default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;
