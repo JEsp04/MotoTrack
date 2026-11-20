@@ -27,6 +27,8 @@ export interface MotoSheetProps {
   clientePublicId?: string;
   /** Tras guardar (por ejemplo, para elegirla en una orden nueva) */
   onGuardada?: (moto: Moto) => void;
+  /** HU-61 · Tras eliminarla (por ejemplo, para salir de su ficha) */
+  onEliminada?: () => void;
 }
 
 /**
@@ -39,7 +41,13 @@ export function MotoSheet(props: MotoSheetProps) {
   return props.open ? <FormularioMoto {...props} /> : null;
 }
 
-function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoSheetProps) {
+function FormularioMoto({
+  onClose,
+  moto,
+  clientePublicId,
+  onGuardada,
+  onEliminada,
+}: MotoSheetProps) {
   const crear = useCrearMoto();
   const actualizar = useActualizarMoto();
   const eliminar = useEliminarMoto();
@@ -54,6 +62,7 @@ function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoShee
       await eliminar.mutateAsync(moto.publicId);
       toast(`Eliminamos la moto ${moto.placa}`, 'success');
       onClose();
+      onEliminada?.();
     } catch (error) {
       setBorrando(false);
       setErrorGeneral(parseApiError(error).message);

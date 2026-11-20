@@ -24,3 +24,8 @@ export async function eliminar(req: Request<{ id: string }>, res: Response) {
   await motosService.eliminarMoto(usuarioActual(req), req.params.id);
   res.status(204).end();
 }
+
+/** HU-61 · Ficha de la moto con su historial */
+export async function obtener(req: Request<{ id: string }>, res: Response) {
+  res.json({ data: await motosService.obtenerMoto(usuarioActual(req), req.params.id) });
+}

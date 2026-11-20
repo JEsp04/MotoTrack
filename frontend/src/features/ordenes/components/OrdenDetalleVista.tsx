@@ -49,6 +49,7 @@ import {
 import { useCambiarEstado, useOrden, useQuitarServicio } from '../hooks/use-ordenes';
 import { ETIQUETA_ESTADO, textoHold } from '../textos';
 import { CambioEstadoSheet } from './CambioEstadoSheet';
+import { ReasignarSheet } from './ReasignarSheet';
 import { DiagnosticoSheet } from './DiagnosticoSheet';
 import { EntregaSheet } from './EntregaSheet';
 import { ComprobanteServicio } from './ComprobanteServicio';
@@ -144,6 +145,7 @@ function Contenido({
   const [agregandoServicio, setAgregandoServicio] = useState(false);
   const [retirando, setRetirando] = useState(false);
   const [cambiandoEntrega, setCambiandoEntrega] = useState(false);
+  const [reasignando, setReasignando] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const cambiar = useCambiarEstado(orden.publicId);
 
@@ -165,6 +167,10 @@ function Contenido({
   const retiroSinReparacion =
     actor === 'admin' && orden.estado === 'cancelada' && orden.retiroPendiente;
   const telefonoCliente = rol === 'admin' ? orden.moto.cliente.telefono?.trim() || null : null;
+  // HU-63: el admin pasa la orden a otro mecánico mientras siga abierta
+  const puedeReasignar =
+    actor === 'admin' && !['entregada', 'cerrada', 'cancelada'].includes(orden.estado);
+  const conMenu = Boolean(telefonoCliente) || puedeReasignar;
   // HU-85: un mecánico que abre la orden de un compañero solo la consulta
   const soloLecturaDeOtro = rol === 'mecanico' && actor !== 'mecanico_asignado';
   // HU-85: no se envía a aprobación una cotización sin ítems
@@ -189,7 +195,7 @@ function Contenido({
         subtitle={`Ingresó el ${formatFecha(orden.fechaIngreso).replace(/ de \d{4}$/, '')}`}
         onBack={() => navigate(-1)}
         actions={
-          telefonoCliente ? (
+          conMenu ? (
             <IconButton icon="more" label="Más acciones" onClick={() => setMenuAcciones(true)} />
           ) : undefined
         }
@@ -422,33 +428,54 @@ function Contenido({
         ampliacion={puedeAmpliar}
         onClose={() => setAgregandoServicio(false)}
       />
-      {telefonoCliente && (
+      {conMenu && (
         <BottomSheet
           open={menuAcciones}
           title={`Orden #${orden.numero}`}
           onClose={() => setMenuAcciones(false)}
         >
           <List label="Más acciones de la orden">
-            <ListItem
-              icon="receipt"
-              title="Compartir cotización"
-              subtitle="Enviar hallazgos y total por WhatsApp"
-              href={enlaceWhatsApp(telefonoCliente, mensajeCotizacionWhatsApp(orden, taller))}
-              onClick={() => setMenuAcciones(false)}
-            />
-            {/* HU-84 · Respaldo en computador: copiar el mismo mensaje para pegarlo donde sea */}
-            <ListItem
-              icon="clipboard"
-              title="Copiar mensaje"
-              subtitle="Copiar la cotización para pegarla en otro chat"
-              chevron={false}
-              onClick={() => {
-                setMenuAcciones(false);
-                void copiarTexto(mensajeCotizacionWhatsApp(orden, taller), 'Cotización copiada');
-              }}
-            />
+            {telefonoCliente && (
+              <>
+                <ListItem
+                  icon="receipt"
+                  title="Compartir cotización"
+                  subtitle="Enviar hallazgos y total por WhatsApp"
+                  href={enlaceWhatsApp(telefonoCliente, mensajeCotizacionWhatsApp(orden, taller))}
+                  onClick={() => setMenuAcciones(false)}
+                />
+                {/* HU-84 · Respaldo en computador: copiar el mismo mensaje para pegarlo donde sea */}
+                <ListItem
+                  icon="clipboard"
+                  title="Copiar mensaje"
+                  subtitle="Copiar la cotización para pegarla en otro chat"
+                  chevron={false}
+                  onClick={() => {
+                    setMenuAcciones(false);
+                    void copiarTexto(
+                      mensajeCotizacionWhatsApp(orden, taller),
+                      'Cotización copiada',
+                    );
+                  }}
+                />
+              </>
+            )}
+            {puedeReasignar && (
+              <ListItem
+                icon="user"
+                title="Reasignar mecánico"
+                subtitle={orden.mecanico.nombre}
+                onClick={() => {
+                  setMenuAcciones(false);
+                  setReasignando(true);
+                }}
+              />
+            )}
           </List>
         </BottomSheet>
+      )}
+      {puedeReasignar && (
+        <ReasignarSheet open={reasignando} orden={orden} onClose={() => setReasignando(false)} />
       )}
     </>
   );
@@ -542,6 +569,17 @@ function Resumen({
             </div>
           )}
         </Card>
+      )}
+      {/* HU-61 · Desde el detalle, la ficha de la moto con todos sus servicios */}
+      {rol === 'admin' && (
+        <List>
+          <ListItem
+            icon="history"
+            title="Historial de la moto"
+            subtitle={`${orden.moto.marca} ${orden.moto.referencia} · ${orden.moto.placa}`}
+            to={`/admin/motos/${orden.moto.publicId}`}
+          />
+        </List>
       )}
       <Card
         title="Ingreso"

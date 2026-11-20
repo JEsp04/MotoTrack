@@ -25,6 +25,7 @@ import type {
   DiagnosticoInput,
   FechaEntregaInput,
   ListarOrdenesQuery,
+  ReasignarMecanicoInput,
   RetiroInput,
 } from './ordenes.schemas.js';
 
@@ -731,6 +732,66 @@ export async function cambiarFechaEntrega(
     where: { ordenServicioId: orden.id },
     data: { fechaEstimadaEntrega },
   });
+  return detalle(usuario, orden.id);
+}
+
+// ─── HU-63 · Reasignar el mecánico ─────────────────────────────────────────
+
+/**
+ * PATCH /api/ordenes/:id/mecanico. Solo el admin, mientras la orden siga abierta (si no, 409).
+ * El mecánico nuevo debe estar activo en el taller (si no, 400). Deja en el historial
+ * «Reasignado a …» sin cambiar el estado, en la misma transacción.
+ */
+export async function reasignarMecanico(
+  usuario: UsuarioAutenticado,
+  publicId: string,
+  input: ReasignarMecanicoInput,
+) {
+  const orden = await buscarOrden(usuario, publicId);
+  exigirActor(orden.actor, ['admin']);
+  if (ESTADOS_CERRADOS.includes(orden.estado)) {
+    throw HttpError.conflict(
+      `El mecánico ya no se puede cambiar: la orden está ${ETIQUETAS[orden.estado]}`,
+    );
+  }
+  const mecanico = await prisma.usuario.findFirst({
+    where: {
+      publicId: input.mecanicoPublicId,
+      tallerId: usuario.tallerId,
+      rol: 'mecanico',
+      estado: 'activo',
+    },
+    select: { usuarioId: true, nombre: true },
+  });
+  if (!mecanico) {
+    throw HttpError.badRequest('Datos inválidos', [
+      { field: 'mecanicoPublicId', message: 'Elige un mecánico activo de tu taller' },
+    ]);
+  }
+  const { mecanicoId } = await prisma.ordenServicio.findUniqueOrThrow({
+    where: { ordenServicioId: orden.id },
+    select: { mecanicoId: true },
+  });
+  if (mecanicoId === mecanico.usuarioId) {
+    throw HttpError.badRequest('Datos inválidos', [
+      { field: 'mecanicoPublicId', message: 'La orden ya está asignada a ese mecánico' },
+    ]);
+  }
+  await prisma.$transaction([
+    prisma.ordenServicio.update({
+      where: { ordenServicioId: orden.id },
+      data: { mecanicoId: mecanico.usuarioId },
+    }),
+    prisma.historialOrden.create({
+      data: {
+        ordenServicioId: orden.id,
+        usuarioId: usuario.usuarioId,
+        estadoAnterior: orden.estado,
+        estadoNuevo: orden.estado,
+        observacion: `Reasignado a ${mecanico.nombre}`,
+      },
+    }),
+  ]);
   return detalle(usuario, orden.id);
 }
 

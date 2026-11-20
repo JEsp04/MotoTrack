@@ -10,6 +10,8 @@ const router = Router();
 
 router.use(requireAuth);
 router.get('/', motos.listar);
+// HU-61 · Ficha de la moto con su historial de servicios
+router.get('/:id', motos.obtener);
 router.post('/', requireRole('admin', 'cliente'), motos.crear);
 router.patch('/:id', requireRole('admin', 'cliente'), motos.actualizar);
 router.delete('/:id', requireRole('admin', 'cliente'), motos.eliminar);
