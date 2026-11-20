@@ -1,19 +1,6 @@
-import { ButtonLink } from '@/components/ui';
-import { Proximamente } from '@/pages/Proximamente';
+import { MisCitas } from '@/features/citas';
 
-/** «Mis citas» del cliente. Provisional hasta HU-60 (ver, reprogramar y cancelar). */
+/** HU-60 · /cliente/citas */
 export default function MisCitasPage() {
-  return (
-    <Proximamente
-      title="Mis citas"
-      hu="HU-60"
-      icon="calendar"
-      text="Aquí verás tus citas próximas y anteriores"
-      actions={
-        <ButtonLink href="/cliente/citas/nueva" size="sm" icon="plus">
-          Pedir cita
-        </ButtonLink>
-      }
-    />
-  );
+  return <MisCitas />;
 }

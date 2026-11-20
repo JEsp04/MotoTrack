@@ -10,6 +10,15 @@ export interface CrearCitaBody {
   recordatorio: boolean;
 }
 
+export interface ActualizarCitaBody {
+  fechaHora?: string;
+  estado?: EstadoCita;
+  motivo?: string;
+  /** '' borra el detalle */
+  detalle?: string;
+  recordatorio?: boolean;
+}
+
 export interface FiltroCitas {
   /** Día «AAAA-MM-DD» */
   desde?: string;
@@ -32,4 +41,8 @@ export const citasApi = {
 
   crear: (body: CrearCitaBody) =>
     http.post<ApiResponse<Cita>>('/citas', body).then((r) => r.data.data),
+
+  /** HU-60 · Reprogramar (fechaHora) o cancelar (estado 'cancelada') */
+  actualizar: (publicId: string, body: ActualizarCitaBody) =>
+    http.patch<ApiResponse<Cita>>(`/citas/${publicId}`, body).then((r) => r.data.data),
 };

@@ -1,5 +1,6 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HOLD_MS } from '@/components/ui';
 import { useSession } from '@/features/auth';
 import { motosApi } from '@/features/motos/api/motos-api';
 import { tallerApi } from '@/features/taller/api/taller-api';
@@ -11,7 +12,13 @@ import { diasParaCita, formatDiaCita, partesCita } from './fechas';
 import { pedirCitaSchema } from './schemas/cita-schema';
 
 vi.mock('./api/citas-api', () => ({
-  citasApi: { listar: vi.fn(), obtener: vi.fn(), horasLibres: vi.fn(), crear: vi.fn() },
+  citasApi: {
+    listar: vi.fn(),
+    obtener: vi.fn(),
+    horasLibres: vi.fn(),
+    crear: vi.fn(),
+    actualizar: vi.fn(),
+  },
 }));
 vi.mock('@/features/motos/api/motos-api', () => ({
   motosApi: { listar: vi.fn(), crear: vi.fn(), actualizar: vi.fn(), eliminar: vi.fn() },
@@ -193,5 +200,108 @@ describe('HU-59 · Días y horas de la cita', () => {
       recordatorio: true,
     });
     expect(r.success).toBe(false);
+  });
+});
+
+async function mantener(boton: HTMLElement) {
+  fireEvent.pointerDown(boton, { button: 0 });
+  await act(() => new Promise((r) => setTimeout(r, HOLD_MS + 50)));
+  fireEvent.pointerUp(boton);
+}
+
+/** Cita lejos en el futuro, para que siempre sea «próxima» */
+const FUTURA: Cita = { ...CITA, fechaHora: '2099-11-21T14:00:00.000Z' };
+
+const ATENDIDA: Cita = {
+  ...CITA,
+  publicId: '0192f0a0-0000-7000-8000-0000000000c2',
+  fechaHora: '2026-10-10T15:00:00.000Z',
+  motivo: 'Cambio de aceite',
+  detalle: null,
+  estado: 'atendida',
+};
+
+describe('HU-60 · Ver, reprogramar y cancelar mis citas', () => {
+  it('muestra las próximas y las anteriores; una atendida no tiene botones', async () => {
+    api.listar.mockResolvedValue(lista([ATENDIDA, FUTURA]));
+    abrirApp('/cliente/citas');
+
+    await screen.findByRole('heading', { name: 'Mis citas' });
+    expect(await screen.findByText('1 próxima')).toBeInTheDocument();
+    const [proxima, anterior] = screen.getAllByRole('article');
+    expect(within(proxima!).getByText('Programada')).toBeInTheDocument();
+    expect(within(proxima!).getByRole('link', { name: 'Reprogramar' })).toHaveAttribute(
+      'href',
+      `/cliente/citas/${CITA.publicId}/reprogramar`,
+    );
+    expect(within(proxima!).getByRole('button', { name: 'Cancelar cita' })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Anteriores' })).toBeInTheDocument();
+    expect(within(anterior!).getByText('Atendida')).toBeInTheDocument();
+    expect(within(anterior!).queryByRole('link', { name: 'Reprogramar' })).not.toBeInTheDocument();
+    expect(
+      within(anterior!).queryByRole('button', { name: 'Cancelar cita' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('sin citas invita a pedir una', async () => {
+    api.listar.mockResolvedValue(lista([]));
+    abrirApp('/cliente/citas');
+    expect(await screen.findByText('No tienes citas')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Pedir cita' })).toHaveAttribute(
+      'href',
+      '/cliente/citas/nueva',
+    );
+  });
+
+  it('cancela con mantener presionado y la cita queda cancelada', async () => {
+    api.listar.mockResolvedValue(lista([FUTURA]));
+    api.actualizar.mockResolvedValue({ ...CITA, estado: 'cancelada' });
+    abrirApp('/cliente/citas');
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar cita' }));
+    expect(await screen.findByText(/El taller libera ese horario/)).toBeInTheDocument();
+    await mantener(screen.getByRole('button', { name: /Mantén para cancelar/ }));
+    await waitFor(() =>
+      expect(api.actualizar).toHaveBeenCalledWith(CITA.publicId, { estado: 'cancelada' }),
+    );
+  });
+
+  it('reprogramar usa la pantalla de pedir cita con los datos de la cita', async () => {
+    api.obtener.mockResolvedValue(CITA);
+    api.actualizar.mockResolvedValue({ ...CITA, fechaHora: '2026-11-21T14:30:00.000Z' });
+    const router = abrirApp(`/cliente/citas/${CITA.publicId}/reprogramar`);
+
+    await screen.findByRole('heading', { name: 'Reprogramar cita' });
+    expect(await screen.findByRole('button', { name: 'Frenos' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByLabelText(/Detalle \(opcional\)/)).toHaveValue('Chillan al frenar');
+    // La hora actual de la cita sigue elegida
+    expect(await screen.findByRole('button', { name: /9:00/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.queryByRole('button', { name: 'Agregar otra moto' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /9:30/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(api.actualizar).toHaveBeenCalledWith(CITA.publicId, {
+      fechaHora: '2026-11-21T14:30:00.000Z',
+      motivo: 'Frenos',
+      detalle: 'Chillan al frenar',
+      recordatorio: true,
+    });
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe(`/cliente/citas/${CITA.publicId}/agendada`),
+    );
+    expect(await screen.findByRole('heading', { name: 'Cita reprogramada' })).toBeInTheDocument();
+  });
+
+  it('una cita atendida no se puede reprogramar', async () => {
+    api.obtener.mockResolvedValue(ATENDIDA);
+    abrirApp(`/cliente/citas/${ATENDIDA.publicId}/reprogramar`);
+    expect(await screen.findByText(/Esta cita ya está atendida/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument();
   });
 });
