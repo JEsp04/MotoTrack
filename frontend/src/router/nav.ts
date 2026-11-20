@@ -29,6 +29,8 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
   cliente: [
     { to: '/cliente', label: 'Inicio', icon: 'home', end: true },
     { to: '/cliente/ordenes', label: 'Órdenes', icon: 'clipboard' },
+    // HU-60 · Mis citas (pestaña «Citas» del prototipo)
+    { to: '/cliente/citas', label: 'Citas', icon: 'calendar' },
     { to: '/cliente/perfil', label: 'Cuenta', icon: 'user' },
   ],
 };

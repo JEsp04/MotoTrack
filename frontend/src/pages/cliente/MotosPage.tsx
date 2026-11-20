@@ -10,6 +10,7 @@ import {
   SkeletonList,
 } from '@/components/ui';
 import { SelectorTaller, useSession } from '@/features/auth';
+import { ProximaCita } from '@/features/citas';
 import { MotoSheet, useMotos } from '@/features/motos';
 import { OrdenClienteCard, useMisOrdenesActivas } from '@/features/ordenes';
 import { parseApiError } from '@/lib/api-error';
@@ -90,6 +91,9 @@ export default function MotosPage() {
                   />
                 </div>
               ))}
+
+            {/* HU-60 · Próxima cita, lleva a «Mis citas» */}
+            <ProximaCita />
 
             <h2 className="text-lg leading-6 font-semibold">Mis motos</h2>
             {motos.isPending && <SkeletonList rows={1} />}

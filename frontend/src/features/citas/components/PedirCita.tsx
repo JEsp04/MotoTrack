@@ -22,11 +22,51 @@ import { parseApiError } from '@/lib/api-error';
 import { cn } from '@/lib/cn';
 import { hoyColombia } from '@/lib/format';
 import { LIMITES } from '@/lib/validaciones';
-import { diasParaCita, esSabado, formatDiaCita, formatHora, nombreDia, numeroDia } from '../fechas';
-import { useCrearCita, useHorasLibres } from '../hooks/use-citas';
+import type { Cita } from '@/types';
+import {
+  diasParaCita,
+  esSabado,
+  formatDiaCita,
+  formatHora,
+  nombreDia,
+  numeroDia,
+  partesCita,
+} from '../fechas';
+import { useActualizarCita, useCrearCita, useHorasLibres } from '../hooks/use-citas';
 import { MOTIVOS_CITA, pedirCitaSchema, type MotivoCita } from '../schemas/cita-schema';
 
 const km = new Intl.NumberFormat('es-CO');
+
+type MotoCita = Pick<Cita['moto'], 'placa' | 'marca' | 'referencia'>;
+
+/** La API puede escribir la misma hora como «…Z» o «….000Z» */
+const sameInstant = (a: string, b: string) => Date.parse(a) === Date.parse(b);
+
+const esMotivoDeLista = (m: string): m is MotivoCita => MOTIVOS_CITA.some((x) => x === m);
+
+/** Valores con que arranca el formulario: vacío para pedir, los de la cita para reprogramar */
+function valoresIniciales(cita?: Cita) {
+  if (!cita) {
+    return {
+      moto: null,
+      motivo: null,
+      nota: '',
+      dia: null,
+      hora: null,
+      recordatorio: true,
+    };
+  }
+  const { dia, hora } = partesCita(cita.fechaHora);
+  const deLista = esMotivoDeLista(cita.motivo);
+  return {
+    moto: cita.moto.publicId,
+    motivo: (deLista ? cita.motivo : 'Otro') as MotivoCita,
+    nota: deLista ? (cita.detalle ?? '') : cita.motivo,
+    dia,
+    hora: { hora, fechaHora: cita.fechaHora },
+    recordatorio: cita.recordatorio,
+  };
+}
 
 /** Título de cada parte del formulario (.mt-field-label) */
 function Etiqueta({ children }: { children: string }) {
@@ -43,33 +83,51 @@ const chip = (on: boolean) =>
 /**
  * HU-59 · «Pedir cita» (BookingScreen del prototipo): moto, motivo, día y hora libres,
  * recordatorio, resumen y «Confirmar cita». Al confirmar abre «Cita agendada».
+ * HU-60 · Con `cita`, la misma pantalla es «Reprogramar cita» y guarda con «Guardar cambios».
  */
-export function PedirCita({ volverA }: { volverA: string }) {
+export function PedirCita({ volverA, cita }: { volverA: string; cita?: Cita }) {
   const navigate = useNavigate();
   const usuario = useSession((s) => s.usuario);
   const taller = useMiTaller();
   const motos = useMotos();
   const crear = useCrearCita();
+  const actualizar = useActualizarCita();
+  const guardando = crear.isPending || actualizar.isPending;
 
+  // HU-60 · Al reprogramar, el formulario arranca con los datos de la cita
+  const [inicial] = useState(() => valoresIniciales(cita));
   const hoy = hoyColombia();
-  const dias = diasParaCita(hoy);
+  const proximos = diasParaCita(hoy);
+  const dias =
+    inicial.dia && !proximos.includes(inicial.dia) ? [...proximos, inicial.dia].sort() : proximos;
   const listaMotos = motos.data?.data ?? [];
 
-  const [motoElegida, setMotoElegida] = useState<string | null>(null);
-  const [motivo, setMotivo] = useState<MotivoCita | null>(null);
-  const [nota, setNota] = useState('');
-  const [dia, setDia] = useState(dias[0]!);
-  const [hora, setHora] = useState<{ hora: string; fechaHora: string } | null>(null);
-  const [recordatorio, setRecordatorio] = useState(true);
+  const [motoElegida, setMotoElegida] = useState<string | null>(inicial.moto);
+  const [motivo, setMotivo] = useState<MotivoCita | null>(inicial.motivo);
+  const [nota, setNota] = useState(inicial.nota);
+  const [dia, setDia] = useState(inicial.dia ?? dias[0]!);
+  const [hora, setHora] = useState<{ hora: string; fechaHora: string } | null>(inicial.hora);
+  const [recordatorio, setRecordatorio] = useState(inicial.recordatorio);
   const [agregando, setAgregando] = useState(false);
   const [errorNota, setErrorNota] = useState<string | null>(null);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 
   const horas = useHorasLibres(dia);
+  // Al reprogramar, la hora actual de la cita también se puede dejar (está tomada por ella misma)
+  const horasDelDia = [...(horas.data?.horas ?? [])];
+  if (cita && inicial.hora && dia === inicial.dia) {
+    const propia = inicial.hora;
+    if (!horasDelDia.some((h) => sameInstant(h.fechaHora, propia.fechaHora))) {
+      horasDelDia.push(propia);
+      horasDelDia.sort((a, b) => Date.parse(a.fechaHora) - Date.parse(b.fechaHora));
+    }
+  }
 
-  // Si no ha elegido, queda la primera moto (como en el prototipo)
+  // Al reprogramar la moto no cambia; si no, queda la primera (como en el prototipo)
   const motoPublicId = motoElegida ?? listaMotos[0]?.publicId ?? null;
-  const moto = listaMotos.find((m) => m.publicId === motoPublicId) ?? null;
+  const moto: MotoCita | null = cita
+    ? cita.moto
+    : (listaMotos.find((m) => m.publicId === motoPublicId) ?? null);
   const motivoTexto = motivo === 'Otro' ? nota.trim() : motivo;
   const listo = Boolean(moto && motivoTexto && hora);
   const direccion = taller.data?.direccion;
@@ -91,8 +149,18 @@ export function PedirCita({ volverA }: { volverA: string }) {
       return;
     }
     try {
-      const cita = await crear.mutateAsync(datos.data);
-      navigate(`/cliente/citas/${cita.publicId}/agendada`, { replace: true });
+      if (cita) {
+        const { fechaHora, motivo: m, detalle, recordatorio: r } = datos.data;
+        // detalle '' lo borra en el backend
+        await actualizar.mutateAsync({
+          publicId: cita.publicId,
+          body: { fechaHora, motivo: m, detalle: detalle ?? '', recordatorio: r },
+        });
+        navigate(`/cliente/citas/${cita.publicId}/agendada?reprogramada=1`, { replace: true });
+      } else {
+        const nueva = await crear.mutateAsync(datos.data);
+        navigate(`/cliente/citas/${nueva.publicId}/agendada`, { replace: true });
+      }
     } catch (error) {
       const e = parseApiError(error);
       // Alterno: la hora se ocupó mientras elegía. Se recargan las horas libres.
@@ -109,7 +177,7 @@ export function PedirCita({ volverA }: { volverA: string }) {
   return (
     <>
       <AppBar
-        title="Pedir cita"
+        title={cita ? 'Reprogramar cita' : 'Pedir cita'}
         subtitle={usuario?.taller.nombre}
         onBack={() => navigate(volverA)}
       />
@@ -117,9 +185,19 @@ export function PedirCita({ volverA }: { volverA: string }) {
         {/* 1. Moto */}
         <section className="flex flex-col gap-2">
           <Etiqueta>1. Moto</Etiqueta>
-          {motos.isPending && <SkeletonList rows={1} />}
-          {motos.isError && <Alert>{parseApiError(motos.error).message}</Alert>}
-          {listaMotos.length > 0 && (
+          {cita && (
+            <div role="radiogroup" aria-label="Moto" className="flex flex-col gap-2">
+              <SelectCard checked onSelect={() => undefined}>
+                <Plate placa={cita.moto.placa} />
+                <span className="min-w-0 flex-1 truncate font-semibold">
+                  {cita.moto.marca} {cita.moto.referencia}
+                </span>
+              </SelectCard>
+            </div>
+          )}
+          {!cita && motos.isPending && <SkeletonList rows={1} />}
+          {!cita && motos.isError && <Alert>{parseApiError(motos.error).message}</Alert>}
+          {!cita && listaMotos.length > 0 && (
             <div role="radiogroup" aria-label="Moto" className="flex flex-col gap-2">
               {listaMotos.map((m) => (
                 <SelectCard
@@ -140,14 +218,16 @@ export function PedirCita({ volverA }: { volverA: string }) {
               ))}
             </div>
           )}
-          {motos.isSuccess && listaMotos.length === 0 && (
+          {!cita && motos.isSuccess && listaMotos.length === 0 && (
             <Note icon="moto" tono="accent">
               Aún no tienes motos. Agrega una para pedir la cita.
             </Note>
           )}
-          <Button variant="ghost" icon="plus" onClick={() => setAgregando(true)}>
-            Agregar otra moto
-          </Button>
+          {!cita && (
+            <Button variant="ghost" icon="plus" onClick={() => setAgregando(true)}>
+              Agregar otra moto
+            </Button>
+          )}
         </section>
 
         {/* 2. Motivo */}
@@ -237,13 +317,13 @@ export function PedirCita({ volverA }: { volverA: string }) {
           {horas.isSuccess && !horas.data.abierto && (
             <Note icon="calendar">El taller no atiende ese día. Elige otro.</Note>
           )}
-          {horas.isSuccess && horas.data.abierto && horas.data.horas.length === 0 && (
+          {horas.isSuccess && horas.data.abierto && horasDelDia.length === 0 && (
             <Note icon="calendar">No quedan horas libres ese día. Elige otro.</Note>
           )}
-          {horas.isSuccess && horas.data.horas.length > 0 && (
+          {horas.isSuccess && horasDelDia.length > 0 && (
             <div role="group" aria-label="Hora" className="grid grid-cols-4 gap-2">
-              {horas.data.horas.map((h) => {
-                const on = hora?.fechaHora === h.fechaHora;
+              {horasDelDia.map((h) => {
+                const on = Boolean(hora && sameInstant(hora.fechaHora, h.fechaHora));
                 return (
                   <button
                     key={h.fechaHora}
@@ -300,10 +380,10 @@ export function PedirCita({ volverA }: { volverA: string }) {
           fullWidth
           icon="check"
           disabled={!listo}
-          loading={crear.isPending}
+          loading={guardando}
           onClick={() => void confirmar()}
         >
-          Confirmar cita
+          {cita ? 'Guardar cambios' : 'Confirmar cita'}
         </Button>
       </ActionBar>
       <MotoSheet

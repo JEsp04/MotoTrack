@@ -181,6 +181,8 @@ function MiCuenta({ usuario }: { usuario: Usuario }) {
               to="/cliente"
             />
           )}
+          {/* HU-60 · Mis citas desde «Mi cuenta» */}
+          {esCliente && <ListItem icon="calendar" title="Mis citas" to="/cliente/citas" />}
         </List>
         {/* HU-91 · El cliente puede usar su cuenta en varios talleres */}
         {esCliente && <MisTalleres />}

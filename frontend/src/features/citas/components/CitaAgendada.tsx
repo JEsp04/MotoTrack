@@ -10,7 +10,14 @@ import { useCita } from '../hooks/use-citas';
  * HU-59 · «Cita agendada» (BookingDoneScreen del prototipo): confirma lo que se pidió y lleva
  * a «Ver mis citas» o «Volver al inicio».
  */
-export function CitaAgendada({ publicId }: { publicId: string }) {
+export function CitaAgendada({
+  publicId,
+  reprogramada = false,
+}: {
+  publicId: string;
+  /** HU-60 · Viene de «Reprogramar cita» */
+  reprogramada?: boolean;
+}) {
   const cita = useCita(publicId);
   const taller = useMiTaller();
   const nombreTaller = useSession((s) => s.usuario?.taller.nombre);
@@ -43,7 +50,9 @@ export function CitaAgendada({ publicId }: { publicId: string }) {
         <Icon name="calendar" size={32} />
       </span>
       <div>
-        <h1 className="text-[26px] leading-7 font-semibold tracking-[-0.03em]">Cita agendada</h1>
+        <h1 className="text-[26px] leading-7 font-semibold tracking-[-0.03em]">
+          {reprogramada ? 'Cita reprogramada' : 'Cita agendada'}
+        </h1>
         <p className="mt-1.5 text-sm leading-5 text-ink-muted">
           Te esperamos.{c.recordatorio ? ' Te recordamos un día antes por WhatsApp.' : ''}
         </p>

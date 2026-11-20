@@ -155,6 +155,12 @@ export const routes: RouteObject[] = [
             element: page(() => import('@/pages/cliente/CitaAgendadaPage')),
             handle: SIN_NAV,
           },
+          // HU-60 · Reprogramar una cita
+          {
+            path: 'citas/:id/reprogramar',
+            element: page(() => import('@/pages/cliente/ReprogramarCitaPage')),
+            handle: SIN_NAV,
+          },
         ],
       },
 
