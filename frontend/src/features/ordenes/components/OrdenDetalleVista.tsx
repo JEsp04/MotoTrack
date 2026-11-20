@@ -570,6 +570,17 @@ function Resumen({
           )}
         </Card>
       )}
+      {/* HU-61 · Desde el detalle, la ficha de la moto con todos sus servicios */}
+      {rol === 'admin' && (
+        <List>
+          <ListItem
+            icon="history"
+            title="Historial de la moto"
+            subtitle={`${orden.moto.marca} ${orden.moto.referencia} · ${orden.moto.placa}`}
+            to={`/admin/motos/${orden.moto.publicId}`}
+          />
+        </List>
+      )}
       <Card
         title="Ingreso"
         action={

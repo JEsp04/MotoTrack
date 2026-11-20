@@ -154,8 +154,9 @@ export default function ClienteDetallePage() {
                   : `${m.modelo} · ${km.format(m.kilometraje)} km`
               }
               trailing={m.ordenActiva ? <StatusBadge estado={m.ordenActiva.estado} /> : undefined}
-              onClick={() => setMotoSheet({ open: true, moto: m })}
-              aria-label={`Editar la moto ${m.placa}`}
+              // HU-61 · Abre la ficha de la moto (allí se edita)
+              to={`/admin/motos/${m.publicId}`}
+              aria-label={`Ver la moto ${m.placa}`}
             />
           ))}
           <ListItem

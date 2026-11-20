@@ -120,6 +120,8 @@ export const routes: RouteObject[] = [
           { path: 'resenas', element: page(() => import('@/pages/admin/ResenasPage')) },
           // HU-58 · Agenda de citas
           { path: 'citas', element: page(() => import('@/pages/admin/CitasPage')) },
+          // HU-61 · Ficha de la moto
+          { path: 'motos/:id', element: page(() => import('@/pages/admin/MotoPage')) },
         ],
       },
 
@@ -159,6 +161,8 @@ export const routes: RouteObject[] = [
             element: page(() => import('@/pages/cliente/CitaAgendadaPage')),
             handle: SIN_NAV,
           },
+          // HU-61 · Ficha de la moto
+          { path: 'motos/:id', element: page(() => import('@/pages/cliente/MotoPage')) },
           // HU-60 · Reprogramar una cita
           {
             path: 'citas/:id/reprogramar',

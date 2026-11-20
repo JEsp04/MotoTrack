@@ -108,7 +108,7 @@ export default function MotosPage() {
                     leading={<Plate placa={m.placa} />}
                     title={`${m.marca} ${m.referencia}`}
                     subtitle={`${km.format(m.kilometraje)} km`}
-                    onClick={() => setSheet({ open: true, moto: m })}
+                    to={`/cliente/motos/${m.publicId}`}
                   />
                 ))}
                 <ListItem

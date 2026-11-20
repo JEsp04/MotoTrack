@@ -11,7 +11,13 @@ vi.mock('./api/clientes-api', () => ({
   clientesApi: { listar: vi.fn(), obtener: vi.fn(), crear: vi.fn(), actualizar: vi.fn() },
 }));
 vi.mock('@/features/motos/api/motos-api', () => ({
-  motosApi: { listar: vi.fn(), crear: vi.fn(), actualizar: vi.fn(), eliminar: vi.fn() },
+  motosApi: {
+    listar: vi.fn(),
+    obtener: vi.fn(),
+    crear: vi.fn(),
+    actualizar: vi.fn(),
+    eliminar: vi.fn(),
+  },
 }));
 const api = vi.mocked(clientesApi);
 const motos = vi.mocked(motosApi);
@@ -235,11 +241,14 @@ describe('HU-87 · Motos del cliente: placa fija y eliminar', () => {
         fechaIngreso: '2026-11-18T14:00:00.000Z',
       },
     });
+    motos.obtener.mockResolvedValue({ ...enTaller, historial: [] });
     const detalle = clienteDetalle({ motos: [enTaller] });
     api.obtener.mockResolvedValue(detalle);
     abrirApp(`/admin/clientes/${detalle.publicId}`);
     expect(await screen.findByText(/Orden #31 abierta/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Editar la moto ABC12D' }));
+    // HU-61 · La moto abre su ficha; se edita desde allí
+    await userEvent.click(await screen.findByRole('link', { name: 'Ver la moto ABC12D' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar moto' }));
     const d = within(await screen.findByRole('dialog', { name: 'Editar moto' }));
     const placa = d.getByLabelText(/Placa/);
     expect(placa).toHaveAttribute('readonly');
@@ -249,11 +258,14 @@ describe('HU-87 · Motos del cliente: placa fija y eliminar', () => {
 
   it('elimina una moto registrada por error tras confirmar', async () => {
     const errada = moto({ placa: 'XYZ98A' });
+    motos.obtener.mockResolvedValue({ ...errada, historial: [] });
     const detalle = clienteDetalle({ motos: [errada] });
     api.obtener.mockResolvedValue(detalle);
     motos.eliminar.mockResolvedValue(undefined);
     abrirApp(`/admin/clientes/${detalle.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Editar la moto XYZ98A' }));
+    // HU-61 · La moto abre su ficha; se edita desde allí
+    await userEvent.click(await screen.findByRole('link', { name: 'Ver la moto XYZ98A' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar moto' }));
     await userEvent.click(screen.getByRole('button', { name: 'Eliminar moto' }));
     const d = within(await screen.findByRole('dialog', { name: 'Eliminar moto' }));
     expect(motos.eliminar).not.toHaveBeenCalled();
@@ -264,6 +276,7 @@ describe('HU-87 · Motos del cliente: placa fija y eliminar', () => {
 
   it('si ya tiene historial, muestra el mensaje del 409', async () => {
     const conHistorial = moto({ placa: 'XYZ98A' });
+    motos.obtener.mockResolvedValue({ ...conHistorial, historial: [] });
     const detalle = clienteDetalle({ motos: [conHistorial] });
     api.obtener.mockResolvedValue(detalle);
     motos.eliminar.mockRejectedValue(
@@ -274,7 +287,9 @@ describe('HU-87 · Motos del cliente: placa fija y eliminar', () => {
       }),
     );
     abrirApp(`/admin/clientes/${detalle.publicId}`);
-    await userEvent.click(await screen.findByRole('button', { name: 'Editar la moto XYZ98A' }));
+    // HU-61 · La moto abre su ficha; se edita desde allí
+    await userEvent.click(await screen.findByRole('link', { name: 'Ver la moto XYZ98A' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar moto' }));
     await userEvent.click(screen.getByRole('button', { name: 'Eliminar moto' }));
     await userEvent.click(
       within(await screen.findByRole('dialog', { name: 'Eliminar moto' })).getByRole('button', {
