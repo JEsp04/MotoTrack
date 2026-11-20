@@ -10,6 +10,14 @@ export function useMotos(filtro: FiltroMotos = {}, activo = true) {
   });
 }
 
+/** HU-61 · Ficha de una moto con su historial */
+export function useMoto(publicId: string) {
+  return useQuery({
+    queryKey: ['motos', 'detalle', publicId],
+    queryFn: () => motosApi.obtener(publicId),
+  });
+}
+
 /** Al guardar una moto cambian las listas de motos y el detalle del cliente */
 function useRefrescar() {
   const qc = useQueryClient();

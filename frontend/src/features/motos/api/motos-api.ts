@@ -1,5 +1,5 @@
 import { http } from '@/lib/http';
-import type { ApiList, ApiResponse, Moto } from '@/types';
+import type { ApiList, ApiResponse, Moto, MotoFicha } from '@/types';
 
 export interface MotoBody {
   placa: string;
@@ -23,6 +23,10 @@ export interface FiltroMotos {
 export const motosApi = {
   listar: (filtro: FiltroMotos = {}) =>
     http.get<ApiList<Moto>>('/motos', { params: { limit: 50, ...filtro } }).then((r) => r.data),
+
+  /** HU-61 · Ficha con el historial de servicios. La moto de otro cliente responde 404. */
+  obtener: (publicId: string) =>
+    http.get<ApiResponse<MotoFicha>>(`/motos/${publicId}`).then((r) => r.data.data),
 
   /** El admin indica el cliente; para el cliente se ignora (queda a su nombre). */
   crear: (body: MotoBody & { clientePublicId?: string }) =>

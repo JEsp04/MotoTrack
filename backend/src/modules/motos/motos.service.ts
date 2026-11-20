@@ -197,3 +197,39 @@ export async function eliminarMoto(usuario: UsuarioAutenticado, publicId: string
   }
   await prisma.moto.delete({ where: { motocicletaId: moto.motocicletaId } });
 }
+
+/** Estados de las órdenes que cuentan como servicio hecho en la ficha de la moto (HU-61) */
+const ESTADOS_TERMINADOS = ['entregada', 'cerrada'] as const;
+
+/**
+ * GET /api/motos/:id (HU-61) · Ficha de la moto con su historial de servicios: las órdenes
+ * entregadas o cerradas, la más reciente primero.
+ * Cliente: solo las suyas (la de otro cliente responde 404). Admin y mecánico: las del taller.
+ */
+export async function obtenerMoto(usuario: UsuarioAutenticado, publicId: string) {
+  if (!esPublicId(publicId)) throw HttpError.notFound(MOTO_NO_ENCONTRADA);
+  const where: Prisma.MotoWhereInput = { publicId, tallerId: usuario.tallerId };
+  if (usuario.rol === 'cliente') where.clienteId = await clienteDelUsuario(usuario);
+
+  const moto = await prisma.moto.findFirst({
+    where,
+    select: { ...motoSelect, motocicletaId: true },
+  });
+  if (!moto) throw HttpError.notFound(MOTO_NO_ENCONTRADA);
+  const { motocicletaId, ...resto } = moto;
+  const historial = await prisma.ordenServicio.findMany({
+    where: { motocicletaId, estado: { in: [...ESTADOS_TERMINADOS] } },
+    orderBy: [{ fechaIngreso: 'desc' }, { numero: 'desc' }],
+    select: {
+      publicId: true,
+      numero: true,
+      estado: true,
+      motivoIngreso: true,
+      kilometrajeIngreso: true,
+      costoTotal: true,
+      fechaIngreso: true,
+      fechaEntrega: true,
+    },
+  });
+  return { ...aMotoPublica(resto), historial };
+}
