@@ -158,7 +158,7 @@ function Formulario({ ordenPublicId, onClose }: Props) {
                   key={`rep-${r.publicId}`}
                   icon="box"
                   title={r.nombre}
-                  subtitle={`${formatPesos(r.precioVenta)} · ${r.stock > 0 ? `${r.stock} en stock` : 'Sin stock'}`}
+                  subtitle={`Repuesto · ${formatPesos(r.precioVenta)} · ${r.stock > 0 ? `${r.stock} en stock` : 'Sin stock'}`}
                   trailing={stockBadge(r)}
                   onClick={() => seleccionar({ tipo: 'repuesto', item: r })}
                 />
@@ -189,7 +189,7 @@ function Formulario({ ordenPublicId, onClose }: Props) {
               <p className="truncate font-semibold">{elegido.item.nombre}</p>
               <p className="text-sm leading-5 text-ink-muted">
                 {elegido.tipo === 'repuesto'
-                  ? `${formatPesos(elegido.item.precioVenta)} · ${elegido.item.stock > 0 ? `${elegido.item.stock} en stock` : 'Sin stock'}`
+                  ? `Repuesto · ${formatPesos(elegido.item.precioVenta)} · ${elegido.item.stock > 0 ? `${elegido.item.stock} en stock` : 'Sin stock'}`
                   : `Servicio · ${formatPesos(elegido.item.precioBase)}`}
               </p>
             </div>

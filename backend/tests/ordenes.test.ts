@@ -800,3 +800,59 @@ describe('HU-56 · Repuestos en la cotización del diagnóstico', () => {
     ).toBe(0);
   });
 });
+
+describe('HU-85 · Actividad reciente y mensajes', () => {
+  it('el mecánico recibe solo los cambios de sus órdenes, del más reciente al más antiguo', async () => {
+    const p = await preparar();
+    const otroMeca = await crearUsuario(p.taller.tallerId, 'mecanico', 'otro@meca.co');
+    const mia = await p.ordenEn('en_reparacion');
+    const ajena = await p.ordenEn('en_reparacion', { mecanicoId: otroMeca.usuarioId });
+    await cambiar(mia.publicId, p.mecanico, {
+      estado: 'pendiente_repuesto',
+      observacion: 'Falta la cadena',
+    });
+    await cambiar(ajena.publicId, otroMeca, {
+      estado: 'pendiente_repuesto',
+      observacion: 'Falta el piñón',
+    });
+    await cambiar(mia.publicId, p.mecanico, { estado: 'en_reparacion' });
+
+    const res = await request(app).get('/api/ordenes/actividad').set(auth(p.mecanico));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.data[0]).toMatchObject({
+      estadoNuevo: 'en_reparacion',
+      ordenPublicId: mia.publicId,
+      numero: mia.numero,
+      placa: 'ABC12D',
+    });
+    expect(res.body.data[1].observacion).toBe('Falta la cadena');
+    expect(res.body.data[0]).not.toHaveProperty('ordenServicioId');
+    expect(JSON.stringify(res.body)).not.toContain('Falta el piñón');
+  });
+
+  it('respeta el límite y valida el parámetro', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('en_reparacion');
+    await cambiar(orden.publicId, p.mecanico, { estado: 'pendiente_repuesto', observacion: 'A' });
+    await cambiar(orden.publicId, p.mecanico, { estado: 'en_reparacion' });
+    const uno = await request(app).get('/api/ordenes/actividad?limit=1').set(auth(p.admin));
+    expect(uno.body.data).toHaveLength(1);
+    const malo = await request(app).get('/api/ordenes/actividad?limit=99').set(auth(p.admin));
+    expect(malo.status).toBe(400);
+  });
+
+  it('el mensaje de hallazgos cortos concuerda en plural', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('registrada');
+    const res = await request(app)
+      .post(`/api/ordenes/${orden.publicId}/diagnostico`)
+      .set(auth(p.mecanico))
+      .send({ hallazgos: 'Corto', trabajoRecomendado: 'Cambiar pastillas', prioridad: 'normal' });
+    expect(res.status).toBe(400);
+    expect(res.body.errors).toContainEqual({
+      field: 'hallazgos',
+      message: 'Los hallazgos deben tener al menos 10 caracteres',
+    });
+  });
+});

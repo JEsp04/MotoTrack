@@ -85,7 +85,11 @@ export function InicioMecanico() {
   const primerNombre = usuario?.nombre.split(' ')[0] ?? 'mecánico';
   const abiertas = data ? [...data.abiertas].sort(ordenarUrgencia) : [];
   const urgente = abiertas[0] ?? null;
-  const cola = abiertas.slice(1, 6);
+  // HU-85: la cola es lo que falta por hacer; las listas para entregar ya no son del mecánico
+  const cola = abiertas
+    .slice(1)
+    .filter((o) => o.estado !== 'lista_entrega')
+    .slice(0, 5);
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
@@ -232,16 +236,37 @@ export function InicioMecanico() {
 
 function Lecturas({ abiertas }: { abiertas: OrdenResumen[] }) {
   const contar = (estado: EstadoOrden) => abiertas.filter((o) => o.estado === estado).length;
+  // HU-85: cada lectura abre «Mis órdenes» con su filtro ya aplicado
   const lecturas: Array<{
     label: string;
     valor: number;
+    to: string;
     tono?: 'accent' | 'danger' | 'success';
   }> = [
-    { label: 'Mis órdenes', valor: abiertas.length },
-    { label: 'Por diagnosticar', valor: contar('registrada'), tono: 'accent' },
-    { label: 'En reparación', valor: contar('en_reparacion') },
-    { label: 'Sin repuesto', valor: contar('pendiente_repuesto'), tono: 'danger' },
-    { label: 'Listas', valor: contar('lista_entrega'), tono: 'success' },
+    { label: 'Mis órdenes', valor: abiertas.length, to: '/mecanico/ordenes' },
+    {
+      label: 'Por diagnosticar',
+      valor: contar('registrada'),
+      to: '/mecanico/ordenes?grupo=en_proceso&estado=registrada',
+      tono: 'accent',
+    },
+    {
+      label: 'En reparación',
+      valor: contar('en_reparacion'),
+      to: '/mecanico/ordenes?grupo=en_proceso&estado=en_reparacion',
+    },
+    {
+      label: 'Sin repuesto',
+      valor: contar('pendiente_repuesto'),
+      to: '/mecanico/ordenes?grupo=en_proceso&estado=pendiente_repuesto',
+      tono: 'danger',
+    },
+    {
+      label: 'Listas',
+      valor: contar('lista_entrega'),
+      to: '/mecanico/ordenes?grupo=listas',
+      tono: 'success',
+    },
   ];
 
   return (
@@ -252,7 +277,8 @@ function Lecturas({ abiertas }: { abiertas: OrdenResumen[] }) {
       {lecturas.map((l) => (
         <li key={l.label}>
           <Link
-            to="/mecanico/ordenes"
+            to={l.to}
+            aria-label={`${l.label}: ${l.valor}`}
             className="flex flex-col items-start gap-0.5 rounded-[18px] bg-surface-sunken px-3.5 py-3 text-ink transition-colors duration-150 hover:bg-surface-2"
           >
             <span

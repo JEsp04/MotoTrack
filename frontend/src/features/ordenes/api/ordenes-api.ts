@@ -3,6 +3,7 @@ import type {
   ApiList,
   ApiResponse,
   EstadoOrden,
+  EventoActividad,
   OrdenDetalle,
   OrdenResumen,
   Prioridad,
@@ -42,11 +43,14 @@ export const ordenesApi = {
   /** El backend filtra según el rol: admin todas, mecánico las suyas, cliente las de sus motos */
   listar: ({
     grupo,
+    estado,
     q,
     page,
     limit = POR_PAGINA,
   }: {
     grupo: GrupoId;
+    /** HU-85 · Un solo estado dentro del grupo (por ejemplo, desde una lectura del inicio) */
+    estado?: EstadoOrden;
     q?: string;
     page: number;
     limit?: number;
@@ -55,12 +59,19 @@ export const ordenesApi = {
       .get<ApiList<OrdenResumen>>('/ordenes', {
         params: {
           grupo: grupo === 'todas' ? undefined : grupo,
+          estado,
           q: q || undefined,
           page,
           limit,
         },
       })
       .then((r) => r.data),
+
+  /** HU-85 · Últimos cambios de estado de las órdenes que el usuario puede ver */
+  actividad: (limit = 5) =>
+    http
+      .get<ApiResponse<EventoActividad[]>>('/ordenes/actividad', { params: { limit } })
+      .then((r) => r.data.data),
 
   obtener: (publicId: string) =>
     http.get<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}`).then(detalle),

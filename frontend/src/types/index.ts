@@ -193,6 +193,13 @@ export interface EventoHistorial {
   usuario: { publicId: string; nombre: string; rol: Rol };
 }
 
+/** HU-85 · Cambio de estado reciente con la orden a la que pertenece (`/ordenes/actividad`) */
+export interface EventoActividad extends EventoHistorial {
+  ordenPublicId: string;
+  numero: number;
+  placa: string;
+}
+
 /** HU-84 · Contacto del taller que recibe el cliente en el detalle de su orden */
 export interface ContactoTaller {
   nombre: string;

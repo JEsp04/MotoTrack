@@ -1,15 +1,19 @@
 import { z } from 'zod';
 import { enteroDesdeTexto } from '@/lib/validaciones';
 
-const textoLargo = (campo: string, min: number, max: number) =>
-  z
+/** «Los hallazgos deben…» / «El motivo debe…» (HU-85: concordancia en plural) */
+const textoLargo = (campo: string, min: number, max: number) => {
+  const plural = /^(los|las)\s/i.test(campo);
+  const obligatorio = `${campo} ${plural ? 'son obligatorios' : 'es obligatorio'}`;
+  return z
     .string()
     .trim()
     .min(
       min,
-      min > 1 ? `${campo} debe tener al menos ${min} caracteres` : `${campo} es obligatorio`,
+      min > 1 ? `${campo} debe${plural ? 'n' : ''} tener al menos ${min} caracteres` : obligatorio,
     )
     .max(max, `Máximo ${max} caracteres`);
+};
 
 /** HU-32 · Mismas reglas del backend */
 export const diagnosticoSchema = z.object({
