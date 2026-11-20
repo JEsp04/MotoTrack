@@ -3,7 +3,7 @@
 Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct), `docs/HISTORIAS-2.md` (segunda etapa, HU-51 a HU-81) y `docs/HISTORIAS-3.md` (tercera etapa de mejoras UX, reseñas y casos de uso completos, HU-82 a HU-91). Reparto: `docs/REPARTO.md`. Guía de cada sesión: `docs/FLUJO.md`. Diseño: `docs/diseno.md` y `docs/prototipo/`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: lunes 16 de noviembre de 2026.
+Última actualización: viernes 20 de noviembre de 2026.
 
 Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
@@ -23,8 +23,8 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V · HU-57 en `develop` (PR #30); falta ronda 2 (`HU-58` a `HU-60`) |
 | E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ En `develop`: `HU-62`, `HU-64`, `HU-66`, `HU-67`, `HU-68` · faltan V (`HU-61`, `63`, `65`) |
 | E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J · `HU-69` y `HU-73` en `develop` · faltan rondas 2 y 3 (`HU-70` a `72`, `74`, `75`) |
-| E12 · Funciones con costo | HU-76 a HU-81 | 21 | ⛔ Solo si se aprueba el gasto |
-| E13 · Experiencia, reseñas y mejoras | HU-82 a HU-91 | 26 | ⏳ A · `HU-82` y `HU-83` completadas; `HU-84` a `HU-91` en revisión (E13 completa, falta unir las ramas) (`docs/HISTORIAS-3.md`) |
+| E12 · Funciones con costo | HU-79 a HU-81 | 13 | ⏳ Decisión del 20-nov: se descartan HU-76, HU-77 y HU-78. Va HU-79 (A, gasto mínimo); HU-80 y HU-81 solo como simulación local con tarjeta de prueba (V, sin cobro real) |
+| E13 · Experiencia, reseñas y mejoras | HU-82 a HU-91 | 26 | ✅ A · Completa en `develop` (20-nov, PR #58 la última) (`docs/HISTORIAS-3.md`) |
 | E7 · Despliegue y entrega | HU-38 a HU-40 | 6 | ⏳ De última: A (HU-38), V (HU-39), J (HU-40) |
 
 **Avance del primer entregable:** 47 de 50 historias unidas · 106 de 112 puntos (≈ 95 %). Faltan las 3 historias de E7 (6 puntos), todas obligatorias.
@@ -199,18 +199,20 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 - [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]
 - [ ] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68]
 
-### E12 · Funciones con costo · 21 pts *(solo si se aprueba el gasto; no asignadas)*
+### E12 · Funciones con costo · 13 pts *(alcance decidido el 20-nov-2026)*
 
-- [ ] HU-76 · Recuperar la contraseña con un código · 3 pts · [J si se aprueba]
-- [ ] HU-77 · Verificar el celular con un código · 3 pts · [J si se aprueba]
-- [ ] HU-78 · Fotos en el diagnóstico · 2 pts · [A si se aprueba]
-- [ ] HU-79 · Asistente IA de diagnóstico · 5 pts · [A si se aprueba]
-- [ ] HU-80 · Plan del taller y facturas · 3 pts · [V si se aprueba]
-- [ ] HU-81 · Pagar con tarjeta, PSE o Nequi · 5 pts · [V si se aprueba]
+**Decisión del 20-nov:** no hay tiempo para todo y no se necesita cobrar de verdad. HU-76, HU-77 y HU-78 se descartan. HU-79 es obligatoria, con gasto mínimo (solo para mostrar unos mensajes en la presentación final). HU-80 y HU-81 se hacen **solo como simulación local**: compra de la membresía con una tarjeta de prueba, sin pasarela real ni cobro.
+
+- ~~HU-76 · Recuperar la contraseña con un código · 3 pts~~ · descartada (20-nov). El taller ya puede restablecer la contraseña (HU-86)
+- ~~HU-77 · Verificar el celular con un código · 3 pts~~ · descartada (20-nov)
+- ~~HU-78 · Fotos en el diagnóstico · 2 pts~~ · descartada (20-nov)
+- [ ] HU-79 · Asistente IA de diagnóstico · 5 pts · [A, obligatoria] · llave de la API solo en el backend y límite diario de mensajes por usuario
+- [ ] HU-80 · Plan del taller y facturas · 3 pts · [V, simulación local] · planes y facturas con IVA guardados en la base, sin cobro real
+- [ ] HU-81 · Pagar con tarjeta *(simulado)* · 5 pts · [V, simulación local] · pago falso con tarjeta de prueba (por ejemplo `4242 4242 4242 4242`); sin PSE, Nequi ni pasarela real
 
 ---
 
-## Tercera etapa (`docs/HISTORIAS-3.md`) ⏳
+## Tercera etapa (`docs/HISTORIAS-3.md`) ✅
 
 Nacida de la auditoría exploratoria del 16-nov-2026 (`RES-01` a `RES-22`). Sin costo externo (`$ 0`), ejecutada en 4 fases secuenciales por **A**.
 
@@ -218,14 +220,14 @@ Nacida de la auditoría exploratoria del 16-nov-2026 (`RES-01` a `RES-22`). Sin 
 
 - [x] HU-82 · Correcciones móviles (`390 px`), áreas táctiles (`48 px`) y barras de acción fijas · 3 pts · [A, fase 1]
 - [x] HU-83 · Coherencia de landing, acceso, registro e invitaciones seguras · 2 pts · [A, fase 1]
-- [~] HU-84 · Seguimiento completo del cliente y contacto directo con el taller · 3 pts · [A, fase 2]
-- [~] HU-85 · Mejoras operativas del Panel del taller (`/admin`) e Inicio del mecánico (`/mecanico`) · 2 pts · [A, fase 2]
-- [~] HU-86 · Autogestión de perfil, cambio de contraseña y restablecimiento asistido por el taller · 3 pts · [A, fase 3]
-- [~] HU-87 · Gestión completa de inventario, motos, clientes y equipo (editar, ajustar con motivo e inactivar) · 3 pts · [A, fase 3]
-- [~] HU-88 · Ítems adicionales en una orden aprobada o en reparación (Ampliación de cotización) · 3 pts · [A, fase 3]
-- [~] HU-89 · Reseñas y calificación del servicio al entregar o cerrar la orden · 3 pts · [A, fase 4, migración `resenas_orden`]
-- [~] HU-90 · Seguimiento público sin cuenta y comprobante de servicio imprimible *(deseable)* · 2 pts · [A, fase 4]
-- [~] HU-91 · Soporte multi-taller para cuentas de cliente *(deseable)* · 2 pts · [A, fase 4]
+- [x] HU-84 · Seguimiento completo del cliente y contacto directo con el taller · 3 pts · [A, fase 2]
+- [x] HU-85 · Mejoras operativas del Panel del taller (`/admin`) e Inicio del mecánico (`/mecanico`) · 2 pts · [A, fase 2]
+- [x] HU-86 · Autogestión de perfil, cambio de contraseña y restablecimiento asistido por el taller · 3 pts · [A, fase 3]
+- [x] HU-87 · Gestión completa de inventario, motos, clientes y equipo (editar, ajustar con motivo e inactivar) · 3 pts · [A, fase 3]
+- [x] HU-88 · Ítems adicionales en una orden aprobada o en reparación (Ampliación de cotización) · 3 pts · [A, fase 3]
+- [x] HU-89 · Reseñas y calificación del servicio al entregar o cerrar la orden · 3 pts · [A, fase 4, migración `resenas_orden`]
+- [x] HU-90 · Seguimiento público sin cuenta y comprobante de servicio imprimible *(deseable)* · 2 pts · [A, fase 4]
+- [x] HU-91 · Soporte multi-taller para cuentas de cliente *(deseable)* · 2 pts · [A, fase 4]
 
 ---
 

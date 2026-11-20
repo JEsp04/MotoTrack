@@ -54,15 +54,15 @@ Cada ronda termina cuando sus PR están unidos en `develop`. Dentro de cada rond
 
 A y B entregan HU-68 y HU-61 **al inicio** de la ronda 3, porque C las necesita.
 
-### E12 · Funciones con costo (solo si se aprueban)
+### E12 · Funciones con costo (alcance decidido el 20-nov-2026)
 
-No se asignan todavía. Si el equipo aprueba algún gasto, se reparte así para seguir con el mismo tema:
+Se descartan HU-76, HU-77 y HU-78. Solo HU-79 genera gasto, y debe ser mínimo. HU-80 y HU-81 se hacen como simulación local, sin pasarela real ni cobro.
 
-| Persona | Historias                                           | Pts |
-| ------- | --------------------------------------------------- | --- |
-| A       | HU-78 Fotos, HU-79 Asistente IA                     | 7   |
-| B       | HU-80 Plan y facturas, HU-81 Pagos                  | 8   |
-| C       | HU-76 Recuperar contraseña, HU-77 Verificar celular | 6   |
+| Persona | Historias                                                          | Pts | Nota                                                                  |
+| ------- | ------------------------------------------------------------------ | --- | --------------------------------------------------------------------- |
+| A       | HU-79 Asistente IA                                                  | 5   | Obligatoria. Llave solo en el backend, límite diario por usuario      |
+| B       | HU-80 Plan y facturas, HU-81 Pago simulado con tarjeta de prueba    | 8   | Sin cobro real. Va después de las historias de B que faltan para el MVP |
+| —       | ~~HU-76~~, ~~HU-77~~, ~~HU-78~~                                     | —   | Descartadas el 20-nov                                                 |
 
 ### Al final · E7 · Despliegue y entrega (6 pts)
 
