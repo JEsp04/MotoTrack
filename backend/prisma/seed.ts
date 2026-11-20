@@ -715,6 +715,66 @@ async function main() {
     ],
   });
 
+  // HU-91 · Juan también lleva una moto a otro taller con la misma cuenta (su ficha allá tiene
+  // el mismo documento). En «Mi cuenta» puede cambiar entre los dos talleres.
+  const envigado = await prisma.taller.create({
+    data: {
+      nombre: 'MotoServicio Envigado',
+      nit: '900765432-1',
+      direccion: 'Calle 38 Sur #43-20, Envigado',
+      telefono: '6043335566',
+      email: 'hola@motoservicio.co',
+      horarioAtencion: 'Lunes a sábado, 8:00 a. m. a 5:00 p. m.',
+    },
+  });
+  const diana = await prisma.usuario.create({
+    data: {
+      tallerId: envigado.tallerId,
+      nombre: 'Diana Zapata',
+      email: 'diana@motoservicio.co',
+      passwordHash,
+      telefono: '3007778899',
+      rol: 'admin',
+    },
+  });
+  const juanEnvigado = await prisma.cliente.create({
+    data: {
+      tallerId: envigado.tallerId,
+      usuarioId: usuarioJuan.usuarioId,
+      nombre: 'Juan Pablo Ochoa',
+      documentoIdentidad: '1017234567',
+      telefono: '3115556677',
+      email: 'juan@correo.co',
+    },
+  });
+  const crypton = await prisma.moto.create({
+    data: {
+      tallerId: envigado.tallerId,
+      clienteId: juanEnvigado.clienteId,
+      placa: 'CRY34E',
+      marca: 'Yamaha',
+      referencia: 'Crypton FI',
+      modelo: 2020,
+      color: 'Azul',
+      kilometraje: 41200,
+    },
+  });
+  await prisma.ordenServicio.create({
+    data: {
+      tallerId: envigado.tallerId,
+      numero: 1,
+      motocicletaId: crypton.motocicletaId,
+      mecanicoId: diana.usuarioId,
+      creadoPorId: diana.usuarioId,
+      estado: 'registrada',
+      motivoIngreso: 'Mantenimiento de los 40.000 km.',
+      kilometrajeIngreso: 41200,
+      historial: {
+        create: { usuarioId: diana.usuarioId, estadoNuevo: 'registrada', observacion: null },
+      },
+    },
+  });
+
   const resumen = {
     talleres: await prisma.taller.count(),
     usuarios: await prisma.usuario.count(),
@@ -732,7 +792,7 @@ async function main() {
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(
-    `Cuentas de prueba (clave ${CLAVE_DE_PRUEBA}): admin@mototrack.co, andres@mototrack.co, felipe@mototrack.co, laura@correo.co, juan@correo.co`,
+    `Cuentas de prueba (clave ${CLAVE_DE_PRUEBA}): admin@mototrack.co, andres@mototrack.co, felipe@mototrack.co, laura@correo.co, juan@correo.co (cliente en 2 talleres), diana@motoservicio.co`,
   );
 }
 

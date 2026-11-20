@@ -7,6 +7,7 @@ import {
   loginSchema,
   registerClienteSchema,
   registerTallerSchema,
+  tallerClienteSchema,
 } from './auth.schemas.js';
 import * as authService from './auth.service.js';
 import { opcionesCookieRefresh, REFRESH_COOKIE } from './auth.tokens.js';
@@ -75,4 +76,24 @@ export async function cambiarPassword(req: Request, res: Response) {
   const { usuarioId, tallerId } = usuarioActual(req);
   const input = cambiarPasswordSchema.parse(req.body);
   responderSesion(res, await authService.cambiarPassword(usuarioId, tallerId, input));
+}
+
+/** HU-91 · Talleres de la cuenta del cliente */
+export async function talleres(req: Request, res: Response) {
+  const { usuarioId, tallerId } = usuarioActual(req);
+  res.json({ data: await authService.misTalleres(usuarioId, tallerId) });
+}
+
+/** HU-91 · Agregar otro taller a la cuenta del cliente */
+export async function vincularTaller(req: Request, res: Response) {
+  const { usuarioId, tallerId } = usuarioActual(req);
+  const input = tallerClienteSchema.parse(req.body);
+  res.status(201).json({ data: await authService.vincularTaller(usuarioId, tallerId, input) });
+}
+
+/** HU-91 · Ver las motos y órdenes de otro de sus talleres (la sesión sigue con tokens nuevos) */
+export async function cambiarTallerActivo(req: Request, res: Response) {
+  const { usuarioId } = usuarioActual(req);
+  const input = tallerClienteSchema.parse(req.body);
+  responderSesion(res, await authService.cambiarTallerActivo(usuarioId, input, leerCookie(req)));
 }

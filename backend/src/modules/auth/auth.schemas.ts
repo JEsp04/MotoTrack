@@ -75,6 +75,12 @@ export const cambiarPasswordSchema = z
     message: 'La contraseña nueva debe ser distinta de la actual',
   });
 
+/** HU-91 · POST /api/auth/talleres y POST /api/auth/taller-activo */
+export const tallerClienteSchema = z.object({
+  tallerPublicId: z.uuid({ error: 'Elige un taller' }),
+});
+
+export type TallerClienteInput = z.infer<typeof tallerClienteSchema>;
 export type ActualizarPerfilInput = z.infer<typeof actualizarPerfilSchema>;
 export type CambiarPasswordInput = z.infer<typeof cambiarPasswordSchema>;
 export type RegisterTallerInput = z.infer<typeof registerTallerSchema>;

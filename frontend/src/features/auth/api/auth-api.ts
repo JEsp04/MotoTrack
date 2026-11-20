@@ -1,5 +1,5 @@
 import { http } from '@/lib/http';
-import type { ApiResponse, InvitacionValidada, Usuario } from '@/types';
+import type { ApiResponse, InvitacionValidada, TallerCliente, Usuario } from '@/types';
 
 /** Respuesta de login, registro y renovación: token de acceso + usuario. */
 export interface SesionResponse {
@@ -88,6 +88,22 @@ export const authApi = {
   /** HU-86 · Cambiar mi contraseña: devuelve una sesión nueva (las demás se cierran) */
   cambiarPassword: (body: CambiarPasswordBody) =>
     http.patch<ApiResponse<SesionResponse>>('/auth/password', body).then((r) => r.data.data),
+
+  /** HU-91 · Talleres de mi cuenta de cliente */
+  misTalleres: () =>
+    http.get<ApiResponse<TallerCliente[]>>('/auth/talleres').then((r) => r.data.data),
+
+  /** HU-91 · Agrega otro taller a mi cuenta (vincula la ficha que ya tenía allá o crea una) */
+  vincularTaller: (tallerPublicId: string) =>
+    http
+      .post<ApiResponse<TallerCliente[]>>('/auth/talleres', { tallerPublicId })
+      .then((r) => r.data.data),
+
+  /** HU-91 · Pasa a ver otro de mis talleres: devuelve una sesión nueva de ese taller */
+  cambiarTaller: (tallerPublicId: string) =>
+    http
+      .post<ApiResponse<SesionResponse>>('/auth/taller-activo', { tallerPublicId })
+      .then((r) => r.data.data),
 
   talleresPublicos: () =>
     http.get<ApiResponse<TallerPublico[]>>('/talleres/publicos').then((r) => r.data.data),

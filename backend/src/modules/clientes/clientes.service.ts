@@ -167,6 +167,13 @@ export async function restablecerClaveCliente(tallerId: number, publicId: string
   if (cliente.usuarioId === null) {
     throw HttpError.conflict('Este cliente aún no tiene cuenta en la app');
   }
+  // HU-91 · Si la cuenta también la usa en otro taller, la clave no la cambia un solo taller
+  const talleres = await prisma.cliente.count({ where: { usuarioId: cliente.usuarioId } });
+  if (talleres > 1) {
+    throw HttpError.conflict(
+      'Este cliente usa su cuenta en otro taller. Debe cambiar su contraseña desde «Mi cuenta».',
+    );
+  }
   const claveTemporal = await restablecerPassword(cliente.usuarioId);
   return { nombre: cliente.nombre, telefono: cliente.telefono, claveTemporal };
 }

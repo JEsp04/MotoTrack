@@ -61,7 +61,7 @@ Instrucciones para Claude y para el equipo. Claude Code lee este archivo al empe
 
 **Ruta solo de desarrollo:** `/dev/ui` (catálogo de componentes).
 
-**Cuentas de prueba (después de `npm run seed`):** clave `MotoTrack2026` para `admin@mototrack.co`, `andres@mototrack.co`, `felipe@mototrack.co`, `laura@correo.co` y `juan@correo.co`.
+**Cuentas de prueba (después de `npm run seed`):** clave `MotoTrack2026` para `admin@mototrack.co`, `andres@mototrack.co`, `felipe@mototrack.co`, `laura@correo.co`, `juan@correo.co` (cliente en 2 talleres, HU-91) y `diana@motoservicio.co` (admin del segundo taller).
 
 ## 3. Estilo de código
 

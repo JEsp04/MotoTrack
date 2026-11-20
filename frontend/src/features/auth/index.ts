@@ -1,5 +1,6 @@
 export type { TallerPublico } from './api/auth-api';
 export { LoginForm } from './components/LoginForm';
+export { MisTalleres, SelectorTaller } from './components/MisTalleres';
 export { CambiarPasswordSheet, EditarPerfilSheet } from './components/MiCuentaSheets';
 export { RegistroClienteForm } from './components/RegistroClienteForm';
 export { RegistroTallerForm } from './components/RegistroTallerForm';

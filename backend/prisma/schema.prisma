@@ -146,7 +146,8 @@ model Usuario {
   actualizadoEn DateTime       @updatedAt
 
   taller               Taller            @relation(fields: [tallerId], references: [tallerId])
-  cliente              Cliente?
+  /// HU-91 · Fichas de cliente de la cuenta (una por taller); `tallerId` es el taller activo
+  clientes             Cliente[]
   refreshTokens        RefreshToken[]
   ordenesAsignadas     OrdenServicio[]   @relation("MecanicoAsignado")
   ordenesCreadas       OrdenServicio[]   @relation("CreadaPor")
@@ -186,7 +187,8 @@ model Cliente {
   /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
   publicId           String   @unique @default(uuid(7)) @db.Char(36)
   tallerId           Int
-  usuarioId          Int?     @unique
+  /// HU-91 · Una misma cuenta de cliente puede tener una ficha en cada taller (una por taller)
+  usuarioId          Int?
   nombre             String   @db.VarChar(150)
   documentoIdentidad String   @db.VarChar(30)
   telefono           String   @db.VarChar(20)
@@ -202,7 +204,9 @@ model Cliente {
   resenas ResenaOrden[]
 
   @@unique([tallerId, documentoIdentidad])
+  @@unique([tallerId, usuarioId])
   @@index([tallerId, nombre])
+  @@index([usuarioId])
   @@map("clientes")
 }
 

@@ -15,6 +15,7 @@ import type {
   LoginInput,
   RegisterClienteInput,
   RegisterTallerInput,
+  TallerClienteInput,
 } from './auth.schemas.js';
 import {
   firmarAccessToken,
@@ -149,6 +150,16 @@ export async function registrarCliente(input: RegisterClienteInput): Promise<Ses
   });
   if (!taller) throw HttpError.notFound('No encontramos ese taller');
 
+  // HU-91 · Quien ya es cliente en otro taller no crea otra cuenta: agrega el taller
+  const cuenta = await prisma.usuario.findUnique({
+    where: { email: input.email },
+    select: { rol: true },
+  });
+  if (cuenta?.rol === 'cliente') {
+    const msg =
+      'Ya tienes una cuenta con este correo. Ingresa y agrega este taller desde «Mi cuenta».';
+    throw new HttpError(409, msg, [{ field: 'email', message: msg }]);
+  }
   await correoDisponible(input.email);
 
   // ¿El taller ya lo había registrado (HU-24)? Se busca por documento o por correo.
@@ -319,6 +330,137 @@ export async function renovarSesion(refreshToken: string | undefined): Promise<S
   return abrirSesion(usuario);
 }
 
+// ─── HU-91 · Cliente en varios talleres ──────────────────────────────────────
+
+const SIN_FICHA = 'No encontramos ese taller en tu cuenta';
+
+/** GET /api/auth/talleres · Los talleres donde la cuenta tiene ficha de cliente, y cuál está activo */
+export async function misTalleres(usuarioId: number, tallerActivoId: number) {
+  const fichas = await prisma.cliente.findMany({
+    where: { usuarioId, taller: { estado: 'activo' } },
+    select: { tallerId: true, taller: { select: { publicId: true, nombre: true } } },
+    orderBy: { creadoEn: 'asc' },
+  });
+  return fichas.map((f) => ({ ...f.taller, activo: f.tallerId === tallerActivoId }));
+}
+
+/**
+ * POST /api/auth/taller-activo · El cliente pasa a ver las motos y órdenes de otro de sus
+ * talleres. Se guarda como su taller activo (también al volver a ingresar) y la sesión sigue con
+ * tokens nuevos de ese taller; el token de renovación anterior queda revocado.
+ */
+export async function cambiarTallerActivo(
+  usuarioId: number,
+  input: TallerClienteInput,
+  refreshActual: string | undefined,
+): Promise<Sesion> {
+  const ficha = await prisma.cliente.findFirst({
+    where: { usuarioId, taller: { publicId: input.tallerPublicId, estado: 'activo' } },
+    select: { tallerId: true },
+  });
+  if (!ficha) throw HttpError.notFound(SIN_FICHA);
+  const usuario = await prisma.usuario.update({
+    where: { usuarioId },
+    data: { tallerId: ficha.tallerId },
+    select: usuarioSesion,
+  });
+  await cerrarSesion(refreshActual);
+  return abrirSesion(usuario);
+}
+
+const mismoTexto = (a: string | null | undefined, b: string | null | undefined) =>
+  !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * POST /api/auth/talleres · Agrega otro taller a la cuenta del cliente.
+ * - Si ese taller ya lo tenía registrado (mismo documento que su ficha actual), se vincula esa
+ *   ficha y conserva sus motos y órdenes. Por seguridad, la ficha debe tener además su mismo
+ *   correo o celular; si no, el taller debe actualizar sus datos primero (409).
+ * - Si no lo tenía, se crea su ficha con los datos de la cuenta.
+ * Responde la lista de talleres; cambiar al nuevo es otro paso (taller-activo).
+ */
+export async function vincularTaller(
+  usuarioId: number,
+  tallerActivoId: number,
+  input: TallerClienteInput,
+) {
+  const taller = await prisma.taller.findFirst({
+    where: { publicId: input.tallerPublicId, estado: 'activo' },
+    select: { tallerId: true },
+  });
+  if (!taller) throw HttpError.notFound('No encontramos ese taller');
+
+  const [usuario, propia] = await Promise.all([
+    prisma.usuario.findUniqueOrThrow({
+      where: { usuarioId },
+      select: { nombre: true, email: true, telefono: true },
+    }),
+    // Su documento sale de la ficha que ya tiene (la del taller activo primero)
+    prisma.cliente.findFirst({
+      where: { usuarioId },
+      select: { tallerId: true, documentoIdentidad: true, telefono: true },
+      orderBy: { creadoEn: 'asc' },
+    }),
+  ]);
+  const fichaActiva =
+    (await prisma.cliente.findFirst({
+      where: { usuarioId, tallerId: tallerActivoId },
+      select: { tallerId: true, documentoIdentidad: true, telefono: true },
+    })) ?? propia;
+  if (!fichaActiva) throw HttpError.conflict('Tu cuenta no tiene datos de cliente para copiar');
+  if (fichaActiva.tallerId === taller.tallerId) {
+    throw HttpError.conflict('Este taller ya está en tu cuenta');
+  }
+  const yaVinculado = await prisma.cliente.findFirst({
+    where: { usuarioId, tallerId: taller.tallerId },
+    select: { clienteId: true },
+  });
+  if (yaVinculado) throw HttpError.conflict('Este taller ya está en tu cuenta');
+
+  const telefono = usuario.telefono ?? fichaActiva.telefono;
+  const existente = await prisma.cliente.findUnique({
+    where: {
+      tallerId_documentoIdentidad: {
+        tallerId: taller.tallerId,
+        documentoIdentidad: fichaActiva.documentoIdentidad,
+      },
+    },
+    select: { clienteId: true, usuarioId: true, email: true, telefono: true },
+  });
+
+  if (existente) {
+    if (existente.usuarioId !== null) {
+      throw HttpError.conflict(
+        'Tu documento ya tiene otra cuenta en ese taller. Pídele al taller que lo revise.',
+      );
+    }
+    const esSuya =
+      mismoTexto(existente.email, usuario.email) ||
+      existente.telefono.replace(/\D/g, '') === telefono.replace(/\D/g, '');
+    if (!esSuya) {
+      throw HttpError.conflict(
+        'El taller tiene tu documento con otro correo y celular. Pídele que actualice tus datos y vuelve a intentarlo.',
+      );
+    }
+    await prisma.cliente.update({
+      where: { clienteId: existente.clienteId },
+      data: { usuarioId, email: usuario.email },
+    });
+  } else {
+    await prisma.cliente.create({
+      data: {
+        tallerId: taller.tallerId,
+        usuarioId,
+        nombre: usuario.nombre,
+        documentoIdentidad: fichaActiva.documentoIdentidad,
+        telefono,
+        email: usuario.email,
+      },
+    });
+  }
+  return misTalleres(usuarioId, tallerActivoId);
+}
+
 // ─── HU-17 · Cerrar sesión ─────────────────────────────────────────────────
 
 export async function cerrarSesion(refreshToken: string | undefined): Promise<void> {
@@ -370,8 +512,9 @@ export async function actualizarPerfil(
         select: usuarioSesion,
       });
       if (usuario.rol === 'cliente') {
+        // HU-91 · Sus datos se actualizan en la ficha de cada taller donde es cliente
         await tx.cliente.updateMany({
-          where: { usuarioId, tallerId },
+          where: { usuarioId },
           data: {
             nombre: input.nombre,
             email: input.email,

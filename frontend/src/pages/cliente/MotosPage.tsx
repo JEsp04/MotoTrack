@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, EmptyState, List, ListItem, Plate, SkeletonList } from '@/components/ui';
-import { useSession } from '@/features/auth';
+import { SelectorTaller, useSession } from '@/features/auth';
 import { MotoSheet, useMotos } from '@/features/motos';
 import { OrdenClienteCard, useMisOrdenesActivas } from '@/features/ordenes';
 import { parseApiError } from '@/lib/api-error';
@@ -34,6 +34,10 @@ export default function MotosPage() {
           <h1 className="mt-1 text-[26px] leading-7 font-semibold tracking-[-0.03em]">
             Hola, {usuario?.nombre.split(' ')[0]}
           </h1>
+          {/* HU-91 · Con más de un taller, cambia entre ellos */}
+          <div className="mt-3">
+            <SelectorTaller />
+          </div>
         </div>
       </header>
 
