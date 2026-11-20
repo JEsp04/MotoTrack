@@ -39,6 +39,21 @@ export function diasParaCita(hoy: string, cuantos = 7) {
   return dias;
 }
 
+/**
+ * HU-58 · Días de la agenda del taller: desde el lunes de esta semana, dos semanas,
+ * sin domingos (como en el prototipo).
+ */
+export function diasAgenda(hoy: string) {
+  const diaSemana = fechaUtc(hoy).getUTCDay();
+  const lunes = sumarDias(hoy, diaSemana === 0 ? -6 : 1 - diaSemana);
+  const dias: string[] = [];
+  for (let i = 0; i < 14; i++) {
+    const dia = sumarDias(lunes, i);
+    if (!esDomingo(dia)) dias.push(dia);
+  }
+  return dias;
+}
+
 /** «09:00» → «9:00» */
 export const formatHora = (hora: string) => hora.replace(/^0/, '');
 

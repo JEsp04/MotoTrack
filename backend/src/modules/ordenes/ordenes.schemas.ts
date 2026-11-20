@@ -59,6 +59,8 @@ export const crearOrdenSchema = z.object({
     .union([z.literal(''), z.null(), diaEntrega])
     .optional()
     .transform((v) => v || null),
+  /** HU-58 · Si la moto llega a una cita, la cita queda atendida y unida a la orden */
+  citaPublicId: z.string().optional(),
 });
 
 /** PATCH /api/ordenes/:id/entrega (HU-62). null la borra. */

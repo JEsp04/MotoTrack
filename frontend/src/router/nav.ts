@@ -12,6 +12,8 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     { to: '/admin/ordenes', label: 'Órdenes', icon: 'clipboard' },
     { to: '/admin/clientes', label: 'Clientes y motos', icon: 'users', donde: 'escritorio' },
     { to: '/admin/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
+    // HU-58 · Agenda de citas (pestaña «Citas» del prototipo, también en celular)
+    { to: '/admin/citas', label: 'Citas', icon: 'calendar' },
     { to: '/admin/equipo', label: 'Usuarios', icon: 'user', donde: 'escritorio' },
     { to: '/admin/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
@@ -23,6 +25,8 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
       labelEscritorio: 'Mis órdenes',
       icon: 'clipboard',
     },
+    // HU-58 · Agenda en solo lectura (en celular está en «Más»)
+    { to: '/mecanico/citas', label: 'Citas', icon: 'calendar', donde: 'escritorio' },
     { to: '/mecanico/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
     { to: '/mecanico/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],

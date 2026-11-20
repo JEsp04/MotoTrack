@@ -174,7 +174,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 ### E9 · Citas y agenda · 11 pts
 
 - [x] HU-57 · Tabla y API de citas · 3 pts · [V, ronda 1] · PR #30
-- [ ] HU-58 · Agenda de citas del taller · 3 pts · [V, ronda 2, necesita HU-73]
+- [~] HU-58 · Agenda de citas del taller · 3 pts · [V, ronda 2, necesita HU-73] · rama `HU-58` (sale de `HU-60`), en revisión
 - [~] HU-59 · Pedir una cita como cliente · 3 pts · [V, ronda 2] · rama `HU-59`, en revisión
 - [~] HU-60 · Ver, reprogramar y cancelar mis citas · 2 pts · [V, ronda 2] · rama `HU-60` (sale de `HU-59`), en revisión
 

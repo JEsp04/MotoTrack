@@ -24,11 +24,11 @@ import { useEquipo } from '@/features/equipo';
 import { MotoSheet } from '@/features/motos';
 import { parseApiError } from '@/lib/api-error';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
-import { hoyColombia } from '@/lib/format';
+import { formatFechaHora, hoyColombia } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import { useDebounce } from '@/lib/use-debounce';
 import { LIMITES } from '@/lib/validaciones';
-import type { Moto } from '@/types';
+import type { Cita, Moto } from '@/types';
 import { rutaOrden } from '../estados';
 import { useCrearOrden } from '../hooks/use-ordenes';
 import {
@@ -46,12 +46,30 @@ const FORM_ID = 'nueva-orden';
  * 1) cliente, 2) moto, 3) datos de ingreso, con la barra de pasos y «Continuar» abajo.
  * Si el cliente o la moto son nuevos, se registran sin salir de aquí (HU-29 alterno A, HU-26 alterno B).
  */
-export function NuevaOrdenForm({ clienteInicial }: { clienteInicial?: string }) {
+export function NuevaOrdenForm({
+  clienteInicial,
+  cita,
+}: {
+  clienteInicial?: string;
+  /** HU-58 · La moto llega a esta cita: arranca en el paso 3 con la moto y el motivo puestos */
+  cita?: Cita;
+}) {
   const navigate = useNavigate();
-  const [paso, setPaso] = useState(clienteInicial ? 1 : 0);
-  const [clienteId, setClienteId] = useState<string | null>(clienteInicial ?? null);
-  const [moto, setMoto] = useState<Moto | null>(null);
+  const [paso, setPaso] = useState(cita ? 2 : clienteInicial ? 1 : 0);
+  const [clienteId, setClienteId] = useState<string | null>(
+    cita?.cliente.publicId ?? clienteInicial ?? null,
+  );
+  const [motoElegida, setMoto] = useState<Moto | null>(null);
   const guardando = useIsMutating() > 0;
+
+  // HU-58 · Con cita, la moto sale de la ficha del cliente
+  const clienteCita = useCliente(cita?.cliente.publicId ?? '', Boolean(cita));
+  const motoCita = cita
+    ? (clienteCita.data?.motos.find((m) => m.publicId === cita.moto.publicId) ?? null)
+    : null;
+  const moto = motoElegida ?? motoCita;
+  // La cita solo se une a la orden si es de la moto que se recibe
+  const citaDeLaMoto = cita && moto?.publicId === cita.moto.publicId ? cita : undefined;
 
   const puedeSeguir = paso === 0 ? Boolean(clienteId) : Boolean(moto && !moto.ordenActiva);
 
@@ -85,7 +103,21 @@ export function NuevaOrdenForm({ clienteInicial }: { clienteInicial?: string }) 
         {paso === 1 && clienteId && (
           <ElegirMoto clientePublicId={clienteId} elegida={moto} onElegir={setMoto} />
         )}
-        {paso === 2 && moto && <DatosOrden key={moto.publicId} moto={moto} />}
+        {paso === 2 && cita && !moto && clienteCita.isPending && <SkeletonList rows={1} />}
+        {paso === 2 && moto?.ordenActiva && (
+          <Note icon="alert" tono="accent">
+            Esta moto ya tiene la orden #{moto.ordenActiva.numero} abierta.{' '}
+            <Link
+              className="font-semibold underline underline-offset-4"
+              to={rutaOrden('admin', moto.ordenActiva.publicId)}
+            >
+              Ver la orden
+            </Link>
+          </Note>
+        )}
+        {paso === 2 && moto && !moto.ordenActiva && (
+          <DatosOrden key={moto.publicId} moto={moto} cita={citaDeLaMoto} />
+        )}
       </Page>
       <ActionBar>
         {paso < 2 ? (
@@ -105,6 +137,8 @@ export function NuevaOrdenForm({ clienteInicial }: { clienteInicial?: string }) 
             form={FORM_ID}
             fullWidth
             icon="check"
+            // HU-58 · Desde una cita, la moto puede tener ya una orden abierta
+            disabled={!moto || Boolean(moto.ordenActiva)}
             loading={guardando}
           >
             Crear orden
@@ -251,7 +285,7 @@ function ElegirMoto({
   );
 }
 
-function DatosOrden({ moto }: { moto: Moto }) {
+function DatosOrden({ moto, cita }: { moto: Moto; cita?: Cita }) {
   const navigate = useNavigate();
   const equipo = useEquipo();
   const crear = useCrearOrden();
@@ -270,7 +304,8 @@ function DatosOrden({ moto }: { moto: Moto }) {
     mode: 'onTouched',
     defaultValues: {
       mecanicoPublicId: '',
-      motivoIngreso: '',
+      // HU-58 · Con cita, el motivo ya viene puesto
+      motivoIngreso: cita ? [cita.motivo, cita.detalle].filter(Boolean).join(': ') : '',
       kilometrajeIngreso: String(moto.kilometraje),
       observaciones: '',
       fechaEstimadaEntrega: '',
@@ -291,6 +326,7 @@ function DatosOrden({ moto }: { moto: Moto }) {
         motoPublicId: moto.publicId,
         observaciones: datos.observaciones || undefined,
         fechaEstimadaEntrega: datos.fechaEstimadaEntrega || undefined,
+        citaPublicId: cita?.publicId,
       });
       toast(`Orden #${orden.numero} creada`, 'success');
       navigate(rutaOrden('admin', orden.publicId), { replace: true });
@@ -314,6 +350,11 @@ function DatosOrden({ moto }: { moto: Moto }) {
   return (
     <form id={FORM_ID} onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       {errorGeneral && <Alert>{errorGeneral}</Alert>}
+      {cita && (
+        <Note icon="calendar">
+          Cita de {formatFechaHora(cita.fechaHora)}. Al crear la orden, la cita queda atendida.
+        </Note>
+      )}
       <Textarea
         label="Motivo de ingreso"
         required

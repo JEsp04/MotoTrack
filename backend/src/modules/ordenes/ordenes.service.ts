@@ -387,6 +387,33 @@ export async function obtenerOrden(usuario: UsuarioAutenticado, publicId: string
 
 // ─── HU-29 · Crear ─────────────────────────────────────────────────────────
 
+const CITA_YA_CERRADA = 'Esa cita ya fue atendida o cancelada. Recibe la moto sin la cita';
+
+/**
+ * HU-58 · La cita con que llega la moto: del taller, de esa misma moto y todavía
+ * programada o confirmada.
+ */
+async function citaDeLlegada(tallerId: number, publicId: string, motocicletaId: number) {
+  const noEncontrada = () =>
+    new HttpError(404, 'No encontramos esa cita', [
+      { field: 'citaPublicId', message: 'No encontramos esa cita' },
+    ]);
+  if (!esPublicId(publicId)) throw noEncontrada();
+  const cita = await prisma.cita.findFirst({
+    where: { publicId, tallerId },
+    select: { citaId: true, estado: true, motocicletaId: true },
+  });
+  if (!cita) throw noEncontrada();
+  if (cita.motocicletaId !== motocicletaId) {
+    const msg = 'La cita es de otra moto';
+    throw HttpError.badRequest(msg, [{ field: 'citaPublicId', message: msg }]);
+  }
+  if (cita.estado !== 'programada' && cita.estado !== 'confirmada') {
+    throw HttpError.conflict(CITA_YA_CERRADA);
+  }
+  return cita;
+}
+
 export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenInput) {
   const { tallerId } = usuario;
   const moto = await prisma.moto.findFirst({
@@ -424,6 +451,9 @@ export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenI
   }
 
   const fechaEstimadaEntrega = exigirEntregaValida(input.fechaEstimadaEntrega, new Date());
+  const cita = input.citaPublicId
+    ? await citaDeLlegada(tallerId, input.citaPublicId, moto.motocicletaId)
+    : null;
 
   // El número es consecutivo por taller. Si dos órdenes se crean a la vez y chocan,
   // la llave única (tallerId, numero) lo detecta y se reintenta.
@@ -466,6 +496,14 @@ export async function crearOrden(usuario: UsuarioAutenticado, input: CrearOrdenI
           a: 'registrada',
           observacion: null,
         });
+        // HU-58 · La moto llegó a su cita: la cita queda atendida y relacionada con la orden
+        if (cita) {
+          const marcada = await tx.cita.updateMany({
+            where: { citaId: cita.citaId, estado: { in: ['programada', 'confirmada'] } },
+            data: { estado: 'atendida', ordenServicioId: orden.ordenServicioId },
+          });
+          if (marcada.count === 0) throw HttpError.conflict(CITA_YA_CERRADA);
+        }
         return orden.ordenServicioId;
       });
       return detalle(usuario, id);

@@ -23,6 +23,8 @@ export interface NuevaOrdenBody {
   observaciones?: string;
   /** HU-62 · «AAAA-MM-DD» */
   fechaEstimadaEntrega?: string;
+  /** HU-58 · La cita con que llegó la moto: queda atendida y unida a la orden */
+  citaPublicId?: string;
 }
 
 /** HU-89 · Calificación del cliente */

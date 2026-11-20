@@ -110,6 +110,8 @@ function useAlGuardar() {
       qc.invalidateQueries({ queryKey: ['motos'] }),
       qc.invalidateQueries({ queryKey: ['clientes'] }),
       qc.invalidateQueries({ queryKey: ['repuestos'] }),
+      // HU-58 · Al recibir la moto de una cita, la cita queda atendida
+      qc.invalidateQueries({ queryKey: ['citas'] }),
     ]);
   };
 }

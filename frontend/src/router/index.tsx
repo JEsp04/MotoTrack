@@ -118,6 +118,8 @@ export const routes: RouteObject[] = [
           },
           // HU-89 · Reseñas de los clientes
           { path: 'resenas', element: page(() => import('@/pages/admin/ResenasPage')) },
+          // HU-58 · Agenda de citas
+          { path: 'citas', element: page(() => import('@/pages/admin/CitasPage')) },
         ],
       },
 
@@ -132,6 +134,8 @@ export const routes: RouteObject[] = [
           { path: 'perfil', element: perfil },
           // HU-86 · «Más» del mecánico en celular; «Mi cuenta» queda en /mecanico/perfil
           { path: 'mas', element: perfil },
+          // HU-58 · Agenda de citas en solo lectura
+          { path: 'citas', element: page(() => import('@/pages/mecanico/CitasPage')) },
         ],
       },
 
