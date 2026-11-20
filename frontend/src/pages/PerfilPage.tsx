@@ -4,6 +4,7 @@ import { AppBar, Badge, Card, DataList, Initials, List, ListItem, Page } from '@
 import {
   CambiarPasswordSheet,
   EditarPerfilSheet,
+  MisTalleres,
   ROL_LABEL,
   useSalir,
   useSession,
@@ -16,7 +17,7 @@ import { formatPromedio } from '@/lib/resenas';
 import type { Usuario } from '@/types';
 
 /**
- * HU-22, HU-50, HU-73, HU-86, HU-89 · Dos pantallas en una página:
+ * HU-22, HU-50, HU-73, HU-86, HU-89, HU-91 · Dos pantallas en una página:
  * - «Más» del taller (MoreScreen del prototipo) en `/admin/mas` y `/mecanico/mas`: menú móvil.
  *   Para el admin, arriba va la tarjeta del taller, que abre «Datos del taller» (HU-73).
  * - «Mi cuenta» en `/<rol>/perfil` para los 3 roles (HU-86): datos personales, «Editar mis
@@ -181,6 +182,8 @@ function MiCuenta({ usuario }: { usuario: Usuario }) {
             />
           )}
         </List>
+        {/* HU-91 · El cliente puede usar su cuenta en varios talleres */}
+        {esCliente && <MisTalleres />}
         <List>
           <CerrarSesion />
         </List>

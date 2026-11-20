@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { toast } from '@/lib/toast';
 import {
@@ -99,5 +99,36 @@ export function useTalleresPublicos() {
     queryKey: ['talleres', 'publicos'],
     queryFn: authApi.talleresPublicos,
     staleTime: 5 * 60_000,
+  });
+}
+
+const CLAVE_MIS_TALLERES = ['auth', 'talleres'] as const;
+
+/** HU-91 · Talleres de la cuenta del cliente (el activo marcado) */
+export function useMisTalleres(activo = true) {
+  return useQuery({ queryKey: CLAVE_MIS_TALLERES, queryFn: authApi.misTalleres, enabled: activo });
+}
+
+/** HU-91 · Agregar otro taller a la cuenta */
+export function useVincularTaller() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (tallerPublicId: string) => authApi.vincularTaller(tallerPublicId),
+    onSuccess: (talleres) => qc.setQueryData(CLAVE_MIS_TALLERES, talleres),
+  });
+}
+
+/**
+ * HU-91 · Cambia el taller activo: sesión nueva y se vuelven a pedir los datos (motos, órdenes,
+ * avisos) del otro taller.
+ */
+export function useCambiarTaller() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (tallerPublicId: string) => authApi.cambiarTaller(tallerPublicId),
+    onSuccess: async (sesion) => {
+      guardarSesion(sesion);
+      await qc.resetQueries();
+    },
   });
 }

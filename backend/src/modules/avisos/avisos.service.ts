@@ -81,8 +81,10 @@ export async function crearAvisosDeEstado(
 
 /** GET /api/avisos · Solo los del usuario que pregunta, del más nuevo al más viejo */
 export async function listarAvisos(usuario: UsuarioAutenticado, query: ListarAvisosQuery) {
+  // HU-91 · Un cliente en varios talleres ve los avisos del taller activo
   const where = {
     usuarioId: usuario.usuarioId,
+    tallerId: usuario.tallerId,
     ...(query.noLeidos ? { leido: false } : {}),
   };
   const [data, total, noLeidos] = await Promise.all([
@@ -94,7 +96,9 @@ export async function listarAvisos(usuario: UsuarioAutenticado, query: ListarAvi
       take: query.limit,
     }),
     prisma.aviso.count({ where }),
-    prisma.aviso.count({ where: { usuarioId: usuario.usuarioId, leido: false } }),
+    prisma.aviso.count({
+      where: { usuarioId: usuario.usuarioId, tallerId: usuario.tallerId, leido: false },
+    }),
   ]);
   return { data, meta: { page: query.page, limit: query.limit, total, noLeidos } };
 }
@@ -113,7 +117,7 @@ export async function marcarLeido(usuario: UsuarioAutenticado, publicId: string)
 /** POST /api/avisos/leer-todos */
 export async function leerTodos(usuario: UsuarioAutenticado) {
   const { count } = await prisma.aviso.updateMany({
-    where: { usuarioId: usuario.usuarioId, leido: false },
+    where: { usuarioId: usuario.usuarioId, tallerId: usuario.tallerId, leido: false },
     data: { leido: true },
   });
   return { actualizados: count };

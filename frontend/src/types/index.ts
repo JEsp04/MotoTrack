@@ -271,6 +271,13 @@ export interface SeguimientoPublico {
   }>;
 }
 
+/** HU-91 · Un taller donde la cuenta del cliente tiene ficha; `activo` es el que está viendo */
+export interface TallerCliente {
+  publicId: string;
+  nombre: string;
+  activo: boolean;
+}
+
 /** HU-89 · Seguimiento de una reseña por parte del taller */
 export type EstadoResena = 'pendiente' | 'revisada' | 'adaptada';
 
