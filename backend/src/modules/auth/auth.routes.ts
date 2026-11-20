@@ -12,5 +12,8 @@ router.post('/login', auth.login);
 router.post('/refresh', auth.refresh);
 router.post('/logout', auth.logout);
 router.get('/me', requireAuth, auth.me);
+// HU-86 · Autogestión de la cuenta
+router.patch('/perfil', requireAuth, auth.actualizarPerfil);
+router.patch('/password', requireAuth, auth.cambiarPassword);
 
 export default router;

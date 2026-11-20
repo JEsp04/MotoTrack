@@ -24,7 +24,7 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
       icon: 'clipboard',
     },
     { to: '/mecanico/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
-    { to: '/mecanico/perfil', label: 'Más', icon: 'menu', donde: 'celular' },
+    { to: '/mecanico/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],
   cliente: [
     { to: '/cliente', label: 'Inicio', icon: 'home', end: true },

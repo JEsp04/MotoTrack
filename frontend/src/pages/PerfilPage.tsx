@@ -1,21 +1,31 @@
-import { AppBar, Badge, Initials, List, ListItem, Page } from '@/components/ui';
-import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import { AppBar, Badge, Card, DataList, Initials, List, ListItem, Page } from '@/components/ui';
+import {
+  CambiarPasswordSheet,
+  EditarPerfilSheet,
+  ROL_LABEL,
+  useSalir,
+  useSession,
+} from '@/features/auth';
 import { useMotos } from '@/features/motos';
 import { useResumenInventario } from '@/features/repuestos';
 import { TarjetaTaller } from '@/features/taller';
 import type { Usuario } from '@/types';
 
 /**
- * HU-22, HU-50, HU-73 · «Más» del taller (MoreScreen del prototipo) y «Mi cuenta» del cliente
- * (ClientAccountScreen). En celular aquí está «Cerrar sesión».
- * Para el admin, arriba va la tarjeta del taller, que abre «Datos del taller» (HU-73).
- * Las demás opciones del prototipo (Inventario, Citas, Reportes, Tema oscuro) se agregan
- * cuando su historia esté unida.
+ * HU-22, HU-50, HU-73, HU-86 · Dos pantallas en una página:
+ * - «Más» del taller (MoreScreen del prototipo) en `/admin/mas` y `/mecanico/mas`: menú móvil.
+ *   Para el admin, arriba va la tarjeta del taller, que abre «Datos del taller» (HU-73).
+ * - «Mi cuenta» en `/<rol>/perfil` para los 3 roles (HU-86): datos personales, «Editar mis
+ *   datos» y «Cambiar contraseña». En celular aquí también está «Cerrar sesión».
  */
 export default function PerfilPage() {
   const usuario = useSession((s) => s.usuario);
+  const { pathname } = useLocation();
   if (!usuario) return null;
-  return usuario.rol === 'cliente' ? <MiCuenta usuario={usuario} /> : <Mas usuario={usuario} />;
+  if (usuario.rol !== 'cliente' && pathname.endsWith('/mas')) return <Mas usuario={usuario} />;
+  return <MiCuenta usuario={usuario} />;
 }
 
 function Perfil({ nombre, detalle }: { nombre: string; detalle: string }) {
@@ -62,6 +72,15 @@ function Mas({ usuario }: { usuario: Usuario }) {
             detalle={`${ROL_LABEL[usuario.rol]} · ${usuario.taller.nombre}`}
           />
         )}
+        {/* HU-86 · «Mi cuenta» es su propia pantalla */}
+        <List>
+          <ListItem
+            icon="user"
+            title="Mi cuenta"
+            subtitle="Mis datos y contraseña"
+            to={`/${usuario.rol}/perfil`}
+          />
+        </List>
         {admin ? (
           <List>
             <ListItem icon="users" title="Clientes y motos" to="/admin/clientes" />
@@ -93,23 +112,59 @@ function Mas({ usuario }: { usuario: Usuario }) {
 }
 
 function MiCuenta({ usuario }: { usuario: Usuario }) {
-  const motos = useMotos();
+  const esCliente = usuario.rol === 'cliente';
+  const motos = useMotos({}, esCliente);
   const placas = (motos.data?.data ?? []).map((m) => m.placa).join(' · ');
+  const [editando, setEditando] = useState(false);
+  const [cambiandoClave, setCambiandoClave] = useState(false);
+  const navigate = useNavigate();
+  const { key } = useLocation();
+  // El taller llega desde «Más» (celular) o el menú del avatar; el cliente la tiene en su menú
+  const volver = esCliente
+    ? undefined
+    : () => void (key === 'default' ? navigate(`/${usuario.rol}/mas`) : navigate(-1));
   return (
     <>
-      <AppBar title="Mi cuenta" />
-      <Page>
-        <Perfil nombre={usuario.nombre} detalle={usuario.telefono || usuario.email} />
-        <List>
-          <ListItem
-            icon="moto"
-            title="Mis motos"
-            subtitle={motos.isSuccess ? placas || 'Sin motos' : undefined}
-            to="/cliente"
+      <AppBar title="Mi cuenta" onBack={volver} />
+      <Page narrow>
+        <Perfil
+          nombre={usuario.nombre}
+          detalle={`${ROL_LABEL[usuario.rol]} · ${usuario.taller.nombre}`}
+        />
+        <Card title="Mis datos">
+          <DataList
+            items={[
+              ['Nombre', usuario.nombre],
+              ['Correo', usuario.email],
+              ['Celular', usuario.telefono || 'Sin celular'],
+              ['Rol', ROL_LABEL[usuario.rol]],
+              ['Taller', usuario.taller.nombre],
+            ]}
           />
+        </Card>
+        <List label="Mi cuenta">
+          <ListItem icon="edit" title="Editar mis datos" onClick={() => setEditando(true)} />
+          <ListItem
+            icon="lock"
+            title="Cambiar contraseña"
+            subtitle="Cierra tu sesión en los demás dispositivos"
+            onClick={() => setCambiandoClave(true)}
+          />
+          {esCliente && (
+            <ListItem
+              icon="moto"
+              title="Mis motos"
+              subtitle={motos.isSuccess ? placas || 'Sin motos' : undefined}
+              to="/cliente"
+            />
+          )}
+        </List>
+        <List>
           <CerrarSesion />
         </List>
       </Page>
+      <EditarPerfilSheet open={editando} usuario={usuario} onClose={() => setEditando(false)} />
+      <CambiarPasswordSheet open={cambiandoClave} onClose={() => setCambiandoClave(false)} />
     </>
   );
 }

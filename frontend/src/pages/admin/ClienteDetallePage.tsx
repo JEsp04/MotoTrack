@@ -19,7 +19,8 @@ import {
   StatusBadge,
 } from '@/components/ui';
 import { useSession } from '@/features/auth';
-import { ClienteSheet, useCliente } from '@/features/clientes';
+import { ClienteSheet, clientesApi, useCliente } from '@/features/clientes';
+import { RestablecerClaveSheet } from '@/features/equipo';
 import { MotoSheet } from '@/features/motos';
 import { parseApiError } from '@/lib/api-error';
 import { enlaceTelefono, enlaceWhatsApp } from '@/lib/whatsapp';
@@ -32,6 +33,7 @@ export default function ClienteDetallePage() {
   const cliente = useCliente(id);
   const taller = useSession((s) => s.usuario?.taller.nombre) ?? 'el taller';
   const [editando, setEditando] = useState(false);
+  const [restableciendo, setRestableciendo] = useState(false);
   const [motoSheet, setMotoSheet] = useState<{ open: boolean; moto: Moto | null }>({
     open: false,
     moto: null,
@@ -126,6 +128,17 @@ export default function ClienteDetallePage() {
               ['App MotoTrack', c.tieneCuenta ? 'Ya usa la app' : 'Aún no se registra'],
             ]}
           />
+          {/* HU-86 · Si olvidó su contraseña, el taller le genera una clave temporal */}
+          {c.tieneCuenta && (
+            <Button
+              variant="secondary"
+              icon="lock"
+              className="mt-3 w-full"
+              onClick={() => setRestableciendo(true)}
+            >
+              Restablecer contraseña
+            </Button>
+          )}
         </Card>
 
         <h2 className="text-lg leading-6 font-semibold tracking-[-0.02em]">Motocicletas</h2>
@@ -195,6 +208,13 @@ export default function ClienteDetallePage() {
       </Page>
 
       <ClienteSheet open={editando} cliente={c} onClose={() => setEditando(false)} />
+      <RestablecerClaveSheet
+        open={restableciendo}
+        nombre={c.nombre}
+        taller={taller}
+        restablecer={() => clientesApi.restablecerClave(c.publicId)}
+        onClose={() => setRestableciendo(false)}
+      />
       <MotoSheet
         open={motoSheet.open}
         moto={motoSheet.moto}

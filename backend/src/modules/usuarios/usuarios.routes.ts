@@ -9,5 +9,6 @@ router.use(requireAuth, requireRole('admin'));
 router.get('/', usuarios.listar);
 router.post('/', usuarios.crear);
 router.patch('/:id', usuarios.actualizar);
+router.post('/:id/reset-password', usuarios.restablecerClave);
 
 export default router;

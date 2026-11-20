@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../../config/prisma.js';
 import { Prisma } from '../../generated/prisma/client.js';
@@ -8,7 +9,13 @@ import {
   estadoVisible,
   MENSAJE_ESTADO,
 } from '../invitaciones/invitaciones.service.js';
-import type { LoginInput, RegisterClienteInput, RegisterTallerInput } from './auth.schemas.js';
+import type {
+  ActualizarPerfilInput,
+  CambiarPasswordInput,
+  LoginInput,
+  RegisterClienteInput,
+  RegisterTallerInput,
+} from './auth.schemas.js';
 import {
   firmarAccessToken,
   generarRefreshToken,
@@ -331,4 +338,115 @@ export async function obtenerPerfil(usuarioId: number, tallerId: number) {
   });
   if (!usuario) throw HttpError.unauthorized('Tu sesión terminó. Ingresa de nuevo.');
   return aPublico(usuario);
+}
+
+// ─── HU-86 · Autogestión de perfil y contraseña ───────────────────────────
+
+/**
+ * PATCH /api/auth/perfil · El usuario cambia su nombre, correo o celular.
+ * Si es cliente, su ficha en el taller (Cliente) queda con los mismos datos.
+ */
+export async function actualizarPerfil(
+  usuarioId: number,
+  tallerId: number,
+  input: ActualizarPerfilInput,
+) {
+  const actual = await prisma.usuario.findFirst({
+    where: { usuarioId, tallerId, estado: 'activo' },
+    select: { rol: true, email: true },
+  });
+  if (!actual) throw HttpError.unauthorized('Tu sesión terminó. Ingresa de nuevo.');
+  if (actual.rol === 'cliente' && input.telefono === null) {
+    const msg = 'Tu celular es obligatorio: el taller lo usa para avisarte';
+    throw HttpError.badRequest('Datos inválidos', [{ field: 'telefono', message: msg }]);
+  }
+  if (input.email && input.email !== actual.email) await correoDisponible(input.email);
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const usuario = await tx.usuario.update({
+        where: { usuarioId },
+        data: { nombre: input.nombre, email: input.email, telefono: input.telefono },
+        select: usuarioSesion,
+      });
+      if (usuario.rol === 'cliente') {
+        await tx.cliente.updateMany({
+          where: { usuarioId, tallerId },
+          data: {
+            nombre: input.nombre,
+            email: input.email,
+            telefono: input.telefono ?? undefined,
+          },
+        });
+      }
+      return aPublico(usuario);
+    });
+  } catch (error) {
+    if (esCorreoDuplicado(error))
+      throw new HttpError(409, CORREO_REGISTRADO, [{ field: 'email', message: CORREO_REGISTRADO }]);
+    throw error;
+  }
+}
+
+/**
+ * PATCH /api/auth/password · Verifica la actual, guarda la nueva y cierra todas las sesiones
+ * anteriores. Devuelve una sesión nueva para que este dispositivo siga conectado.
+ */
+export async function cambiarPassword(
+  usuarioId: number,
+  tallerId: number,
+  input: CambiarPasswordInput,
+): Promise<Sesion> {
+  const usuario = await prisma.usuario.findFirst({
+    where: { usuarioId, tallerId, estado: 'activo' },
+    select: { ...usuarioSesion, passwordHash: true },
+  });
+  if (!usuario) throw HttpError.unauthorized('Tu sesión terminó. Ingresa de nuevo.');
+  if (!(await bcrypt.compare(input.passwordActual, usuario.passwordHash))) {
+    const msg = 'La contraseña actual no es correcta';
+    throw HttpError.badRequest(msg, [{ field: 'passwordActual', message: msg }]);
+  }
+  const passwordHash = await bcrypt.hash(input.passwordNueva, BCRYPT_COSTO);
+  await prisma.$transaction([
+    prisma.usuario.update({ where: { usuarioId }, data: { passwordHash } }),
+    prisma.refreshToken.updateMany({
+      where: { usuarioId, revocadoEn: null },
+      data: { revocadoEn: new Date() },
+    }),
+  ]);
+  const { passwordHash: _hash, ...publico } = usuario;
+  return abrirSesion(publico);
+}
+
+/** Sin 0/O ni 1/l/I para que se pueda dictar por teléfono sin confusiones */
+const LETRAS = 'abcdefghjkmnpqrstuvwxyz';
+const DIGITOS = '23456789';
+
+/** Clave temporal de 8 caracteres con al menos una letra y un número (cumple passwordSchema) */
+export function claveTemporal() {
+  const todos = LETRAS + DIGITOS;
+  const chars = [LETRAS[randomInt(LETRAS.length)]!, DIGITOS[randomInt(DIGITOS.length)]!];
+  while (chars.length < 8) chars.push(todos[randomInt(todos.length)]!);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j]!, chars[i]!];
+  }
+  return chars.join('');
+}
+
+/**
+ * HU-86 · El admin restablece la clave de alguien de su taller: guarda una temporal, cierra
+ * sus sesiones y la devuelve para entregarla por WhatsApp o en persona (sin costo).
+ */
+export async function restablecerPassword(usuarioId: number) {
+  const clave = claveTemporal();
+  const passwordHash = await bcrypt.hash(clave, BCRYPT_COSTO);
+  await prisma.$transaction([
+    prisma.usuario.update({ where: { usuarioId }, data: { passwordHash } }),
+    prisma.refreshToken.updateMany({
+      where: { usuarioId, revocadoEn: null },
+      data: { revocadoEn: new Date() },
+    }),
+  ]);
+  return clave;
 }

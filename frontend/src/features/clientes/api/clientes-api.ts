@@ -1,5 +1,11 @@
 import { http } from '@/lib/http';
-import type { ApiList, ApiResponse, ClienteDetalle, ClienteResumen } from '@/types';
+import type {
+  ApiList,
+  ApiResponse,
+  ClaveRestablecida,
+  ClienteDetalle,
+  ClienteResumen,
+} from '@/types';
 
 export interface NuevoClienteBody {
   nombre: string;
@@ -31,4 +37,10 @@ export const clientesApi = {
 
   actualizar: (publicId: string, body: EditarClienteBody) =>
     http.patch<ApiResponse<ClienteResumen>>(`/clientes/${publicId}`, body).then((r) => r.data.data),
+
+  /** HU-86 · Clave temporal para un cliente que ya tiene cuenta */
+  restablecerClave: (publicId: string) =>
+    http
+      .post<ApiResponse<ClaveRestablecida>>(`/clientes/${publicId}/reset-password`)
+      .then((r) => r.data.data),
 };

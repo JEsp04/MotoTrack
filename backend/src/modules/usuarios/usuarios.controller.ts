@@ -24,3 +24,9 @@ export async function actualizar(req: Request<{ id: string }>, res: Response) {
   const input = actualizarMecanicoSchema.parse(req.body);
   res.json({ data: await usuariosService.actualizarMecanico(tallerId, req.params.id, input) });
 }
+
+/** HU-86 · Restablecer la contraseña de un integrante */
+export async function restablecerClave(req: Request<{ id: string }>, res: Response) {
+  const admin = usuarioActual(req);
+  res.json({ data: await usuariosService.restablecerClaveIntegrante(admin, req.params.id) });
+}

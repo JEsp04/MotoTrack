@@ -14,6 +14,8 @@ vi.mock('./api/auth-api', () => ({
     refresh: vi.fn(),
     logout: vi.fn(),
     talleresPublicos: vi.fn(),
+    actualizarPerfil: vi.fn(),
+    cambiarPassword: vi.fn(),
   },
 }));
 
@@ -226,8 +228,8 @@ describe('HU-22 · Cerrar sesión', () => {
     api.logout.mockResolvedValue(undefined);
     sesionDePrueba('admin');
     const router = abrirApp('/admin/perfil');
-    await screen.findByRole('heading', { name: 'Más' });
-    // En «Más» (celular) y en el menú del avatar (computador) hay botón de salir
+    await screen.findByRole('heading', { name: 'Mi cuenta' });
+    // En «Mi cuenta» y en el menú del avatar (computador) hay botón de salir
     const botones = screen.getAllByRole('button', { name: 'Cerrar sesión' });
     await userEvent.click(botones[botones.length - 1]!);
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
@@ -308,5 +310,74 @@ describe('HU-83 · Coherencia de landing, acceso y registro', () => {
         screen.queryByRole('dialog', { name: 'Términos y tratamiento de datos' }),
       ).not.toBeInTheDocument(),
     );
+  });
+});
+
+describe('HU-86 · Mi cuenta', () => {
+  it('edita sus datos y la sesión muestra el nombre nuevo', async () => {
+    sesionDePrueba('mecanico');
+    api.actualizarPerfil.mockResolvedValue({
+      ...USUARIOS_PRUEBA.mecanico,
+      nombre: 'Andrés Felipe Gómez',
+      telefono: '3001112233',
+    });
+    abrirApp('/mecanico/perfil');
+    await screen.findByRole('heading', { name: 'Mi cuenta' });
+    await userEvent.click(screen.getByRole('button', { name: /Editar mis datos/ }));
+    const dialogo = await screen.findByRole('dialog', { name: /Editar mis datos/ });
+    const d = within(dialogo);
+    const nombre = d.getByLabelText(/Nombre completo/);
+    expect(nombre).toHaveValue('Andrés Gómez');
+    await userEvent.clear(nombre);
+    await userEvent.type(nombre, 'Andrés Felipe Gómez');
+    await userEvent.type(d.getByLabelText(/Celular/), '3001112233');
+    await userEvent.click(d.getByRole('button', { name: 'Guardar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(api.actualizarPerfil).toHaveBeenCalledWith(
+      expect.objectContaining({ nombre: 'Andrés Felipe Gómez', telefono: '3001112233' }),
+    );
+    expect(useSession.getState().usuario?.nombre).toBe('Andrés Felipe Gómez');
+    expect(useSession.getState().accessToken).toBe('token-mecanico');
+  });
+
+  it('con la contraseña actual equivocada marca el campo y no cierra la hoja', async () => {
+    sesionDePrueba('admin');
+    api.cambiarPassword.mockRejectedValue(
+      errorApi(400, {
+        message: 'La contraseña actual no es correcta',
+        errors: [{ field: 'passwordActual', message: 'La contraseña actual no es correcta' }],
+      }),
+    );
+    abrirApp('/admin/perfil');
+    await screen.findByRole('heading', { name: 'Mi cuenta' });
+    await userEvent.click(screen.getByRole('button', { name: /Cambiar contraseña/ }));
+    const dialogo = await screen.findByRole('dialog', { name: /Cambiar contraseña/ });
+    const d = within(dialogo);
+    await userEvent.type(d.getByLabelText(/Contraseña actual/), 'Mala12345');
+    await userEvent.type(d.getByLabelText(/^Contraseña nueva/), 'Nueva12345');
+    await userEvent.type(d.getByLabelText(/Repite la contraseña nueva/), 'Nueva12345');
+    await userEvent.click(d.getByRole('button', { name: 'Cambiar' }));
+
+    expect(await d.findByText('La contraseña actual no es correcta')).toBeInTheDocument();
+    expect(d.getByLabelText(/Contraseña actual/)).toHaveAttribute('aria-invalid', 'true');
+    expect(api.cambiarPassword).toHaveBeenCalledWith({
+      passwordActual: 'Mala12345',
+      passwordNueva: 'Nueva12345',
+    });
+  });
+
+  it('la confirmación distinta no se envía', async () => {
+    sesionDePrueba('cliente');
+    abrirApp('/cliente/perfil');
+    await screen.findByRole('heading', { name: 'Mi cuenta' });
+    await userEvent.click(screen.getByRole('button', { name: /Cambiar contraseña/ }));
+    const d = within(await screen.findByRole('dialog', { name: /Cambiar contraseña/ }));
+    await userEvent.type(d.getByLabelText(/Contraseña actual/), 'Actual12345');
+    await userEvent.type(d.getByLabelText(/^Contraseña nueva/), 'Nueva12345');
+    await userEvent.type(d.getByLabelText(/Repite la contraseña nueva/), 'Otra12345');
+    await userEvent.click(d.getByRole('button', { name: 'Cambiar' }));
+    expect(await d.findByText(/no coinciden/)).toBeInTheDocument();
+    expect(api.cambiarPassword).not.toHaveBeenCalled();
   });
 });

@@ -16,9 +16,12 @@ import {
   SkeletonList,
   Tabs,
 } from '@/components/ui';
+import { useSession } from '@/features/auth';
 import {
+  equipoApi,
   InvitacionesLista,
   NuevoMecanicoSheet,
+  RestablecerClaveSheet,
   useCambiarEstado,
   useEquipo,
   useInvitaciones,
@@ -161,7 +164,10 @@ export default function EquipoPage() {
   );
 }
 
-/** Hoja con el estado de un mecánico y el botón para activarlo o desactivarlo */
+/**
+ * Hoja con el estado de un mecánico y el botón para activarlo o desactivarlo. HU-86: si está
+ * activo, también se le puede restablecer la contraseña (clave temporal por WhatsApp).
+ */
 function OpcionesMecanico({
   mecanico,
   onClose,
@@ -170,8 +176,27 @@ function OpcionesMecanico({
   onClose: () => void;
 }) {
   const cambiar = useCambiarEstado();
+  const taller = useSession((s) => s.usuario?.taller.nombre) ?? 'el taller';
+  const [restableciendo, setRestableciendo] = useState(false);
   if (!mecanico) return null;
   const activo = mecanico.estado === 'activo';
+
+  function cerrar() {
+    setRestableciendo(false);
+    onClose();
+  }
+
+  if (restableciendo) {
+    return (
+      <RestablecerClaveSheet
+        open
+        nombre={mecanico.nombre}
+        taller={taller}
+        restablecer={() => equipoApi.restablecerClave(mecanico.publicId)}
+        onClose={cerrar}
+      />
+    );
+  }
 
   async function alternar() {
     if (!mecanico) return;
@@ -228,6 +253,11 @@ function OpcionesMecanico({
         <p className="text-sm leading-5 text-ink-muted">
           Si lo desactivas, ya no podrá ingresar. Sus órdenes e historial se conservan.
         </p>
+      )}
+      {activo && (
+        <Button variant="secondary" icon="lock" onClick={() => setRestableciendo(true)}>
+          Restablecer contraseña
+        </Button>
       )}
     </BottomSheet>
   );

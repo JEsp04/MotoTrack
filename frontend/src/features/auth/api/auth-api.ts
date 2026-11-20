@@ -42,6 +42,18 @@ export interface RegistroInvitacionBody {
   aceptaTerminos: true;
 }
 
+/** HU-86 · Campo ausente = no cambia; teléfono '' lo borra (solo personal del taller) */
+export interface PerfilBody {
+  nombre?: string;
+  email?: string;
+  telefono?: string;
+}
+
+export interface CambiarPasswordBody {
+  passwordActual: string;
+  passwordNueva: string;
+}
+
 /** Llamadas a /api/auth (docs/HISTORIAS.md, HU-13 a HU-18). */
 export const authApi = {
   login: (body: LoginBody) =>
@@ -68,6 +80,14 @@ export const authApi = {
     http
       .get<ApiResponse<InvitacionValidada>>(`/invitaciones/codigo/${encodeURIComponent(codigo)}`)
       .then((r) => r.data.data),
+
+  /** HU-86 · Editar mis datos */
+  actualizarPerfil: (body: PerfilBody) =>
+    http.patch<ApiResponse<Usuario>>('/auth/perfil', body).then((r) => r.data.data),
+
+  /** HU-86 · Cambiar mi contraseña: devuelve una sesión nueva (las demás se cierran) */
+  cambiarPassword: (body: CambiarPasswordBody) =>
+    http.patch<ApiResponse<SesionResponse>>('/auth/password', body).then((r) => r.data.data),
 
   talleresPublicos: () =>
     http.get<ApiResponse<TallerPublico[]>>('/talleres/publicos').then((r) => r.data.data),

@@ -2,8 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motosApi, type FiltroMotos, type MotoBody } from '../api/motos-api';
 
 /** Lista de motos. Para el cliente son solo las suyas (HU-27). */
-export function useMotos(filtro: FiltroMotos = {}) {
-  return useQuery({ queryKey: ['motos', filtro], queryFn: () => motosApi.listar(filtro) });
+export function useMotos(filtro: FiltroMotos = {}, activo = true) {
+  return useQuery({
+    queryKey: ['motos', filtro],
+    queryFn: () => motosApi.listar(filtro),
+    enabled: activo,
+  });
 }
 
 /** Al guardar una moto cambian las listas de motos y el detalle del cliente */

@@ -4,6 +4,7 @@ import type { Prisma, Rol } from '../../generated/prisma/client.js';
 import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
+import { restablecerPassword } from '../auth/auth.service.js';
 import type { ActualizarMecanicoInput, CrearMecanicoInput } from './usuarios.schemas.js';
 
 const BCRYPT_COSTO = 12;
@@ -94,4 +95,26 @@ export async function actualizarMecanico(
     }
     return actualizado;
   });
+}
+
+/**
+ * POST /api/usuarios/:id/reset-password (HU-86) · Clave temporal para un integrante del
+ * equipo. El admin no se la restablece a sí mismo: para eso está «Cambiar contraseña».
+ */
+export async function restablecerClaveIntegrante(
+  admin: { usuarioId: number; tallerId: number },
+  publicId: string,
+) {
+  const NO_ESTA = 'No encontramos a esa persona en tu equipo';
+  if (!esPublicId(publicId)) throw HttpError.notFound(NO_ESTA);
+  const usuario = await prisma.usuario.findFirst({
+    where: { publicId, tallerId: admin.tallerId, rol: { in: ['admin', 'mecanico'] } },
+    select: { usuarioId: true, nombre: true, telefono: true },
+  });
+  if (!usuario) throw HttpError.notFound(NO_ESTA);
+  if (usuario.usuarioId === admin.usuarioId) {
+    throw HttpError.conflict('Para tu propia clave usa «Cambiar contraseña» en Mi cuenta');
+  }
+  const claveTemporal = await restablecerPassword(usuario.usuarioId);
+  return { nombre: usuario.nombre, telefono: usuario.telefono, claveTemporal };
 }

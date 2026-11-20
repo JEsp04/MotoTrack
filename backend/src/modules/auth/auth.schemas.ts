@@ -3,6 +3,7 @@ import {
   documentoSchema,
   emailSchema,
   passwordSchema,
+  telefonoEditable,
   telefonoSchema,
   texto,
 } from '../../utils/schemas.js';
@@ -51,6 +52,31 @@ export const loginSchema = z.object({
     .max(72, 'La contraseña admite máximo 72 caracteres'),
 });
 
+/** PATCH /api/auth/perfil (HU-86). Campo ausente = no cambia; teléfono '' o null lo borra. */
+export const actualizarPerfilSchema = z
+  .object({
+    nombre: texto('Tu nombre', 150).optional(),
+    email: emailSchema.optional(),
+    telefono: telefonoEditable,
+  })
+  .refine((d) => Object.values(d).some((v) => v !== undefined), 'No enviaste nada para cambiar');
+
+/** PATCH /api/auth/password (HU-86) */
+export const cambiarPasswordSchema = z
+  .object({
+    passwordActual: z
+      .string({ error: 'Escribe tu contraseña actual' })
+      .min(1, 'Escribe tu contraseña actual')
+      .max(72, 'La contraseña admite máximo 72 caracteres'),
+    passwordNueva: passwordSchema,
+  })
+  .refine((d) => d.passwordActual !== d.passwordNueva, {
+    path: ['passwordNueva'],
+    message: 'La contraseña nueva debe ser distinta de la actual',
+  });
+
+export type ActualizarPerfilInput = z.infer<typeof actualizarPerfilSchema>;
+export type CambiarPasswordInput = z.infer<typeof cambiarPasswordSchema>;
 export type RegisterTallerInput = z.infer<typeof registerTallerSchema>;
 export type RegisterClienteInput = z.infer<typeof registerClienteSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

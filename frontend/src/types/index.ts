@@ -27,6 +27,13 @@ export interface Usuario {
 
 export type EstadoRegistro = 'activo' | 'inactivo';
 
+/** HU-86 · Respuesta de «Restablecer contraseña»: la clave temporal para entregarla */
+export interface ClaveRestablecida {
+  nombre: string;
+  telefono: string | null;
+  claveTemporal: string;
+}
+
 /** Datos del taller que se ven y se editan en «Más» (HU-73) */
 export interface DatosTaller {
   publicId: string;

@@ -85,3 +85,30 @@ export const unirseSchema = z.object({
   aceptaTerminos: z.boolean().refine((v) => v, 'Acepta los términos para crear tu cuenta'),
 });
 export type UnirseForm = z.infer<typeof unirseSchema>;
+
+// ─── Mi cuenta (HU-86) ──────────────────────────────────────────────────────
+
+/** El cliente debe dejar su celular (el taller lo usa para avisarle); el personal puede borrarlo */
+export const perfilSchema = (celularObligatorio: boolean) =>
+  z.object({
+    nombre: obligatorio('Tu nombre').max(LIMITES.nombre, maximo(LIMITES.nombre)),
+    email,
+    telefono: celularObligatorio ? telefono : telefonoOpcional,
+  });
+export type PerfilValores = z.infer<ReturnType<typeof perfilSchema>>;
+
+export const cambiarPasswordSchema = z
+  .object({
+    passwordActual: z
+      .string()
+      .min(1, 'Escribe tu contraseña actual')
+      .max(LIMITES.password, maximo(LIMITES.password)),
+    password,
+    confirmar: z.string().min(1, 'Repite la contraseña nueva'),
+  })
+  .refine(confirmarClave, { path: ['confirmar'], message: 'Las contraseñas no coinciden' })
+  .refine((d) => d.password !== d.passwordActual, {
+    path: ['password'],
+    message: 'La contraseña nueva debe ser distinta de la actual',
+  });
+export type CambiarPasswordValores = z.infer<typeof cambiarPasswordSchema>;

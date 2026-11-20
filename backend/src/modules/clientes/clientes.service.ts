@@ -3,6 +3,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
+import { restablecerPassword } from '../auth/auth.service.js';
 import { aMotoPublica, motoSelect } from '../motos/motos.service.js';
 import type {
   ActualizarClienteInput,
@@ -150,4 +151,22 @@ export async function actualizarCliente(
     select: clienteResumen,
   });
   return sinIds(cliente);
+}
+
+/**
+ * POST /api/clientes/:id/reset-password (HU-86) · Clave temporal para el cliente que ya
+ * tiene cuenta en la app. Si aún no se registra, no hay clave que restablecer (409).
+ */
+export async function restablecerClaveCliente(tallerId: number, publicId: string) {
+  if (!esPublicId(publicId)) throw HttpError.notFound(NO_ENCONTRADO);
+  const cliente = await prisma.cliente.findFirst({
+    where: { publicId, tallerId },
+    select: { usuarioId: true, nombre: true, telefono: true },
+  });
+  if (!cliente) throw HttpError.notFound(NO_ENCONTRADO);
+  if (cliente.usuarioId === null) {
+    throw HttpError.conflict('Este cliente aún no tiene cuenta en la app');
+  }
+  const claveTemporal = await restablecerPassword(cliente.usuarioId);
+  return { nombre: cliente.nombre, telefono: cliente.telefono, claveTemporal };
 }
