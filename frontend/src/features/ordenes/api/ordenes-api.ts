@@ -7,6 +7,7 @@ import type {
   OrdenDetalle,
   OrdenResumen,
   Prioridad,
+  Resena,
   ServicioCatalogo,
 } from '@/types';
 import type { GrupoId } from '../estados';
@@ -21,6 +22,13 @@ export interface NuevaOrdenBody {
   observaciones?: string;
   /** HU-62 · «AAAA-MM-DD» */
   fechaEstimadaEntrega?: string;
+}
+
+/** HU-89 · Calificación del cliente */
+export interface ResenaBody {
+  calificacion: number;
+  aspectos: string[];
+  comentario?: string;
 }
 
 export interface DiagnosticoBody {
@@ -111,6 +119,10 @@ export const ordenesApi = {
 
   agregarServicio: (publicId: string, body: ServicioBody) =>
     http.post<ApiResponse<OrdenDetalle>>(`/ordenes/${publicId}/servicios`, body).then(detalle),
+
+  /** HU-89 · El cliente dueño califica una orden entregada o cerrada */
+  calificar: (publicId: string, body: ResenaBody) =>
+    http.post<ApiResponse<Resena>>(`/ordenes/${publicId}/resena`, body).then((r) => r.data.data),
 
   quitarServicio: (publicId: string, detallePublicId: string) =>
     http

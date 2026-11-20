@@ -13,6 +13,7 @@ export const CLAVE_DE_PRUEBA = 'MotoTrack2026';
 
 async function limpiar() {
   // Orden inverso a las dependencias
+  await prisma.resenaOrden.deleteMany();
   await prisma.invitacion.deleteMany();
   await prisma.aviso.deleteMany();
   await prisma.cita.deleteMany();
@@ -306,6 +307,32 @@ async function main() {
       },
       servicios: ['Cambio de aceite y filtro', 'Ajuste y lubricación de cadena'],
     },
+    {
+      // HU-89: entregada a Laura, con reseña ya respondida por el taller
+      moto: nmax,
+      mecanico: andres,
+      motivo: 'Mantenimiento de los 10.000 km.',
+      estados: hasta('entregada'),
+      diagnostico: {
+        hallazgos: 'Aceite vencido y frenos sin novedad.',
+        trabajoRecomendado: 'Cambio de aceite con filtro.',
+      },
+      servicios: ['Cambio de aceite y filtro'],
+      ingresoHaceDias: 20,
+    },
+    {
+      // HU-89: cerrada de Juan, con reseña aún por revisar
+      moto: pulsar,
+      mecanico: felipe,
+      motivo: 'Tironea al acelerar.',
+      estados: hasta('cerrada'),
+      diagnostico: {
+        hallazgos: 'Mezcla descompensada.',
+        trabajoRecomendado: 'Sincronización.',
+      },
+      servicios: ['Sincronización'],
+      ingresoHaceDias: 12,
+    },
   ];
 
   for (const [i, o] of ordenes.entries()) {
@@ -366,6 +393,36 @@ async function main() {
       },
     });
   }
+
+  // HU-89 · Reseñas de ejemplo sobre las órdenes entregadas o cerradas de clientes con cuenta
+  const ordenNumero = (numero: number) =>
+    prisma.ordenServicio.findUniqueOrThrow({
+      where: { tallerId_numero: { tallerId, numero } },
+      select: { ordenServicioId: true },
+    });
+  await prisma.resenaOrden.createMany({
+    data: [
+      {
+        tallerId,
+        ordenServicioId: (await ordenNumero(7)).ordenServicioId,
+        clienteId: laura.clienteId,
+        calificacion: 5,
+        aspectos: 'Buena atención, Puntualidad, Me explicaron todo',
+        comentario: 'Me entregaron la moto el mismo día y me explicaron todo lo que hicieron.',
+        estado: 'adaptada',
+        respuestaAdmin:
+          '¡Gracias, Laura! Desde ahora te enviamos fotos del antes y el después por WhatsApp.',
+      },
+      {
+        tallerId,
+        ordenServicioId: (await ordenNumero(8)).ordenServicioId,
+        clienteId: juan.clienteId,
+        calificacion: 3,
+        aspectos: 'Calidad del trabajo',
+        comentario: 'Quedó bien, pero se demoraron un día más de lo que me dijeron.',
+      },
+    ],
+  });
 
   // Inventario del prototipo (HU-51). Cuatro quedan en stock crítico (stock <= mínimo).
   const repuestos: Array<{
@@ -671,6 +728,7 @@ async function main() {
     citas: await prisma.cita.count(),
     avisos: await prisma.aviso.count(),
     invitaciones: await prisma.invitacion.count(),
+    resenas: await prisma.resenaOrden.count(),
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(

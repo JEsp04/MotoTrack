@@ -117,6 +117,7 @@ describe('whatsapp (HU-68)', () => {
       diagnostico: null,
       servicios: [],
       historial: [],
+      resena: null,
     });
     expect(sinCotizar).toContain('Aún no hay diagnóstico ni servicios registrados.');
     expect(sinCotizar).toContain('$ 0');

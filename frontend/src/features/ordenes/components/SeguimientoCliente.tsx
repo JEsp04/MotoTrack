@@ -26,6 +26,7 @@ import type { ContactoTaller, OrdenDetalle } from '@/types';
 import { accionesPara, type Accion } from '../estados';
 import { useCambiarEstado } from '../hooks/use-ordenes';
 import { ETIQUETA_ESTADO, MENSAJE_CLIENTE, MOTIVOS_RECHAZO } from '../textos';
+import { CalificarServicio } from './CalificarServicio';
 import { HistorialEstados } from './HistorialEstados';
 import { TarjetaRetiro } from './TarjetaRetiro';
 
@@ -220,6 +221,10 @@ export function SeguimientoCliente({
             ]}
           />
         </Card>
+        {/* HU-89 · Al entregar o cerrar la orden, el cliente califica el servicio */}
+        {(orden.estado === 'entregada' || orden.estado === 'cerrada') && (
+          <CalificarServicio orden={orden} taller={taller} />
+        )}
         {!contactoArriba && contacto}
         {orden.historial.length > 0 && <HistorialEstados historial={orden.historial} />}
       </Page>

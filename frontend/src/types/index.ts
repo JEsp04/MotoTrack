@@ -240,6 +240,43 @@ export interface OrdenDetalle extends Omit<OrdenResumen, 'moto'> {
   historial: EventoHistorial[];
   /** HU-84 · Solo llega al cliente dueño */
   taller?: ContactoTaller;
+  /** HU-89 · Calificación del cliente (null si aún no califica) */
+  resena: Resena | null;
+}
+
+/** HU-89 · Seguimiento de una reseña por parte del taller */
+export type EstadoResena = 'pendiente' | 'revisada' | 'adaptada';
+
+/** HU-89 · Reseña del cliente sobre una orden entregada o cerrada */
+export interface Resena {
+  publicId: string;
+  /** De 1 a 5 */
+  calificacion: number;
+  aspectos: string[];
+  comentario: string | null;
+  estado: EstadoResena;
+  respuestaAdmin: string | null;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+/** HU-89 · Reseña en la lista del admin */
+export interface ResenaAdmin extends Resena {
+  orden: {
+    publicId: string;
+    numero: number;
+    moto: { placa: string; marca: string; referencia: string };
+  };
+  cliente: { publicId: string; nombre: string };
+}
+
+/** HU-89 · GET /resenas: además de la página, el promedio y las pendientes del taller */
+export interface ResenasLista extends ApiList<ResenaAdmin> {
+  meta: ApiList<ResenaAdmin>['meta'] & {
+    promedio: number | null;
+    totalResenas: number;
+    pendientes: number;
+  };
 }
 
 /** Servicio del catálogo del taller (HU-33) */
