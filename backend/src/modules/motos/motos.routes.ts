@@ -4,7 +4,7 @@ import * as motos from './motos.controller.js';
 
 /**
  * /api/motos (HU-26, HU-27). :id es el publicId.
- * El cliente ve, crea y edita solo las suyas; el mecánico solo consulta.
+ * El cliente ve, crea, edita y elimina solo las suyas; el mecánico solo consulta.
  */
 const router = Router();
 
@@ -12,5 +12,6 @@ router.use(requireAuth);
 router.get('/', motos.listar);
 router.post('/', requireRole('admin', 'cliente'), motos.crear);
 router.patch('/:id', requireRole('admin', 'cliente'), motos.actualizar);
+router.delete('/:id', requireRole('admin', 'cliente'), motos.eliminar);
 
 export default router;

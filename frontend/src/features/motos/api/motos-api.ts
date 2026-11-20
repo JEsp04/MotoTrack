@@ -30,4 +30,7 @@ export const motosApi = {
 
   actualizar: (publicId: string, body: Partial<MotoBody>) =>
     http.patch<ApiResponse<Moto>>(`/motos/${publicId}`, body).then((r) => r.data.data),
+
+  /** HU-87 · Solo si no tiene órdenes ni citas (si no, 409) */
+  eliminar: (publicId: string) => http.delete(`/motos/${publicId}`).then(() => undefined),
 };

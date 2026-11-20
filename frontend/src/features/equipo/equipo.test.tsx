@@ -12,6 +12,7 @@ vi.mock('./api/equipo-api', () => ({
     crearMecanico: vi.fn(),
     cambiarEstado: vi.fn(),
     restablecerClave: vi.fn(),
+    actualizar: vi.fn(),
   },
 }));
 const api = vi.mocked(equipoApi);
@@ -139,6 +140,65 @@ describe('HU-86 · Restablecer la contraseña de un mecánico', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Andrés Gómez' }));
     expect(
       screen.queryByRole('button', { name: 'Restablecer contraseña' }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe('HU-87 · Corregir datos y rol de alguien del equipo', () => {
+  it('pasa un mecánico a administrador', async () => {
+    const andres = mecanico();
+    api.listar.mockResolvedValue([andres]);
+    api.actualizar.mockResolvedValue({ ...andres, rol: 'admin' });
+    abrirApp('/admin/equipo');
+    await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Andrés Gómez' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Editar datos' }));
+    const d = within(await screen.findByRole('dialog', { name: 'Editar datos' }));
+    expect(d.getByLabelText(/Nombre completo/)).toHaveValue('Andrés Gómez');
+    await userEvent.click(d.getByRole('tab', { name: 'Administrador' }));
+    await userEvent.click(d.getByRole('button', { name: 'Guardar' }));
+    await waitFor(() =>
+      expect(api.actualizar).toHaveBeenCalledWith(andres.publicId, {
+        nombre: 'Andrés Gómez',
+        telefono: '3002223344',
+        rol: 'admin',
+      }),
+    );
+    expect(useToastStore.getState().items.at(-1)?.message).toMatch(/ahora es administrador/);
+  });
+
+  it('si el taller quedaría sin admin, el error se ve bajo el rol', async () => {
+    const otraAdmin = mecanico({ nombre: 'Marta Ruiz', rol: 'admin' });
+    api.listar.mockResolvedValue([otraAdmin]);
+    api.actualizar.mockRejectedValue(
+      errorApi(400, {
+        message: 'El taller debe tener al menos un administrador activo',
+        errors: [
+          { field: 'rol', message: 'El taller debe tener al menos un administrador activo' },
+        ],
+      }),
+    );
+    abrirApp('/admin/equipo');
+    await userEvent.click(await screen.findByRole('button', { name: 'Opciones de Marta Ruiz' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Editar datos' }));
+    const d = within(await screen.findByRole('dialog', { name: 'Editar datos' }));
+    await userEvent.click(d.getByRole('tab', { name: 'Mecánico' }));
+    await userEvent.click(d.getByRole('button', { name: 'Guardar' }));
+    expect(
+      await d.findByText('El taller debe tener al menos un administrador activo'),
+    ).toBeInTheDocument();
+  });
+
+  it('el admin no se abre opciones a sí mismo (sus datos están en «Mi cuenta»)', async () => {
+    const yo = mecanico({
+      publicId: '0192f0a0-0000-7000-8000-0000000000a1',
+      nombre: 'Carolina Restrepo',
+      rol: 'admin',
+    });
+    api.listar.mockResolvedValue([yo]);
+    abrirApp('/admin/equipo');
+    await screen.findByText('Carolina Restrepo');
+    expect(
+      screen.queryByRole('button', { name: 'Opciones de Carolina Restrepo' }),
     ).not.toBeInTheDocument();
   });
 });

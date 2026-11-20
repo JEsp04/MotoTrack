@@ -19,3 +19,8 @@ export async function actualizar(req: Request<{ id: string }>, res: Response) {
     data: await motosService.actualizarMoto(usuarioActual(req), req.params.id, input),
   });
 }
+
+export async function eliminar(req: Request<{ id: string }>, res: Response) {
+  await motosService.eliminarMoto(usuarioActual(req), req.params.id);
+  res.status(204).end();
+}

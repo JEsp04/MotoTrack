@@ -12,6 +12,7 @@ vi.mock('./api/repuestos-api', () => ({
     listar: vi.fn(),
     obtener: vi.fn(),
     crear: vi.fn(),
+    actualizar: vi.fn(),
     registrarMovimiento: vi.fn(),
   },
 }));
@@ -312,5 +313,107 @@ describe('HU-55 · Registrar un repuesto nuevo', () => {
     expect(
       await screen.findByText('Ya existe un repuesto con este nombre en el taller'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('HU-87 · Ver, editar y desactivar un repuesto', () => {
+  it('la hoja muestra precio, referencia, proveedor y compatibles; el mecánico no ve costo ni «Editar»', async () => {
+    sesionDePrueba('mecanico');
+    const aceite = repuesto();
+    simularInventario(() => [aceite]);
+    api.obtener.mockResolvedValue(repuestoDetalle(aceite));
+    abrirApp('/mecanico/inventario');
+    await userEvent.click(await screen.findByRole('button', { name: /Aceite Motul/ }));
+    const d = within(await screen.findByRole('dialog', { name: aceite.nombre }));
+    expect(d.getByText('Precio de venta')).toBeInTheDocument();
+    expect(d.getByText('MOT-5100-10W40')).toBeInTheDocument();
+    expect(d.getByText('Motul Colombia')).toBeInTheDocument();
+    expect(d.getByText('Pulsar NS 200, Apache 200')).toBeInTheDocument();
+    expect(d.queryByText('Costo')).not.toBeInTheDocument();
+    expect(d.queryByRole('button', { name: 'Editar repuesto' })).not.toBeInTheDocument();
+  });
+
+  it('un ajuste se escribe como stock total y lleva el motivo', async () => {
+    const aceite = repuesto({ stock: 6 });
+    simularInventario(() => [aceite]);
+    api.obtener.mockResolvedValue(repuestoDetalle(aceite));
+    api.registrarMovimiento.mockResolvedValue(repuestoDetalle({ ...aceite, stock: 4 }));
+    abrirApp('/admin/inventario');
+    await userEvent.click(await screen.findByRole('button', { name: /Aceite Motul/ }));
+    const d = within(await screen.findByRole('dialog', { name: aceite.nombre }));
+    expect(d.getByText('Costo')).toBeInTheDocument();
+    expect(d.getByText('33 %')).toBeInTheDocument();
+
+    await userEvent.click(d.getByRole('tab', { name: 'Ajuste' }));
+    expect(
+      d.getByText(/ese número queda como el nuevo stock total \(hoy hay 6\)/),
+    ).toBeInTheDocument();
+    const total = d.getByRole('textbox', { name: 'Nuevo stock total' });
+    await userEvent.clear(total);
+    await userEvent.type(total, '4');
+    await userEvent.type(d.getByLabelText(/Referencia o motivo/), 'Conteo de fin de mes');
+    await userEvent.click(d.getByRole('button', { name: 'Registrar ajuste de 4' }));
+    await waitFor(() =>
+      expect(api.registrarMovimiento).toHaveBeenCalledWith(aceite.publicId, {
+        tipo: 'ajuste',
+        cantidad: 4,
+        referencia: 'Conteo de fin de mes',
+      }),
+    );
+  });
+
+  it('el admin edita precio y stock mínimo desde «Editar repuesto»', async () => {
+    const aceite = repuesto();
+    simularInventario(() => [aceite]);
+    api.obtener.mockResolvedValue(repuestoDetalle(aceite));
+    api.actualizar.mockResolvedValue(repuestoDetalle({ ...aceite, precioVenta: 45000 }));
+    const router = abrirApp('/admin/inventario');
+    await userEvent.click(await screen.findByRole('button', { name: /Aceite Motul/ }));
+    const d = within(await screen.findByRole('dialog', { name: aceite.nombre }));
+    await userEvent.click(d.getByRole('button', { name: 'Editar repuesto' }));
+
+    expect(await screen.findByRole('heading', { name: 'Editar repuesto' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/admin/inventario/${aceite.publicId}/editar`);
+    expect(screen.getByText('En stock: 6 und')).toBeInTheDocument();
+    const precio = screen.getByLabelText(/Precio de venta/);
+    expect(precio).toHaveValue('42000');
+    await userEvent.clear(precio);
+    await userEvent.type(precio, '45000');
+    await userEvent.click(
+      within(screen.getByRole('group', { name: 'Stock mínimo' })).getByRole('button', {
+        name: 'Más',
+      }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    await waitFor(() =>
+      expect(api.actualizar).toHaveBeenCalledWith(aceite.publicId, {
+        nombre: aceite.nombre,
+        referencia: 'MOT-5100-10W40',
+        categoria: 'aceites',
+        precioVenta: 45000,
+        costo: 28000,
+        stockMinimo: 5,
+        proveedor: 'Motul Colombia',
+        motosCompatibles: 'Pulsar NS 200, Apache 200',
+      }),
+    );
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/inventario'));
+  });
+
+  it('desactivar pide confirmación y envía activo: false', async () => {
+    const aceite = repuesto();
+    simularInventario(() => []);
+    api.obtener.mockResolvedValue(repuestoDetalle(aceite));
+    api.actualizar.mockResolvedValue(repuestoDetalle({ ...aceite, activo: false }));
+    const router = abrirApp(`/admin/inventario/${aceite.publicId}/editar`);
+    await userEvent.click(await screen.findByRole('button', { name: 'Desactivar repuesto' }));
+    const d = within(await screen.findByRole('dialog', { name: 'Desactivar repuesto' }));
+    expect(api.actualizar).not.toHaveBeenCalled();
+    await userEvent.click(d.getByRole('button', { name: 'Desactivar' }));
+    await waitFor(() =>
+      expect(api.actualizar).toHaveBeenCalledWith(aceite.publicId, { activo: false }),
+    );
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/inventario'));
   });
 });

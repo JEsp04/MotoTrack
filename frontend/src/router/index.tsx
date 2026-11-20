@@ -93,6 +93,12 @@ export const routes: RouteObject[] = [
             element: page(() => import('@/pages/admin/NuevoRepuestoPage')),
             handle: SIN_NAV,
           },
+          // HU-87 · Editar o desactivar un repuesto
+          {
+            path: 'inventario/:id/editar',
+            element: page(() => import('@/pages/admin/EditarRepuestoPage')),
+            handle: SIN_NAV,
+          },
           { path: 'equipo', element: page(() => import('@/pages/admin/EquipoPage')) },
           // HU-67 · Invitar usuario
           {

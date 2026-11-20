@@ -8,6 +8,7 @@ import {
 import type { CategoriaRepuesto } from '@/types';
 import {
   repuestosApi,
+  type ActualizarRepuestoBody,
   type CrearRepuestoBody,
   type RegistrarMovimientoBody,
 } from '../api/repuestos-api';
@@ -90,6 +91,21 @@ export function useCrearRepuesto() {
     mutationFn: (body: CrearRepuestoBody) => repuestosApi.crear(body),
     onSuccess: (creado) => {
       qc.setQueryData(['repuestos', 'detalle', creado.publicId], creado);
+      return Promise.all([
+        qc.invalidateQueries({ queryKey: ['repuestos', 'lista'] }),
+        qc.invalidateQueries({ queryKey: ['repuestos', 'resumen'] }),
+      ]);
+    },
+  });
+}
+
+/** HU-87 · Edita o desactiva un repuesto y refresca inventario, contadores y detalle */
+export function useActualizarRepuesto(publicId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ActualizarRepuestoBody) => repuestosApi.actualizar(publicId, body),
+    onSuccess: (detalle) => {
+      qc.setQueryData(['repuestos', 'detalle', publicId], detalle);
       return Promise.all([
         qc.invalidateQueries({ queryKey: ['repuestos', 'lista'] }),
         qc.invalidateQueries({ queryKey: ['repuestos', 'resumen'] }),

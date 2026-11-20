@@ -36,6 +36,19 @@ export interface CrearRepuestoBody {
   motosCompatibles?: string;
 }
 
+/** HU-87 · Lo que el admin puede corregir de un repuesto (el stock cambia con un movimiento) */
+export interface ActualizarRepuestoBody {
+  nombre?: string;
+  referencia?: string | null;
+  categoria?: CategoriaRepuesto;
+  precioVenta?: number;
+  costo?: number | null;
+  stockMinimo?: number;
+  proveedor?: string | null;
+  motosCompatibles?: string | null;
+  activo?: boolean;
+}
+
 /** Llamadas a /api/repuestos (HU-52, HU-53, HU-54, HU-55). */
 export const repuestosApi = {
   listar: ({ q, categoria, critico, page = 1, limit = POR_PAGINA }: ListarRepuestosParams = {}) =>
@@ -56,6 +69,11 @@ export const repuestosApi = {
 
   crear: (body: CrearRepuestoBody) =>
     http.post<ApiResponse<RepuestoDetalle>>('/repuestos', body).then((r) => r.data.data),
+
+  actualizar: (publicId: string, body: ActualizarRepuestoBody) =>
+    http
+      .patch<ApiResponse<RepuestoDetalle>>(`/repuestos/${publicId}`, body)
+      .then((r) => r.data.data),
 
   registrarMovimiento: (publicId: string, body: RegistrarMovimientoBody) =>
     http

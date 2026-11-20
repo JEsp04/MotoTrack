@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, BottomSheet, Button, Input } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
+import { cn } from '@/lib/cn';
 import { aplicarErroresDeCampo } from '@/lib/form-errors';
 import { toast } from '@/lib/toast';
 import { LIMITES } from '@/lib/validaciones';
 import type { Moto } from '@/types';
-import { useActualizarMoto, useCrearMoto } from '../hooks/use-motos';
+import { useActualizarMoto, useCrearMoto, useEliminarMoto } from '../hooks/use-motos';
 import {
   anioMaximo,
   MOTO_VACIA,
@@ -28,7 +29,11 @@ export interface MotoSheetProps {
   onGuardada?: (moto: Moto) => void;
 }
 
-/** HU-26 · Agregar o editar una moto (admin desde el cliente; cliente desde "Mis motos"). */
+/**
+ * HU-26 · Agregar o editar una moto (admin desde el cliente; cliente desde "Mis motos").
+ * HU-87 · Con una orden abierta la placa no se puede cambiar, y una moto registrada por error
+ * se puede eliminar (el backend lo impide si ya tiene órdenes o citas).
+ */
 export function MotoSheet(props: MotoSheetProps) {
   // El formulario se monta al abrir: así siempre arranca limpio o con los datos de la moto
   return props.open ? <FormularioMoto {...props} /> : null;
@@ -37,8 +42,23 @@ export function MotoSheet(props: MotoSheetProps) {
 function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoSheetProps) {
   const crear = useCrearMoto();
   const actualizar = useActualizarMoto();
+  const eliminar = useEliminarMoto();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [borrando, setBorrando] = useState(false);
   const editando = Boolean(moto);
+  const ordenAbierta = moto?.ordenActiva ?? null;
+
+  async function confirmarBorrado() {
+    if (!moto) return;
+    try {
+      await eliminar.mutateAsync(moto.publicId);
+      toast(`Eliminamos la moto ${moto.placa}`, 'success');
+      onClose();
+    } catch (error) {
+      setBorrando(false);
+      setErrorGeneral(parseApiError(error).message);
+    }
+  }
 
   const {
     register,
@@ -66,6 +86,42 @@ function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoShee
     }
   });
 
+  if (moto && borrando) {
+    return (
+      <BottomSheet
+        open
+        title="Eliminar moto"
+        onClose={() => setBorrando(false)}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setBorrando(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              loading={eliminar.isPending}
+              onClick={() => void confirmarBorrado()}
+            >
+              Eliminar
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Vamos a eliminar la moto{' '}
+          <span className="font-semibold">
+            {moto.placa} · {moto.marca} {moto.referencia}
+          </span>
+          .
+        </p>
+        <p className="text-sm leading-5 text-ink-muted">
+          Úsalo solo si se registró por error. Si ya tiene órdenes o citas, no se puede eliminar
+          para conservar su historial.
+        </p>
+      </BottomSheet>
+    );
+  }
+
   return (
     <BottomSheet
       open
@@ -90,9 +146,17 @@ function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoShee
           autoComplete="off"
           autoCapitalize="characters"
           placeholder="ABC12D"
-          hint="3 letras, 2 números y 1 letra (o 3 letras y 2 números)"
+          hint={
+            ordenAbierta
+              ? `No se puede cambiar: tiene la orden #${ordenAbierta.numero} abierta`
+              : '3 letras, 2 números y 1 letra (o 3 letras y 2 números)'
+          }
+          readOnly={Boolean(ordenAbierta)}
           maxLength={LIMITES.placa}
-          className="[&_input]:uppercase"
+          className={cn(
+            '[&_input]:uppercase',
+            ordenAbierta && '[&_input]:cursor-not-allowed [&_input]:bg-surface-sunken',
+          )}
           error={errors.placa?.message}
           {...register('placa')}
         />
@@ -146,6 +210,11 @@ function FormularioMoto({ onClose, moto, clientePublicId, onGuardada }: MotoShee
             {...register('kilometraje')}
           />
         </div>
+        {moto && !ordenAbierta && (
+          <Button variant="ghost" icon="trash" onClick={() => setBorrando(true)}>
+            Eliminar moto
+          </Button>
+        )}
       </form>
     </BottomSheet>
   );

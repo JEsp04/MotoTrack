@@ -9,6 +9,13 @@ export interface NuevoMecanicoBody {
   password: string;
 }
 
+/** HU-87 · Lo que el admin corrige de alguien del equipo */
+export interface ActualizarIntegranteBody {
+  nombre?: string;
+  telefono?: string | null;
+  rol?: Integrante['rol'];
+}
+
 /** Llamadas a /api/usuarios (HU-23). Solo el admin. */
 export const equipoApi = {
   listar: () => http.get<ApiResponse<Integrante[]>>('/usuarios').then((r) => r.data.data),
@@ -20,6 +27,9 @@ export const equipoApi = {
     http
       .patch<ApiResponse<Integrante>>(`/usuarios/${publicId}`, { estado })
       .then((r) => r.data.data),
+
+  actualizar: (publicId: string, body: ActualizarIntegranteBody) =>
+    http.patch<ApiResponse<Integrante>>(`/usuarios/${publicId}`, body).then((r) => r.data.data),
 
   /** HU-86 · Clave temporal para un integrante del equipo */
   restablecerClave: (publicId: string) =>

@@ -11,7 +11,7 @@ vi.mock('./api/clientes-api', () => ({
   clientesApi: { listar: vi.fn(), obtener: vi.fn(), crear: vi.fn(), actualizar: vi.fn() },
 }));
 vi.mock('@/features/motos/api/motos-api', () => ({
-  motosApi: { listar: vi.fn(), crear: vi.fn(), actualizar: vi.fn() },
+  motosApi: { listar: vi.fn(), crear: vi.fn(), actualizar: vi.fn(), eliminar: vi.fn() },
 }));
 const api = vi.mocked(clientesApi);
 const motos = vi.mocked(motosApi);
@@ -221,5 +221,67 @@ describe('HU-26 · El admin registra una moto desde el cliente', () => {
     expect(await d.findByLabelText(/Placa/)).toHaveAccessibleDescription(
       expect.stringContaining('Esta placa ya está registrada'),
     );
+  });
+});
+
+describe('HU-87 · Motos del cliente: placa fija y eliminar', () => {
+  it('con una orden abierta se ve en la lista y la placa no se puede cambiar', async () => {
+    const enTaller = moto({
+      placa: 'ABC12D',
+      ordenActiva: {
+        publicId: 'o1',
+        numero: 31,
+        estado: 'en_reparacion',
+        fechaIngreso: '2026-11-18T14:00:00.000Z',
+      },
+    });
+    const detalle = clienteDetalle({ motos: [enTaller] });
+    api.obtener.mockResolvedValue(detalle);
+    abrirApp(`/admin/clientes/${detalle.publicId}`);
+    expect(await screen.findByText(/Orden #31 abierta/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Editar la moto ABC12D' }));
+    const d = within(await screen.findByRole('dialog', { name: 'Editar moto' }));
+    const placa = d.getByLabelText(/Placa/);
+    expect(placa).toHaveAttribute('readonly');
+    expect(placa).toHaveAccessibleDescription(expect.stringContaining('orden #31 abierta'));
+    expect(d.queryByRole('button', { name: 'Eliminar moto' })).not.toBeInTheDocument();
+  });
+
+  it('elimina una moto registrada por error tras confirmar', async () => {
+    const errada = moto({ placa: 'XYZ98A' });
+    const detalle = clienteDetalle({ motos: [errada] });
+    api.obtener.mockResolvedValue(detalle);
+    motos.eliminar.mockResolvedValue(undefined);
+    abrirApp(`/admin/clientes/${detalle.publicId}`);
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar la moto XYZ98A' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Eliminar moto' }));
+    const d = within(await screen.findByRole('dialog', { name: 'Eliminar moto' }));
+    expect(motos.eliminar).not.toHaveBeenCalled();
+    await userEvent.click(d.getByRole('button', { name: 'Eliminar' }));
+    await waitFor(() => expect(motos.eliminar).toHaveBeenCalledWith(errada.publicId));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('si ya tiene historial, muestra el mensaje del 409', async () => {
+    const conHistorial = moto({ placa: 'XYZ98A' });
+    const detalle = clienteDetalle({ motos: [conHistorial] });
+    api.obtener.mockResolvedValue(detalle);
+    motos.eliminar.mockRejectedValue(
+      errorApi(409, {
+        message:
+          'No se puede eliminar: esta moto ya tiene órdenes de servicio. Su historial se conserva.',
+        errors: [],
+      }),
+    );
+    abrirApp(`/admin/clientes/${detalle.publicId}`);
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar la moto XYZ98A' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Eliminar moto' }));
+    await userEvent.click(
+      within(await screen.findByRole('dialog', { name: 'Eliminar moto' })).getByRole('button', {
+        name: 'Eliminar',
+      }),
+    );
+    const d = within(await screen.findByRole('dialog', { name: 'Editar moto' }));
+    expect(d.getByText(/ya tiene órdenes de servicio/)).toBeInTheDocument();
   });
 });
