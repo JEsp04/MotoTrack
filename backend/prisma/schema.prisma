@@ -88,6 +88,15 @@ enum TipoAviso {
   cotizacion
   cita
   recordatorio
+  /// HU-89 · Un cliente calificó el servicio (para los admin)
+  resena
+}
+
+/// HU-89 · Seguimiento de una reseña por parte del taller
+enum EstadoResena {
+  pendiente
+  revisada
+  adaptada
 }
 
 // ─── Talleres y usuarios ──────────────────────────────────────────────────
@@ -116,6 +125,7 @@ model Taller {
   citas            Cita[]
   avisos           Aviso[]
   invitaciones     Invitacion[]
+  resenas          ResenaOrden[]
 
   @@map("talleres")
 }
@@ -185,10 +195,11 @@ model Cliente {
   creadoEn           DateTime @default(now())
   actualizadoEn      DateTime @updatedAt
 
-  taller  Taller   @relation(fields: [tallerId], references: [tallerId])
-  usuario Usuario? @relation(fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
+  taller  Taller        @relation(fields: [tallerId], references: [tallerId])
+  usuario Usuario?      @relation(fields: [usuarioId], references: [usuarioId], onDelete: SetNull)
   motos   Moto[]
   citas   Cita[]
+  resenas ResenaOrden[]
 
   @@unique([tallerId, documentoIdentidad])
   @@index([tallerId, nombre])
@@ -262,6 +273,7 @@ model OrdenServicio {
   movimientosStock MovimientoStock[]
   cita             Cita?
   avisos           Aviso[]
+  resena           ResenaOrden?
 
   @@unique([tallerId, numero])
   @@index([tallerId, estado])
@@ -514,4 +526,33 @@ model Invitacion {
 
   @@index([tallerId, estado])
   @@map("invitaciones")
+}
+
+// ─── HU-89 · Reseñas del servicio ─────────────────────────────────────────
+
+/// Calificación del cliente dueño al entregar o cerrar la orden. Una sola por orden.
+model ResenaOrden {
+  resenaOrdenId   Int          @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId        String       @unique @default(uuid(7)) @db.Char(36)
+  tallerId        Int
+  ordenServicioId Int          @unique
+  clienteId       Int
+  /// De 1 a 5 estrellas
+  calificacion    Int
+  /// Aspectos rápidos elegidos por el cliente, separados por coma («Puntualidad, Buen trato»)
+  aspectos        String?      @db.VarChar(255)
+  comentario      String?      @db.VarChar(500)
+  estado          EstadoResena @default(pendiente)
+  respuestaAdmin  String?      @db.VarChar(500)
+  creadoEn        DateTime     @default(now())
+  actualizadoEn   DateTime     @updatedAt
+
+  taller  Taller        @relation(fields: [tallerId], references: [tallerId])
+  orden   OrdenServicio @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+  cliente Cliente       @relation(fields: [clienteId], references: [clienteId])
+
+  @@index([tallerId, estado, creadoEn])
+  @@index([tallerId, calificacion])
+  @@map("resenas_orden")
 }

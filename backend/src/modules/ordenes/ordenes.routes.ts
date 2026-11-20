@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../../middlewares/auth.js';
+import * as resenas from '../resenas/resenas.controller.js';
 import * as ordenes from './ordenes.controller.js';
 
 /**
@@ -24,5 +25,7 @@ router.delete(
   requireRole('admin', 'mecanico'),
   ordenes.quitarServicio,
 );
+// HU-89 · El cliente dueño califica el servicio al entregar o cerrar la orden
+router.post('/:id/resena', requireRole('cliente'), resenas.crear);
 
 export default router;

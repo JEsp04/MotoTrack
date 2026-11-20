@@ -6,6 +6,8 @@ import type { SVGProps } from 'react';
  */
 const PATHS = {
   home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+  // HU-89 · Calificación de 1 a 5
+  star: 'M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z',
   clipboard: 'M9 3h6v3H9z|M7 4.5H5V21h14V4.5h-2|M8.5 11h7|M8.5 15h5',
   calendar: 'M4 6h16v15H4z|M4 10h16|M8 3v4|M16 3v4',
   sparkle:

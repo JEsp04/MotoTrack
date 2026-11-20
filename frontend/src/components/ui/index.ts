@@ -6,6 +6,7 @@ export { BottomSheet } from './BottomSheet';
 export { Button, ButtonLink, type ButtonVariant } from './Button';
 export { Card } from './Card';
 export { EmptyState } from './EmptyState';
+export { Estrellas } from './Estrellas';
 export { Field } from './Field';
 export { HoldButton, HOLD_MS, type HoldVariant } from './HoldButton';
 export { Icon, type IconName } from './Icon';

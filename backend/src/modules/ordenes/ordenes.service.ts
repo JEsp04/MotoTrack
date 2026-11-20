@@ -5,6 +5,7 @@ import { HttpError } from '../../utils/http-error.js';
 import { esDuplicado } from '../../utils/prisma-errors.js';
 import { esPublicId } from '../../utils/schemas.js';
 import { crearAvisosDeEstado } from '../avisos/avisos.service.js';
+import { aResenaPublica, resenaSelect } from '../resenas/resenas.service.js';
 import { nuevoCodigoRetiro } from './codigo-retiro.js';
 import {
   actorDe,
@@ -253,9 +254,15 @@ async function detalle(usuario: UsuarioAutenticado, ordenServicioId: number) {
       ...ordenDetalle,
       // HU-84: solo el cliente necesita el contacto del taller (admin y mecánico ya están ahí)
       ...(usuario.rol === 'cliente' && { taller: { select: contactoTaller } }),
+      // HU-89 · La reseña del cliente y la respuesta del taller (null si aún no califica)
+      resena: { select: resenaSelect },
     },
   });
-  return sinTelefonoParaMecanico(usuario, conRetiro(usuario, conEntrega(orden)));
+  const { resena, ...resto } = orden;
+  return sinTelefonoParaMecanico(usuario, {
+    ...conRetiro(usuario, conEntrega(resto)),
+    resena: resena ? aResenaPublica(resena) : null,
+  });
 }
 
 // ─── HU-30 · Lista ─────────────────────────────────────────────────────────

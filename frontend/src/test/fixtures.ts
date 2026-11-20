@@ -155,6 +155,7 @@ export function ordenDetalle(extra: Partial<OrdenDetalle> = {}): OrdenDetalle {
         usuario: { publicId: uuid(), nombre: 'Carolina Restrepo', rol: 'admin' },
       },
     ],
+    resena: null,
     ...extra,
   };
 }

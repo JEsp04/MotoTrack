@@ -7,6 +7,7 @@ import invitacionesRoutes from './modules/invitaciones/invitaciones.routes.js';
 import motosRoutes from './modules/motos/motos.routes.js';
 import ordenesRoutes from './modules/ordenes/ordenes.routes.js';
 import repuestosRoutes from './modules/repuestos/repuestos.routes.js';
+import resenasRoutes from './modules/resenas/resenas.routes.js';
 import serviciosRoutes from './modules/servicios/servicios.routes.js';
 import talleresRoutes from './modules/talleres/talleres.routes.js';
 import usuariosRoutes from './modules/usuarios/usuarios.routes.js';
@@ -29,5 +30,6 @@ router.use('/servicios', serviciosRoutes);
 router.use('/repuestos', repuestosRoutes);
 router.use('/citas', citasRoutes);
 router.use('/avisos', avisosRoutes);
+router.use('/resenas', resenasRoutes);
 
 export default router;

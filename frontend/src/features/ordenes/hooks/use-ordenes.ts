@@ -10,6 +10,7 @@ import {
   ordenesApi,
   type DiagnosticoBody,
   type NuevaOrdenBody,
+  type ResenaBody,
   type ServicioBody,
 } from '../api/ordenes-api';
 import type { GrupoId } from '../estados';
@@ -211,5 +212,17 @@ export function useInicioMecanico() {
 
       return { abiertas, actividad };
     },
+  });
+}
+
+/** HU-89 · Guarda la reseña y la muestra en el seguimiento sin recargar */
+export function useCalificar(publicId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ResenaBody) => ordenesApi.calificar(publicId, body),
+    onSuccess: (resena) =>
+      qc.setQueryData<OrdenDetalle>(['ordenes', 'detalle', publicId], (orden) =>
+        orden ? { ...orden, resena } : orden,
+      ),
   });
 }

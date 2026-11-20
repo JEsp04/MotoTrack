@@ -1,9 +1,11 @@
 import { Link } from 'react-router';
 import { Arc, Button, EmptyState, Fab, Icon, Initials, Plate, Skeleton } from '@/components/ui';
 import { useResumenInventario } from '@/features/repuestos';
+import { useResumenResenas } from '@/features/resenas';
 import { cn } from '@/lib/cn';
 import { ESTADOS_ORDEN } from '@/lib/estados-orden';
 import { formatDia, formatPesos } from '@/lib/format';
+import { formatPromedio } from '@/lib/resenas';
 import type { OrdenResumen } from '@/types';
 import { rutaOrden } from '../estados';
 import { usePanelTaller } from '../hooks/use-ordenes';
@@ -49,6 +51,7 @@ export function PanelTaller() {
   const { data, isPending, isError, refetch } = usePanelTaller();
   const inventario = useResumenInventario();
   const criticos = inventario.data?.criticos ?? 0;
+  const resenas = useResumenResenas().data;
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
@@ -80,6 +83,25 @@ export function PanelTaller() {
               {criticos} {criticos === 1 ? 'repuesto' : 'repuestos'} en stock crítico.
             </span>{' '}
             Revisa el inventario antes de cotizar.
+          </span>
+          <Icon name="chevronRight" className="shrink-0 text-ink-muted" />
+        </Link>
+      )}
+
+      {/* HU-89: reseñas nuevas de los clientes */}
+      {resenas && resenas.pendientes > 0 && (
+        <Link
+          to="/admin/resenas?filtro=pendiente"
+          className="flex min-h-touch items-center gap-2.5 rounded-2xl bg-surface-sunken px-3.5 py-2.5 text-sm text-ink transition-transform duration-150 ease-out active:scale-[0.99]"
+        >
+          <Icon name="star" className="shrink-0 text-accent-text" />
+          <span className="min-w-0 flex-1">
+            <span className="font-semibold">
+              {resenas.pendientes}{' '}
+              {resenas.pendientes === 1 ? 'reseña por revisar' : 'reseñas por revisar'}.
+            </span>
+            {resenas.promedio !== null &&
+              ` Promedio del taller: ${formatPromedio(resenas.promedio)} de 5.`}
           </span>
           <Icon name="chevronRight" className="shrink-0 text-ink-muted" />
         </Link>

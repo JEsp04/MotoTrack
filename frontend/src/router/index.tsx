@@ -114,6 +114,8 @@ export const routes: RouteObject[] = [
             element: page(() => import('@/pages/admin/DatosTallerPage')),
             handle: SIN_NAV,
           },
+          // HU-89 · Reseñas de los clientes
+          { path: 'resenas', element: page(() => import('@/pages/admin/ResenasPage')) },
         ],
       },
 

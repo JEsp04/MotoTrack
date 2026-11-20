@@ -10,11 +10,13 @@ import {
 } from '@/features/auth';
 import { useMotos } from '@/features/motos';
 import { useResumenInventario } from '@/features/repuestos';
+import { useResumenResenas } from '@/features/resenas';
 import { TarjetaTaller } from '@/features/taller';
+import { formatPromedio } from '@/lib/resenas';
 import type { Usuario } from '@/types';
 
 /**
- * HU-22, HU-50, HU-73, HU-86 · Dos pantallas en una página:
+ * HU-22, HU-50, HU-73, HU-86, HU-89 · Dos pantallas en una página:
  * - «Más» del taller (MoreScreen del prototipo) en `/admin/mas` y `/mecanico/mas`: menú móvil.
  *   Para el admin, arriba va la tarjeta del taller, que abre «Datos del taller» (HU-73).
  * - «Mi cuenta» en `/<rol>/perfil` para los 3 roles (HU-86): datos personales, «Editar mis
@@ -59,6 +61,8 @@ function Mas({ usuario }: { usuario: Usuario }) {
   const admin = usuario.rol === 'admin';
   const resumen = useResumenInventario(admin);
   const criticos = resumen.data?.criticos ?? 0;
+  const resenas = useResumenResenas(admin);
+  const r = resenas.data;
 
   return (
     <>
@@ -97,6 +101,24 @@ function Mas({ usuario }: { usuario: Usuario }) {
               to="/admin/inventario"
             />
             <ListItem icon="user" title="Usuarios y roles" to="/admin/equipo" />
+            {/* HU-89 */}
+            <ListItem
+              icon="star"
+              title="Reseñas"
+              subtitle={
+                r && r.promedio !== null
+                  ? `${formatPromedio(r.promedio)} de 5 · ${r.total} ${r.total === 1 ? 'reseña' : 'reseñas'}`
+                  : r
+                    ? 'Aún no hay reseñas'
+                    : undefined
+              }
+              trailing={
+                r && r.pendientes > 0 ? (
+                  <Badge tono="accent">{`${r.pendientes} por revisar`}</Badge>
+                ) : undefined
+              }
+              to="/admin/resenas"
+            />
           </List>
         ) : (
           <List>

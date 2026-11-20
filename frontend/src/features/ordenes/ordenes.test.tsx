@@ -36,6 +36,7 @@ vi.mock('./api/ordenes-api', () => ({
     agregarServicio: vi.fn(),
     quitarServicio: vi.fn(),
     catalogo: vi.fn(),
+    calificar: vi.fn(),
   },
 }));
 vi.mock('@/features/clientes/api/clientes-api', () => ({
@@ -1205,5 +1206,69 @@ describe('HU-88 · Ítem adicional en una orden aprobada o en reparación', () =
     expect(
       screen.queryByRole('button', { name: 'Agregar ítem adicional' }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('HU-89 · Calificar el servicio', () => {
+  const resena = {
+    publicId: '0192f0a0-0000-7000-8000-00000000r001',
+    calificacion: 4,
+    aspectos: ['Puntualidad'],
+    comentario: 'Muy cumplidos',
+    estado: 'pendiente' as const,
+    respuestaAdmin: null,
+    creadoEn: '2026-11-19T15:00:00.000Z',
+    actualizadoEn: '2026-11-19T15:00:00.000Z',
+  };
+
+  it('el cliente califica una orden entregada con estrellas, aspectos y comentario', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({ estado: 'entregada' });
+    api.obtener.mockResolvedValue(orden);
+    api.calificar.mockResolvedValue(resena);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Enviar calificación' }));
+    expect(await screen.findByText('Elige de 1 a 5 estrellas')).toBeInTheDocument();
+    expect(api.calificar).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('radio', { name: '4 estrellas' }));
+    await user.click(screen.getByRole('button', { name: 'Puntualidad' }));
+    await user.type(screen.getByLabelText('Comentario'), 'Muy cumplidos');
+    await user.click(screen.getByRole('button', { name: 'Enviar calificación' }));
+
+    await waitFor(() =>
+      expect(api.calificar).toHaveBeenCalledWith(orden.publicId, {
+        calificacion: 4,
+        aspectos: ['Puntualidad'],
+        comentario: 'Muy cumplidos',
+      }),
+    );
+    expect(await screen.findByText('Tu calificación')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enviar calificación' })).not.toBeInTheDocument();
+  });
+
+  it('muestra la respuesta del taller y la mejora adaptada', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({
+      estado: 'cerrada',
+      resena: { ...resena, estado: 'adaptada', respuestaAdmin: 'Gracias, Laura' },
+    });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    expect(await screen.findByText('Gracias, Laura')).toBeInTheDocument();
+    expect(
+      screen.getByText('Tomamos tu opinión como una mejora en el taller.'),
+    ).toBeInTheDocument();
+  });
+
+  it('una orden en reparación todavía no se puede calificar', async () => {
+    sesionDePrueba('cliente');
+    const orden = ordenDetalle({ estado: 'en_reparacion' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/cliente/ordenes/${orden.publicId}`);
+    await screen.findByText('Tu moto está en reparación.');
+    expect(screen.queryByText('Califica tu experiencia')).not.toBeInTheDocument();
   });
 });
