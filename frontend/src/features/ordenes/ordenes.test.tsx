@@ -32,6 +32,7 @@ vi.mock('./api/ordenes-api', () => ({
     registrarRetiro: vi.fn(),
     canceladasPorRetirar: vi.fn(),
     cambiarEntrega: vi.fn(),
+    reasignarMecanico: vi.fn(),
     guardarDiagnostico: vi.fn(),
     agregarServicio: vi.fn(),
     quitarServicio: vi.fn(),
@@ -799,7 +800,11 @@ describe('HU-68 · Contactar al cliente por WhatsApp sin costo', () => {
     expect(await screen.findByText('Cliente sin celular')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Llamar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Escribir por WhatsApp' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Más acciones' })).not.toBeInTheDocument();
+    // HU-63 · «Más acciones» sigue para reasignar, pero sin compartir por WhatsApp
+    await userEvent.click(screen.getByRole('button', { name: 'Más acciones' }));
+    const menu = within(await screen.findByRole('dialog'));
+    expect(menu.queryByText('Compartir cotización')).not.toBeInTheDocument();
+    expect(menu.getByText('Reasignar mecánico')).toBeInTheDocument();
   });
 });
 
@@ -1356,5 +1361,52 @@ describe('HU-90 · Seguimiento público y comprobante', () => {
       screen.queryByRole('article', { name: `Comprobante de la orden #${orden.numero}` }),
     ).not.toBeInTheDocument();
     imprimir.mockRestore();
+  });
+});
+
+describe('HU-63 · Reasignar el mecánico de una orden', () => {
+  it('el admin elige otro mecánico activo y la orden queda con él', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({ estado: 'en_reparacion' });
+    const actual = orden.mecanico;
+    const felipe = mecanico({ nombre: 'Felipe Ríos' });
+    api.obtener.mockResolvedValue(orden);
+    equipo.listar.mockResolvedValue([
+      mecanico({ publicId: actual.publicId, nombre: actual.nombre }),
+      felipe,
+      mecanico({ nombre: 'Inactivo', estado: 'inactivo' }),
+    ]);
+    api.reasignarMecanico.mockResolvedValue({
+      ...orden,
+      mecanico: { publicId: felipe.publicId, nombre: felipe.nombre },
+    });
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Más acciones' }));
+    await userEvent.click(await screen.findByText('Reasignar mecánico'));
+    const hoja = within(await screen.findByRole('dialog', { name: 'Reasignar mecánico' }));
+    // Solo los activos; el actual sale marcado y no se puede «reasignar» a él mismo
+    expect(await hoja.findByRole('radio', { name: new RegExp(actual.nombre) })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(hoja.queryByRole('radio', { name: /Inactivo/ })).not.toBeInTheDocument();
+    expect(hoja.getByRole('button', { name: 'Reasignar' })).toBeDisabled();
+
+    await userEvent.click(hoja.getByRole('radio', { name: /Felipe Ríos/ }));
+    await userEvent.click(hoja.getByRole('button', { name: 'Reasignar' }));
+    await waitFor(() =>
+      expect(api.reasignarMecanico).toHaveBeenCalledWith(orden.publicId, felipe.publicId),
+    );
+  });
+
+  it('en una orden cerrada no aparece la opción', async () => {
+    sesionDePrueba('admin');
+    const orden = ordenDetalle({ estado: 'cerrada' });
+    api.obtener.mockResolvedValue(orden);
+    abrirApp(`/admin/ordenes/${orden.publicId}`);
+    await userEvent.click(await screen.findByRole('button', { name: 'Más acciones' }));
+    const menu = within(await screen.findByRole('dialog'));
+    expect(menu.queryByText('Reasignar mecánico')).not.toBeInTheDocument();
   });
 });

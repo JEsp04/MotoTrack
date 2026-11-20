@@ -6,6 +6,7 @@ import {
   crearOrdenSchema,
   diagnosticoSchema,
   fechaEntregaSchema,
+  reasignarMecanicoSchema,
   actividadSchema,
   listarOrdenesSchema,
   retiroSchema,
@@ -87,5 +88,13 @@ export async function retiro(req: ConId, res: Response) {
   const input = retiroSchema.parse(req.body);
   res.json({
     data: await ordenesService.registrarRetiro(usuarioActual(req), req.params.id, input),
+  });
+}
+
+/** HU-63 · Reasignar el mecánico de una orden abierta (solo admin) */
+export async function mecanico(req: ConId, res: Response) {
+  const input = reasignarMecanicoSchema.parse(req.body);
+  res.json({
+    data: await ordenesService.reasignarMecanico(usuarioActual(req), req.params.id, input),
   });
 }

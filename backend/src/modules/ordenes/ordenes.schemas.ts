@@ -70,6 +70,11 @@ export const fechaEntregaSchema = z.object({
   }),
 });
 
+/** PATCH /api/ordenes/:id/mecanico (HU-63) */
+export const reasignarMecanicoSchema = z.object({
+  mecanicoPublicId: z.uuid({ error: 'Elige el mecánico' }),
+});
+
 /** GET /api/ordenes (HU-30) */
 export const listarOrdenesSchema = paginacionSchema.extend({
   estado: z.enum(ESTADOS, { error: 'Estado no válido' }).optional(),
@@ -143,4 +148,5 @@ export type CambiarEstadoInput = z.infer<typeof cambiarEstadoSchema>;
 export type DiagnosticoInput = z.infer<typeof diagnosticoSchema>;
 export type RetiroInput = z.infer<typeof retiroSchema>;
 export type FechaEntregaInput = z.infer<typeof fechaEntregaSchema>;
+export type ReasignarMecanicoInput = z.infer<typeof reasignarMecanicoSchema>;
 export type AgregarServicioInput = z.infer<typeof agregarServicioSchema>;
