@@ -143,6 +143,18 @@ export const routes: RouteObject[] = [
           { path: 'ordenes', element: page(() => import('@/pages/cliente/OrdenesPage')) },
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'perfil', element: perfil },
+          // HU-59 · Pedir una cita y su confirmación
+          { path: 'citas', element: page(() => import('@/pages/cliente/MisCitasPage')) },
+          {
+            path: 'citas/nueva',
+            element: page(() => import('@/pages/cliente/PedirCitaPage')),
+            handle: SIN_NAV,
+          },
+          {
+            path: 'citas/:id/agendada',
+            element: page(() => import('@/pages/cliente/CitaAgendadaPage')),
+            handle: SIN_NAV,
+          },
         ],
       },
 

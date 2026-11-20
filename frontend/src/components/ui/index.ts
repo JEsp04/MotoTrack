@@ -27,3 +27,4 @@ export { Note } from './Note';
 export { Radio, SelectCard } from './SelectCard';
 export { Segmented } from './Segmented';
 export { Stepper } from './Stepper';
+export { Switch } from './Switch';

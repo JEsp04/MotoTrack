@@ -552,3 +552,50 @@ async function conMotosDeOtroTaller() {
     creadoPorId: admin.usuarioId,
   };
 }
+
+describe('HU-59 · Pedir una cita como cliente', () => {
+  it('la cita del cliente queda programada, con detalle y recordatorio, y aparece en la agenda del taller', async () => {
+    const { admin, usuarioCliente, motoLaura } = await conMotos();
+
+    const libres = await request(app)
+      .get('/api/citas/horas-libres')
+      .query({ fecha: sabado })
+      .set(auth(usuarioCliente));
+    expect(libres.status).toBe(200);
+    // Un sábado solo salen horas de 8:00 a 12:00
+    expect(libres.body.data.horas.at(0).hora).toBe('08:00');
+    expect(libres.body.data.horas.at(-1).hora).toBe('11:30');
+    const nueve = libres.body.data.horas.find((h: { hora: string }) => h.hora === '09:00');
+
+    const res = await request(app).post('/api/citas').set(auth(usuarioCliente)).send({
+      motoPublicId: motoLaura.publicId,
+      fechaHora: nueve.fechaHora,
+      motivo: 'Frenos',
+      detalle: 'Chillan al frenar',
+      recordatorio: true,
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({
+      estado: 'programada',
+      motivo: 'Frenos',
+      detalle: 'Chillan al frenar',
+      recordatorio: true,
+      moto: { placa: 'KLM45F' },
+    });
+
+    const agenda = await request(app)
+      .get('/api/citas')
+      .query({ desde: sabado, hasta: sabado })
+      .set(auth(admin));
+    expect(agenda.body.data.map((c: { publicId: string }) => c.publicId)).toEqual([
+      res.body.data.publicId,
+    ]);
+
+    // Esa hora ya no sale como libre
+    const despues = await request(app)
+      .get('/api/citas/horas-libres')
+      .query({ fecha: sabado })
+      .set(auth(usuarioCliente));
+    expect(despues.body.data.horas.map((h: { hora: string }) => h.hora)).not.toContain('09:00');
+  });
+});

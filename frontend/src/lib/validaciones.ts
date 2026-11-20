@@ -26,6 +26,9 @@ export const LIMITES = {
   proveedor: 150,
   motosCompatibles: 255,
   busqueda: 100,
+  /** HU-59 · Motivo y detalle de una cita */
+  motivoCita: 150,
+  detalleCita: 500,
 } as const;
 
 export const maximo = (max: number) => `Máximo ${max} caracteres`;
