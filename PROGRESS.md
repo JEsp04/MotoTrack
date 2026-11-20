@@ -20,7 +20,7 @@ Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o po
 | E6 · Órdenes de servicio | HU-28 a HU-37 | 21 | ✅ En `develop` (12-oct, PR #13) |
 | E6.5 · Migración al diseño nuevo | HU-41 a HU-50 | 24 | ✅ En `develop` (24-oct, PR #16 a #25) |
 | E8 · Inventario de repuestos | HU-51 a HU-56 | 16 | ✅ A · Completa (`HU-51` a `HU-56`) |
-| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ⏳ V · HU-57 en `develop` (PR #30); falta ronda 2 (`HU-58` a `HU-60`) |
+| E9 · Citas y agenda | HU-57 a HU-60 | 11 | ✅ V · Completa en `develop` (PR #30, #59, #60, #61) |
 | E10 · El día a día del taller | HU-61 a HU-68 | 16 | ⏳ En `develop`: `HU-62`, `HU-64`, `HU-66`, `HU-67`, `HU-68` · faltan V (`HU-61`, `63`, `65`) |
 | E11 · Avisos, reportes y ajustes | HU-69 a HU-75 | 16 | ⏳ J · `HU-69` y `HU-73` en `develop` · faltan rondas 2 y 3 (`HU-70` a `72`, `74`, `75`) |
 | E12 · Funciones con costo | HU-79 a HU-81 | 13 | ⏳ Decisión del 20-nov: se descartan HU-76, HU-77 y HU-78. Va HU-79 (A, gasto mínimo); HU-80 y HU-81 solo como simulación local con tarjeta de prueba (V, sin cobro real) |
@@ -174,13 +174,13 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 ### E9 · Citas y agenda · 11 pts
 
 - [x] HU-57 · Tabla y API de citas · 3 pts · [V, ronda 1] · PR #30
-- [~] HU-58 · Agenda de citas del taller · 3 pts · [V, ronda 2, necesita HU-73] · rama `HU-58` (sale de `HU-60`), en revisión
-- [~] HU-59 · Pedir una cita como cliente · 3 pts · [V, ronda 2] · rama `HU-59`, en revisión
-- [~] HU-60 · Ver, reprogramar y cancelar mis citas · 2 pts · [V, ronda 2] · rama `HU-60` (sale de `HU-59`), en revisión
+- [x] HU-58 · Agenda de citas del taller · 3 pts · [V, ronda 2, necesita HU-73] · PR #61
+- [x] HU-59 · Pedir una cita como cliente · 3 pts · [V, ronda 2] · PR #59
+- [x] HU-60 · Ver, reprogramar y cancelar mis citas · 2 pts · [V, ronda 2] · PR #60
 
 ### E10 · El día a día del taller · 16 pts
 
-- [ ] HU-61 · Ficha de la moto con su historial · 2 pts · [V, ronda 3, al inicio: J la necesita]
+- [~] HU-61 · Ficha de la moto con su historial · 2 pts · [V, ronda 3, al inicio: J la necesita] · rama `HU-61`, en revisión
 - [x] HU-62 · Fecha estimada de entrega y aviso de atraso · 2 pts · [V, ronda 1] · PR #33
 - [ ] HU-63 · Reasignar el mecánico de una orden *(deseable)* · 1 pt · [V, ronda 3]
 - [x] HU-64 · Inicio del mecánico · 3 pts · [A, ronda 2] · PR #45

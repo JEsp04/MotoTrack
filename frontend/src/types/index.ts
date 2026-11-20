@@ -117,6 +117,23 @@ export interface Moto {
   ordenActiva: OrdenActiva | null;
 }
 
+/** HU-61 · Un servicio hecho a la moto: una orden entregada o cerrada */
+export interface ServicioMoto {
+  publicId: string;
+  numero: number;
+  estado: EstadoOrden;
+  motivoIngreso: string;
+  kilometrajeIngreso: number;
+  costoTotal: number;
+  fechaIngreso: string;
+  fechaEntrega: string | null;
+}
+
+/** HU-61 · Ficha de la moto con su historial (la más reciente primero) */
+export interface MotoFicha extends Moto {
+  historial: ServicioMoto[];
+}
+
 /** Cliente en la lista del buscador (HU-25) */
 export interface ClienteResumen {
   publicId: string;

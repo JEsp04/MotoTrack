@@ -217,3 +217,82 @@ describe('HU-27 · Ver mis motos como cliente', () => {
     expect(porPlaca.body.data[0].placa).toBe('ABC12D');
   });
 });
+
+describe('HU-61 · Ficha de la moto con su historial', () => {
+  async function motoConServicios() {
+    const e = await escenario();
+    const { taller, admin, mecanico, ficha } = e;
+    const laura = await prisma.moto.create({
+      data: { ...moto, placa: 'KLM45F', tallerId: taller.tallerId, clienteId: ficha.clienteId },
+    });
+    const otra = await prisma.cliente.create({
+      data: {
+        tallerId: taller.tallerId,
+        nombre: 'Otra',
+        documentoIdentidad: '55555555',
+        telefono: '3000000000',
+      },
+    });
+    const ajena = await prisma.moto.create({
+      data: { ...moto, placa: 'CCC33C', tallerId: taller.tallerId, clienteId: otra.clienteId },
+    });
+    const orden = (
+      numero: number,
+      estado: 'cerrada' | 'entregada' | 'cancelada' | 'en_reparacion',
+      dia: string,
+    ) =>
+      prisma.ordenServicio.create({
+        data: {
+          tallerId: taller.tallerId,
+          numero,
+          motocicletaId: laura.motocicletaId,
+          mecanicoId: mecanico.usuarioId,
+          creadoPorId: admin.usuarioId,
+          estado,
+          motivoIngreso: `Servicio ${numero}`,
+          kilometrajeIngreso: 10000 + numero * 1000,
+          costoTotal: numero * 10000,
+          fechaIngreso: new Date(`${dia}T15:00:00Z`),
+        },
+      });
+    await orden(1, 'cerrada', '2026-08-01');
+    await orden(2, 'entregada', '2026-10-01');
+    await orden(3, 'cerrada', '2026-09-01');
+    await orden(4, 'cancelada', '2026-10-15');
+    await orden(5, 'en_reparacion', '2026-11-10');
+    return { ...e, laura, ajena };
+  }
+
+  it('salen las 3 órdenes terminadas, la más reciente primero, sin canceladas ni abiertas', async () => {
+    const { admin, laura } = await motoConServicios();
+    const res = await request(app).get(`/api/motos/${laura.publicId}`).set(auth(admin));
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      placa: 'KLM45F',
+      marca: 'Yamaha',
+      modelo: 2023,
+      kilometraje: 12850,
+      ordenActiva: { numero: 5, estado: 'en_reparacion' },
+    });
+    expect(res.body.data.historial.map((o: { numero: number }) => o.numero)).toEqual([2, 3, 1]);
+    expect(res.body.data.historial[0]).toMatchObject({
+      motivoIngreso: 'Servicio 2',
+      costoTotal: 20000,
+      kilometrajeIngreso: 12000,
+      estado: 'entregada',
+    });
+    expect(res.body.data).not.toHaveProperty('motocicletaId');
+  });
+
+  it('el cliente ve su moto, pero la de otro cliente responde 404', async () => {
+    const { usuarioCliente, laura, ajena } = await motoConServicios();
+    const propia = await request(app).get(`/api/motos/${laura.publicId}`).set(auth(usuarioCliente));
+    expect(propia.status).toBe(200);
+    expect(propia.body.data.historial).toHaveLength(3);
+    const otra = await request(app).get(`/api/motos/${ajena.publicId}`).set(auth(usuarioCliente));
+    expect(otra.status).toBe(404);
+    expect((await request(app).get('/api/motos/no-existe').set(auth(usuarioCliente))).status).toBe(
+      404,
+    );
+  });
+});
