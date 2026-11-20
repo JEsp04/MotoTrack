@@ -82,6 +82,19 @@ async function main() {
     },
   });
 
+  // Casos de prueba manual (HU-86, HU-87): mecánico sin órdenes para restablecer su clave,
+  // cambiar su contraseña y su rol sin afectar a Andrés ni a Felipe
+  await prisma.usuario.create({
+    data: {
+      tallerId,
+      nombre: 'Camilo Duque',
+      email: 'camilo@mototrack.co',
+      passwordHash,
+      telefono: '3008889900',
+      rol: 'mecanico',
+    },
+  });
+
   // Dos clientes con cuenta en la app y uno registrado solo por el taller
   const usuarioLaura = await prisma.usuario.create({
     data: {
@@ -332,6 +345,19 @@ async function main() {
       },
       servicios: ['Sincronización'],
       ingresoHaceDias: 12,
+    },
+    {
+      // HU-89: entregada a Laura y sin calificar, para probar «Califica tu experiencia»
+      moto: nmax,
+      mecanico: felipe,
+      motivo: 'Luz de freno trasera no prende.',
+      estados: hasta('entregada'),
+      diagnostico: {
+        hallazgos: 'Bombillo de stop fundido.',
+        trabajoRecomendado: 'Revisión del sistema eléctrico y cambio del bombillo.',
+      },
+      servicios: ['Revisión del sistema eléctrico'],
+      ingresoHaceDias: 6,
     },
   ];
 
@@ -792,7 +818,7 @@ async function main() {
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(
-    `Cuentas de prueba (clave ${CLAVE_DE_PRUEBA}): admin@mototrack.co, andres@mototrack.co, felipe@mototrack.co, laura@correo.co, juan@correo.co (cliente en 2 talleres), diana@motoservicio.co`,
+    `Cuentas de prueba (clave ${CLAVE_DE_PRUEBA}): admin@mototrack.co, andres@mototrack.co, felipe@mototrack.co, camilo@mototrack.co, laura@correo.co, juan@correo.co (cliente en 2 talleres), diana@motoservicio.co`,
   );
 }
 
