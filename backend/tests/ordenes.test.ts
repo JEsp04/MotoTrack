@@ -1005,3 +1005,77 @@ describe('HU-88 · Ítem adicional en una orden aprobada o en reparación', () =
     }
   });
 });
+
+describe('HU-90 · Seguimiento público sin cuenta', () => {
+  it('sin sesión devuelve la orden, la moto, el taller y la cotización, sin datos del cliente', async () => {
+    const p = await preparar();
+    await prisma.cliente.update({
+      where: { clienteId: p.ficha.clienteId },
+      data: { telefono: '3009998877', documentoIdentidad: '1037000111' },
+    });
+    const orden = await p.ordenEn('lista_entrega');
+    await prisma.ordenServicio.update({
+      where: { ordenServicioId: orden.ordenServicioId },
+      data: { codigoRetiro: '4821', costoTotal: 40000 },
+    });
+    await prisma.diagnostico.create({
+      data: {
+        ordenServicioId: orden.ordenServicioId,
+        usuarioId: p.mecanico.usuarioId,
+        hallazgos: 'Aceite muy degradado',
+        trabajoRecomendado: 'Cambiar aceite y filtro',
+      },
+    });
+    await prisma.detalleServicio.create({
+      data: {
+        ordenServicioId: orden.ordenServicioId,
+        servicioId: p.aceite.servicioId,
+        cantidad: 1,
+        precioUnitario: 40000,
+        subtotal: 40000,
+      },
+    });
+
+    const res = await request(app).get(`/api/ordenes/seguimiento/${orden.publicId}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      publicId: orden.publicId,
+      numero: orden.numero,
+      estado: 'lista_entrega',
+      costoTotal: 40000,
+      moto: { placa: 'ABC12D', marca: 'Yamaha', referencia: 'NMAX 155', modelo: 2023 },
+      taller: { nombre: 'Moto Express' },
+      diagnostico: {
+        hallazgos: 'Aceite muy degradado',
+        trabajoRecomendado: 'Cambiar aceite y filtro',
+      },
+      servicios: [{ nombre: 'Cambio de aceite', tipo: 'servicio', cantidad: 1, subtotal: 40000 }],
+    });
+    const json = JSON.stringify(res.body);
+    for (const prohibido of [
+      '3009998877',
+      '1037000111',
+      '4821',
+      'codigoRetiro',
+      'cliente',
+      'tallerId',
+      'ordenServicioId',
+    ])
+      expect(json).not.toContain(prohibido);
+    expect(res.body.data).not.toHaveProperty('mecanico');
+    expect(res.body.data).not.toHaveProperty('historial');
+  });
+
+  it('un id que no existe o no es válido responde 404', async () => {
+    await preparar();
+    const falso = '0192f0a0-0000-7000-8000-000000000999';
+    expect((await request(app).get(`/api/ordenes/seguimiento/${falso}`)).status).toBe(404);
+    expect((await request(app).get('/api/ordenes/seguimiento/123')).status).toBe(404);
+  });
+
+  it('las demás rutas de órdenes siguen pidiendo sesión', async () => {
+    const p = await preparar();
+    const orden = await p.ordenEn('registrada');
+    expect((await request(app).get(`/api/ordenes/${orden.publicId}`)).status).toBe(401);
+  });
+});

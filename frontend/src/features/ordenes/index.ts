@@ -6,3 +6,4 @@ export { rutaOrden } from './estados';
 export { PanelTaller } from './components/PanelTaller';
 export { OrdenClienteCard } from './components/OrdenClienteCard';
 export { useMisOrdenesActivas } from './hooks/use-ordenes';
+export { SeguimientoPublico } from './components/SeguimientoPublico';

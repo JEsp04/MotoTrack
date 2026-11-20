@@ -25,6 +25,11 @@ export async function actividad(req: Request, res: Response) {
   res.json({ data: await ordenesService.actividadReciente(usuarioActual(req), limit) });
 }
 
+/** HU-90 · Seguimiento público de la orden (sin sesión) */
+export async function seguimiento(req: ConId, res: Response) {
+  res.json({ data: await ordenesService.seguimientoPublico(req.params.id) });
+}
+
 export async function obtener(req: ConId, res: Response) {
   res.json({ data: await ordenesService.obtenerOrden(usuarioActual(req), req.params.id) });
 }

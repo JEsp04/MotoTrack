@@ -265,6 +265,57 @@ async function detalle(usuario: UsuarioAutenticado, ordenServicioId: number) {
   });
 }
 
+// ─── HU-90 · Seguimiento público ───────────────────────────────────────────
+
+/**
+ * Lo único que ve quien abre el enlace `/s/:id` sin sesión: la orden, la moto, el contacto del
+ * taller, el diagnóstico y la cotización. Nada del cliente (nombre, teléfono, documento), ni el
+ * mecánico, ni el historial, ni el `codigoRetiro`. El `publicId` (UUIDv7) es imposible de adivinar.
+ */
+const seguimientoPublicoSelect = {
+  publicId: true,
+  numero: true,
+  estado: true,
+  motivoIngreso: true,
+  costoTotal: true,
+  fechaIngreso: true,
+  fechaEstimadaEntrega: true,
+  fechaEntrega: true,
+  moto: { select: { placa: true, marca: true, referencia: true, modelo: true } },
+  taller: { select: contactoTaller },
+  diagnostico: { select: { hallazgos: true, trabajoRecomendado: true } },
+  servicios: {
+    select: {
+      publicId: true,
+      cantidad: true,
+      precioUnitario: true,
+      subtotal: true,
+      servicio: { select: { nombre: true } },
+      repuesto: { select: { nombre: true } },
+    },
+    orderBy: { creadoEn: 'asc' },
+  },
+} satisfies Prisma.OrdenServicioSelect;
+
+/** GET /api/ordenes/seguimiento/:id · Público, sin sesión. 404 si no existe. */
+export async function seguimientoPublico(publicId: string) {
+  if (!esPublicId(publicId)) throw HttpError.notFound(NO_ENCONTRADA);
+  const orden = await prisma.ordenServicio.findUnique({
+    where: { publicId },
+    select: seguimientoPublicoSelect,
+  });
+  if (!orden) throw HttpError.notFound(NO_ENCONTRADA);
+  const { servicios, ...resto } = conEntrega(orden);
+  return {
+    ...resto,
+    servicios: servicios.map(({ servicio, repuesto, ...s }) => ({
+      ...s,
+      nombre: repuesto?.nombre ?? servicio?.nombre ?? 'Ítem',
+      tipo: repuesto ? ('repuesto' as const) : ('servicio' as const),
+    })),
+  };
+}
+
 // ─── HU-30 · Lista ─────────────────────────────────────────────────────────
 
 export async function listarOrdenes(usuario: UsuarioAutenticado, query: ListarOrdenesQuery) {

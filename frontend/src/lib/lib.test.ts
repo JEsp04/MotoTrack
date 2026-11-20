@@ -120,6 +120,8 @@ describe('whatsapp (HU-68)', () => {
       resena: null,
     });
     expect(sinCotizar).toContain('Aún no hay diagnóstico ni servicios registrados.');
+    // HU-90 · El mensaje lleva el enlace público de seguimiento
+    expect(sinCotizar).toContain(`${window.location.origin}/s/o1`);
     expect(sinCotizar).toContain('$ 0');
   });
 });

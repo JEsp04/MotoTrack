@@ -9,6 +9,9 @@ import * as ordenes from './ordenes.controller.js';
  */
 const router = Router();
 
+// HU-90 · El enlace /s/:id que se comparte por WhatsApp se abre sin sesión
+router.get('/seguimiento/:id', ordenes.seguimiento);
+
 router.use(requireAuth);
 router.get('/', ordenes.listar);
 // HU-85 · Antes de /:id para que «actividad» no se lea como un id
