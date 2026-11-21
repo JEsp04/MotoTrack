@@ -1,13 +1,19 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useSession } from '@/features/auth';
+import { descargarArchivo } from '@/lib/descargar';
+import { useToastStore } from '@/lib/toast';
+import { errorApi } from '@/test/fixtures';
 import { abrirApp, sesionDePrueba } from '@/test/utils';
 import type { PeriodoReporte, Reporte } from '@/types';
 import { reportesApi } from './api/reportes-api';
 import { abreviarPesos, comparacion, formatDias } from './components/formato';
 
-vi.mock('./api/reportes-api', () => ({ reportesApi: { ver: vi.fn() } }));
+vi.mock('./api/reportes-api', () => ({ reportesApi: { ver: vi.fn(), exportar: vi.fn() } }));
+vi.mock('@/lib/descargar', () => ({ descargarArchivo: vi.fn() }));
 const api = vi.mocked(reportesApi);
+const descargar = vi.mocked(descargarArchivo);
+const avisos = () => useToastStore.getState().items.map((t) => t.message);
 
 const MES: Reporte = {
   periodo: 'mes',
@@ -80,6 +86,30 @@ describe('HU-71 · Reportes del taller', () => {
     const router = abrirApp('/admin/reportes');
     await waitFor(() => expect(router.state.location.pathname).toBe('/mecanico'));
     expect(api.ver).not.toHaveBeenCalled();
+  });
+});
+
+describe('HU-72 · Exportar el reporte a Excel', () => {
+  it('descarga el CSV del periodo y avisa «Reporte exportado a Excel»', async () => {
+    sesionDePrueba('admin');
+    const csv = new Blob(['﻿Número;Total\r\n7;85000\r\n'], { type: 'text/csv' });
+    api.exportar.mockResolvedValue(csv);
+    abrirApp('/admin/reportes');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Exportar a Excel' }));
+    await waitFor(() => expect(descargar).toHaveBeenCalledWith(csv, 'reporte-mes-2026-11.csv'));
+    expect(api.exportar).toHaveBeenCalledWith('mes', '2026-11-01');
+    await waitFor(() => expect(avisos()).toContain('Reporte exportado a Excel'));
+  });
+
+  it('si falla, muestra el mensaje de la API y no descarga nada', async () => {
+    sesionDePrueba('admin');
+    api.exportar.mockRejectedValue(errorApi(403, { message: 'No tienes permiso para exportar' }));
+    abrirApp('/admin/reportes');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Exportar a Excel' }));
+    await waitFor(() => expect(avisos()).toContain('No tienes permiso para exportar'));
+    expect(descargar).not.toHaveBeenCalled();
   });
 });
 

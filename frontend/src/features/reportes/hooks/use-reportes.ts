@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { descargarArchivo } from '@/lib/descargar';
 import type { PeriodoReporte } from '@/types';
 import { reportesApi } from '../api/reportes-api';
 
@@ -8,5 +9,20 @@ export function useReporte(periodo: PeriodoReporte) {
     queryKey: ['reportes', periodo],
     queryFn: () => reportesApi.ver(periodo),
     placeholderData: keepPreviousData,
+  });
+}
+
+/** Nombre del archivo: «reporte-mes-2026-11.csv» o «reporte-semana-2026-11-16.csv» */
+export function nombreArchivo(periodo: PeriodoReporte, desde: string) {
+  return `reporte-${periodo}-${periodo === 'mes' ? desde.slice(0, 7) : desde}.csv`;
+}
+
+/** HU-72 · Descarga el CSV de las órdenes del periodo que se está viendo */
+export function useExportarReporte() {
+  return useMutation({
+    mutationFn: async ({ periodo, desde }: { periodo: PeriodoReporte; desde: string }) => {
+      const archivo = await reportesApi.exportar(periodo, desde);
+      descargarArchivo(archivo, nombreArchivo(periodo, desde));
+    },
   });
 }

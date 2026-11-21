@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   AppBar,
+  Button,
   Card,
   KpiTile,
   Page,
@@ -11,8 +12,9 @@ import {
 } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { cn } from '@/lib/cn';
+import { toast } from '@/lib/toast';
 import type { PeriodoReporte, Reporte } from '@/types';
-import { useReporte } from '../hooks/use-reportes';
+import { useExportarReporte, useReporte } from '../hooks/use-reportes';
 import { abreviarPesos, comparacion, formatDias } from './formato';
 
 /**
@@ -20,17 +22,22 @@ import { abreviarPesos, comparacion, formatDias } from './formato';
  * Semana / Mes, lecturas, «Órdenes por día» y «Servicios más frecuentes».
  * «Clientes recuperados por alertas IA» se omite: la app todavía no tiene esos datos.
  */
-export function ReportesVista({
-  onBack,
-  acciones,
-}: {
-  onBack?: () => void;
-  /** Lo que va al final de la pantalla (HU-72: «Exportar a Excel») */
-  acciones?: (periodo: PeriodoReporte) => ReactNode;
-}) {
+export function ReportesVista({ onBack }: { onBack?: () => void }) {
   const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
   const reporte = useReporte(periodo);
   const r = reporte.data;
+  const exportar = useExportarReporte();
+
+  /** HU-72 · Descarga el CSV de las órdenes del periodo */
+  function exportarExcel(r: Reporte) {
+    exportar.mutate(
+      { periodo, desde: r.desde },
+      {
+        onSuccess: () => toast('Reporte exportado a Excel', 'success'),
+        onError: (e) => toast(parseApiError(e).message, 'danger'),
+      },
+    );
+  }
 
   return (
     <>
@@ -93,7 +100,15 @@ export function ReportesVista({
               <Servicios servicios={r.servicios} />
             </Card>
 
-            {acciones?.(periodo)}
+            <Button
+              variant="secondary"
+              icon="arrowDown"
+              fullWidth
+              loading={exportar.isPending}
+              onClick={() => exportarExcel(r)}
+            >
+              Exportar a Excel
+            </Button>
           </>
         )}
       </Page>
