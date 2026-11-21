@@ -3,7 +3,7 @@
 Detalle y criterios de aceptación de cada historia: `docs/HISTORIAS.md` (50 historias, 112 puntos: las 40 originales más E6.5, agregada el 17-oct), `docs/HISTORIAS-2.md` (segunda etapa, HU-51 a HU-81) y `docs/HISTORIAS-3.md` (tercera etapa de mejoras UX, reseñas y casos de uso completos, HU-82 a HU-91). Reparto: `docs/REPARTO.md`. Guía de cada sesión: `docs/FLUJO.md`. Diseño: `docs/diseno.md` y `docs/prototipo/`.
 Marca `[x]` solo cuando la historia cumple la *definición de terminado* (`CLAUDE.md`, sección 6) y está unida en `develop`.
 
-Última actualización: viernes 20 de noviembre de 2026.
+Última actualización: sábado 21 de noviembre de 2026.
 
 Leyenda: `[x]` unida en `develop` · `[~]` hecha y en revisión (PR abierto o por abrir) · `[ ]` pendiente.
 
@@ -192,12 +192,12 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 ### E11 · Avisos, reportes y ajustes · 16 pts
 
 - [x] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1] · PR #35
-- [ ] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2]
-- [ ] HU-71 · Reportes del taller · 3 pts · [J, ronda 2]
-- [ ] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2]
+- [~] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2] · rama `HU-70`, por abrir PR
+- [~] HU-71 · Reportes del taller · 3 pts · [J, ronda 2] · rama `HU-71` (sale de `HU-70`), por abrir PR
+- [~] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2] · rama `HU-72` (sale de `HU-71`), por abrir PR
 - [x] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero] · PR #34
-- [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]
-- [ ] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68]
+- [~] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3] · rama `HU-74` (sale de `HU-75`), por abrir PR
+- [~] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68] · rama `HU-75` (sale de `HU-72`), por abrir PR
 
 ### E12 · Funciones con costo · 13 pts *(alcance decidido el 20-nov-2026)*
 

@@ -9,6 +9,7 @@ const TABLAS = [
   'consultas_asistente',
   'resenas_orden',
   'invitaciones',
+  'recordatorios',
   'avisos',
   'citas',
   'movimientos_stock',

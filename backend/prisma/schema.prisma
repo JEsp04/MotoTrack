@@ -130,6 +130,7 @@ model Taller {
   movimientosStock MovimientoStock[]
   citas            Cita[]
   avisos           Aviso[]
+  recordatorios    Recordatorio[]
   invitaciones     Invitacion[]
   resenas          ResenaOrden[]
   consultasIA      ConsultaAsistente[]
@@ -154,20 +155,21 @@ model Usuario {
   creadoEn      DateTime       @default(now())
   actualizadoEn DateTime       @updatedAt
 
-  taller               Taller              @relation(fields: [tallerId], references: [tallerId])
+  taller                 Taller              @relation(fields: [tallerId], references: [tallerId])
   /// HU-91 · Fichas de cliente de la cuenta (una por taller); `tallerId` es el taller activo
-  clientes             Cliente[]
-  refreshTokens        RefreshToken[]
-  ordenesAsignadas     OrdenServicio[]     @relation("MecanicoAsignado")
-  ordenesCreadas       OrdenServicio[]     @relation("CreadaPor")
-  diagnosticos         Diagnostico[]
-  historialOrdenes     HistorialOrden[]
-  movimientosStock     MovimientoStock[]
-  citasCreadas         Cita[]
-  avisos               Aviso[]
-  invitacionesEnviadas Invitacion[]        @relation("InvitacionesEnviadas")
-  invitacionAceptada   Invitacion?         @relation("InvitacionAceptada")
-  consultasIA          ConsultaAsistente[]
+  clientes               Cliente[]
+  refreshTokens          RefreshToken[]
+  ordenesAsignadas       OrdenServicio[]     @relation("MecanicoAsignado")
+  ordenesCreadas         OrdenServicio[]     @relation("CreadaPor")
+  diagnosticos           Diagnostico[]
+  historialOrdenes       HistorialOrden[]
+  movimientosStock       MovimientoStock[]
+  citasCreadas           Cita[]
+  avisos                 Aviso[]
+  recordatoriosRevisados Recordatorio[]      @relation("RecordatorioRevisadoPor")
+  invitacionesEnviadas   Invitacion[]        @relation("InvitacionesEnviadas")
+  invitacionAceptada     Invitacion?         @relation("InvitacionAceptada")
+  consultasIA            ConsultaAsistente[]
 
   @@index([tallerId, rol])
   @@map("usuarios")
@@ -238,10 +240,11 @@ model Moto {
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
 
-  taller  Taller          @relation(fields: [tallerId], references: [tallerId])
-  cliente Cliente         @relation(fields: [clienteId], references: [clienteId])
-  ordenes OrdenServicio[]
-  citas   Cita[]
+  taller        Taller          @relation(fields: [tallerId], references: [tallerId])
+  cliente       Cliente         @relation(fields: [clienteId], references: [clienteId])
+  ordenes       OrdenServicio[]
+  citas         Cita[]
+  recordatorios Recordatorio[]
 
   @@unique([tallerId, placa])
   @@index([clienteId])
@@ -287,6 +290,7 @@ model OrdenServicio {
   movimientosStock MovimientoStock[]
   cita             Cita?
   avisos           Aviso[]
+  recordatorios    Recordatorio[]
   resena           ResenaOrden?
 
   @@unique([tallerId, numero])
@@ -631,4 +635,44 @@ model Factura {
 
   @@unique([tallerId, numero])
   @@map("facturas")
+}
+
+/// HU-75 · Estado de un recordatorio de mantenimiento
+enum EstadoRecordatorio {
+  pendiente
+  aprobado
+  rechazado
+}
+
+/// HU-75 · Recordatorio de mantenimiento calculado con reglas fijas (sin IA), desde la última
+/// orden entregada que tuvo ese servicio. Uno por moto, regla y orden: si se rechaza, no vuelve
+/// a salir hasta que se haga el servicio otra vez.
+model Recordatorio {
+  recordatorioId  Int                @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId        String             @unique @default(uuid(7)) @db.Char(36)
+  tallerId        Int
+  motocicletaId   Int
+  /// Id de la regla en recordatorios.reglas.ts (por ejemplo «aceite»)
+  regla           String             @db.VarChar(30)
+  /// Orden con el último servicio de esa regla
+  ordenServicioId Int
+  estado          EstadoRecordatorio @default(pendiente)
+  /// «último cambio de aceite hace 3.500 km», como se calculó al revisarlo
+  porQue          String             @db.VarChar(200)
+  /// Motivo del rechazo
+  motivo          String?            @db.VarChar(120)
+  revisadoPorId   Int?
+  revisadoEn      DateTime?
+  creadoEn        DateTime           @default(now())
+
+  taller      Taller        @relation(fields: [tallerId], references: [tallerId])
+  moto        Moto          @relation(fields: [motocicletaId], references: [motocicletaId], onDelete: Cascade)
+  orden       OrdenServicio @relation(fields: [ordenServicioId], references: [ordenServicioId], onDelete: Cascade)
+  revisadoPor Usuario?      @relation("RecordatorioRevisadoPor", fields: [revisadoPorId], references: [usuarioId])
+
+  @@unique([motocicletaId, regla, ordenServicioId])
+  @@index([tallerId, estado])
+  @@index([ordenServicioId])
+  @@map("recordatorios")
 }

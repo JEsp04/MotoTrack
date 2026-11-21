@@ -47,7 +47,7 @@ export function Radio({ checked }: { checked: boolean }) {
         checked ? 'border-ink bg-accent' : 'border-border-strong',
       )}
     >
-      {checked && <span className="size-2 rounded-full bg-ink" />}
+      {checked && <span className="size-2 rounded-full bg-on-accent" />}
     </span>
   );
 }

@@ -23,6 +23,7 @@ export { DataList, ActionBar, Page } from './Page';
 export { Fab } from './Fab';
 export { IconButton } from './IconButton';
 export { Initials, LeadIcon, List, ListItem } from './List';
+export { KpiTile, type KpiTono } from './KpiTile';
 export { Note } from './Note';
 export { Radio, SelectCard } from './SelectCard';
 export { Segmented } from './Segmented';

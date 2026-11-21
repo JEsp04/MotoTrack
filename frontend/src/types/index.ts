@@ -507,6 +507,77 @@ export interface ResultadoPago {
   fecha: string;
 }
 
+// ─── HU-70 · Avisos ──────────────────────────────────────────────────────────
+
+export type TipoAviso = 'estado' | 'cotizacion' | 'cita' | 'recordatorio';
+
+export interface Aviso {
+  publicId: string;
+  tipo: TipoAviso;
+  titulo: string;
+  texto: string;
+  leido: boolean;
+  creadoEn: string;
+  orden: { publicId: string; numero: number } | null;
+}
+
+export interface AvisosLista extends ApiList<Aviso> {
+  meta: ApiList<Aviso>['meta'] & { noLeidos: number };
+}
+
+// ─── HU-71 · Reportes ────────────────────────────────────────────────────────
+
+export type PeriodoReporte = 'semana' | 'mes';
+
+export interface Reporte {
+  periodo: PeriodoReporte;
+  /** Primer y último día del periodo («AAAA-MM-DD», hora de Colombia) */
+  desde: string;
+  hasta: string;
+  ingresos: number;
+  ordenesCerradas: number;
+  /** Días promedio de ingreso a entrega; null si no hubo entregas */
+  diasPromedio: number | null;
+  anterior: {
+    /** «octubre» o «semana ant.» */
+    nombre: string;
+    ingresos: number;
+    ordenesCerradas: number;
+    variacionIngresos: number | null;
+  };
+  porDia: Array<{ dia: string; ordenes: number }>;
+  servicios: Array<{ nombre: string; veces: number }>;
+}
+
+// ─── HU-75 · Recordatorios de mantenimiento ─────────────────────────────────
+
+export type EstadoRecordatorio = 'pendiente' | 'aprobado' | 'rechazado';
+
+export interface Recordatorio {
+  publicId: string;
+  titulo: string;
+  estado: EstadoRecordatorio;
+  /** «último cambio de aceite hace 3.500 km» */
+  porQue: string;
+  motivo: string | null;
+  revisadoEn: string | null;
+  revisadoPor: { nombre: string } | null;
+  creadoEn: string;
+  ultimoServicio: { publicId: string; numero: number; fechaEntrega: string | null };
+  moto: {
+    publicId: string;
+    placa: string;
+    marca: string;
+    referencia: string;
+    kilometraje: number;
+    cliente: { publicId: string; nombre: string; telefono: string; tieneCuenta: boolean };
+  };
+}
+
+export interface RecordatoriosLista extends ApiList<Recordatorio> {
+  meta: ApiList<Recordatorio>['meta'] & { pendientes: number; motos: number };
+}
+
 export interface ApiResponse<T> {
   data: T;
 }
