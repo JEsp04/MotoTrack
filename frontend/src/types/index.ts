@@ -525,6 +525,30 @@ export interface AvisosLista extends ApiList<Aviso> {
   meta: ApiList<Aviso>['meta'] & { noLeidos: number };
 }
 
+// ─── HU-71 · Reportes ────────────────────────────────────────────────────────
+
+export type PeriodoReporte = 'semana' | 'mes';
+
+export interface Reporte {
+  periodo: PeriodoReporte;
+  /** Primer y último día del periodo («AAAA-MM-DD», hora de Colombia) */
+  desde: string;
+  hasta: string;
+  ingresos: number;
+  ordenesCerradas: number;
+  /** Días promedio de ingreso a entrega; null si no hubo entregas */
+  diasPromedio: number | null;
+  anterior: {
+    /** «octubre» o «semana ant.» */
+    nombre: string;
+    ingresos: number;
+    ordenesCerradas: number;
+    variacionIngresos: number | null;
+  };
+  porDia: Array<{ dia: string; ordenes: number }>;
+  servicios: Array<{ nombre: string; veces: number }>;
+}
+
 export interface ApiResponse<T> {
   data: T;
 }

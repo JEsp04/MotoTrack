@@ -193,7 +193,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 
 - [x] HU-69 · Avisos automáticos al cambiar el estado · 3 pts · [J, ronda 1] · PR #35
 - [~] HU-70 · Pantalla de avisos · 2 pts · [J, ronda 2] · rama `HU-70`, por abrir PR
-- [ ] HU-71 · Reportes del taller · 3 pts · [J, ronda 2]
+- [~] HU-71 · Reportes del taller · 3 pts · [J, ronda 2] · rama `HU-71` (sale de `HU-70`), por abrir PR
 - [ ] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2]
 - [x] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero] · PR #34
 - [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]

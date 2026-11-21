@@ -104,6 +104,8 @@ function Mas({ usuario }: { usuario: Usuario }) {
               }
               to="/admin/inventario"
             />
+            {/* HU-71 */}
+            <ListItem icon="chart" title="Reportes" to="/admin/reportes" />
             <ListItem icon="user" title="Usuarios y roles" to="/admin/equipo" />
             {/* HU-89 */}
             <ListItem

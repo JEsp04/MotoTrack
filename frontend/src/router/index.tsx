@@ -120,6 +120,8 @@ export const routes: RouteObject[] = [
           },
           // HU-70 · Avisos (la campana)
           { path: 'avisos', element: avisos },
+          // HU-71 · Reportes del taller
+          { path: 'reportes', element: page(() => import('@/pages/admin/ReportesPage')) },
           // HU-89 · Reseñas de los clientes
           { path: 'resenas', element: page(() => import('@/pages/admin/ResenasPage')) },
           // HU-80 · Plan del taller y facturas
