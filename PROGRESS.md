@@ -197,7 +197,7 @@ Entre corchetes, quién la lleva y en qué ronda (`docs/REPARTO.md`).
 - [~] HU-72 · Exportar el reporte a Excel *(deseable)* · 1 pt · [J, ronda 2] · rama `HU-72` (sale de `HU-71`), por abrir PR
 - [x] HU-73 · Menú «Más» y datos del taller · 2 pts · [J, ronda 1, va primero] · PR #34
 - [ ] HU-74 · Tema oscuro *(deseable)* · 2 pts · [J, ronda 3]
-- [ ] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68]
+- [~] HU-75 · Recordatorios de mantenimiento (por reglas, sin IA) · 3 pts · [J, ronda 3, espera HU-61 y HU-68] · rama `HU-75` (sale de `HU-72`), por abrir PR
 
 ### E12 · Funciones con costo · 13 pts *(alcance decidido el 20-nov-2026)*
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { CampanaAvisos } from '@/features/avisos';
+import { SugerenciaPreventiva } from '@/features/recordatorios';
 import { Arc, Button, EmptyState, Fab, Icon, Initials, Plate, Skeleton } from '@/components/ui';
 import { useResumenInventario } from '@/features/repuestos';
 import { useResumenResenas } from '@/features/resenas';
@@ -111,6 +112,9 @@ export function PanelTaller() {
           <Icon name="chevronRight" className="shrink-0 text-ink-muted" />
         </Link>
       )}
+
+      {/* HU-75 · Motos que cumplen su intervalo de mantenimiento */}
+      <SugerenciaPreventiva />
 
       {isPending && (
         <div

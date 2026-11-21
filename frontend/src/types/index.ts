@@ -549,6 +549,35 @@ export interface Reporte {
   servicios: Array<{ nombre: string; veces: number }>;
 }
 
+// ─── HU-75 · Recordatorios de mantenimiento ─────────────────────────────────
+
+export type EstadoRecordatorio = 'pendiente' | 'aprobado' | 'rechazado';
+
+export interface Recordatorio {
+  publicId: string;
+  titulo: string;
+  estado: EstadoRecordatorio;
+  /** «último cambio de aceite hace 3.500 km» */
+  porQue: string;
+  motivo: string | null;
+  revisadoEn: string | null;
+  revisadoPor: { nombre: string } | null;
+  creadoEn: string;
+  ultimoServicio: { publicId: string; numero: number; fechaEntrega: string | null };
+  moto: {
+    publicId: string;
+    placa: string;
+    marca: string;
+    referencia: string;
+    kilometraje: number;
+    cliente: { publicId: string; nombre: string; telefono: string; tieneCuenta: boolean };
+  };
+}
+
+export interface RecordatoriosLista extends ApiList<Recordatorio> {
+  meta: ApiList<Recordatorio>['meta'] & { pendientes: number; motos: number };
+}
+
 export interface ApiResponse<T> {
   data: T;
 }
