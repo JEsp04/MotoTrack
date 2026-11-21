@@ -6,6 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>MotoTrack · Gestión para talleres de motos</title>
+    <!-- HU-74 · Pone el tema guardado antes de pintar, para que no parpadee (ver src/lib/tema.ts) -->
+    <script>
+      try {
+        // Solo dentro de la app: la landing y el ingreso siempre van en claro
+        if (
+          /^\/(admin|mecanico|cliente)(\/|$)/.test(location.pathname) &&
+          localStorage.getItem('mototrack-tema') === 'oscuro'
+        ) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

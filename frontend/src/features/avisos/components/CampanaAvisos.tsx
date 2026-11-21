@@ -25,7 +25,7 @@ export function CampanaAvisos({ to, className }: { to: string; className?: strin
       {n > 0 && (
         <span
           aria-hidden="true"
-          className="absolute top-1.5 right-1 min-w-[18px] rounded-full bg-accent px-[5px] text-center text-[11px] leading-[18px] font-bold text-ink ring-2 ring-surface"
+          className="absolute top-1.5 right-1 min-w-[18px] rounded-full bg-accent px-[5px] text-center text-[11px] leading-[18px] font-bold text-on-accent ring-2 ring-surface"
         >
           {n > 99 ? '99+' : n}
         </span>

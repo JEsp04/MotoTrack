@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router';
 import { Icon, type IconName } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { LogoMark } from './Logo';
+import { MenuTemaOscuro } from './TemaOscuro';
 
 export interface NavItem {
   to: string;
@@ -245,6 +246,10 @@ function MenuCuenta({
               ))}
             </div>
           )}
+          {/* HU-74 · Tema oscuro, como en el menú de la cuenta del prototipo */}
+          <div className="mt-1 flex flex-col">
+            <MenuTemaOscuro />
+          </div>
           <button
             type="button"
             onClick={onLogout}

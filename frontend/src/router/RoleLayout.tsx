@@ -1,6 +1,7 @@
 import { AppLayout } from '@/components/layout';
 import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
 import { CampanaAvisos } from '@/features/avisos';
+import { useTemaDeLaApp } from '@/lib/tema';
 import type { Rol } from '@/types';
 import { RequireRole } from './guards';
 import { ACCION_PRINCIPAL, ENLACES_CUENTA, NAV_POR_ROL } from './nav';
@@ -17,6 +18,8 @@ export function RoleLayout({ rol }: { rol: Rol }) {
 function RoleShell({ rol }: { rol: Rol }) {
   const usuario = useSession((s) => s.usuario);
   const { salir } = useSalir();
+  // HU-74 · El tema oscuro rige solo dentro de la app
+  useTemaDeLaApp();
 
   return (
     <AppLayout

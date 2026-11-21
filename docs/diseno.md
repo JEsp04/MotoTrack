@@ -41,7 +41,7 @@ Los colores **solo** se definen en `frontend/src/styles/index.css`. `npm run che
 | `danger` / `danger-text` / `danger-soft` | `#D94A3D` / `#B7382C` / `#FCEBE9` | Peligro, errores |
 | `success` / `success-text` / `success-soft` | `#2F8F5B` / `#1F7146` / `#E6F3EB` | Solo chips de «hecho» |
 
-> **Modo oscuro:** el prototipo lo tiene, pero la app todavía no. Se hará en una HU futura con los valores oscuros del prototipo (`docs/prototipo`, bloque `[data-theme="dark"]`).
+> **Modo oscuro (HU-74):** los mismos tokens con los valores oscuros del prototipo, en `:root[data-theme="dark"]` de `index.css`. Se activa en «Más», «Mi cuenta» o el menú del avatar y se guarda en el navegador. Rige solo dentro de la app: la landing y el ingreso van siempre en claro. Sobre el amarillo, el texto va en `text-on-accent` (no cambia con el tema).
 
 ---
 

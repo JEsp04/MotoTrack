@@ -5,7 +5,7 @@ import { Spinner } from './Spinner';
 export type HoldVariant = 'primary' | 'danger' | 'soft';
 
 const ESTILOS: Record<HoldVariant, { base: string; relleno: string }> = {
-  primary: { base: 'bg-primary text-on-primary', relleno: 'bg-accent text-ink' },
+  primary: { base: 'bg-primary text-on-primary', relleno: 'bg-accent text-on-accent' },
   danger: { base: 'bg-danger-soft text-danger-text', relleno: 'bg-danger text-on-primary' },
   soft: { base: 'bg-surface-sunken text-ink', relleno: 'bg-ink text-on-primary' },
 };

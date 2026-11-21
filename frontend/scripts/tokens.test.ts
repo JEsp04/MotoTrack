@@ -41,6 +41,8 @@ const TOKENS_BASE = [
   'ink-muted',
   'border',
   'border-strong',
+  // HU-74 · Texto y borde sobre el amarillo; no cambia con el tema oscuro
+  'on-accent',
 ];
 
 /** Palabras de Tailwind que no son de la paleta y se pueden usar */

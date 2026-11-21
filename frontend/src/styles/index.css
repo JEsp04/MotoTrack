@@ -13,6 +13,7 @@
   --color-accent-text: #7a5900; /* texto amarillo sobre blanco */
   --color-accent-soft: #fff5cc;
   --color-plate: #f5c400;
+  --color-on-accent: #16191d; /* texto y borde sobre el amarillo (no cambia con el tema) */
 
   /* Estados: verde solo para «hecho», rojo solo para peligro */
   --color-success: #2f8f5b;
@@ -84,6 +85,37 @@
       opacity: 1;
     }
   }
+}
+
+/*
+ * HU-74 · Tema oscuro: los valores del prototipo (bloque [data-theme="dark"]). Se activa con
+ * data-theme="dark" en <html> (lib/tema.ts). Los nombres de los tokens no cambian: cada
+ * componente se ve en oscuro sin tocarlo. El amarillo de la placa y su texto no cambian.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-primary: #e9edf1;
+  --color-on-primary: #0d1013;
+  --color-accent: #f5c400;
+  --color-accent-text: #f5c400;
+  --color-accent-soft: #2a2510;
+  --color-plate: #f5c400;
+  --color-on-accent: #16191d;
+  --color-success: #3fb57a;
+  --color-success-text: #64d39b;
+  --color-success-soft: #13281d;
+  --color-danger: #e5594c;
+  --color-danger-text: #ff8a80;
+  --color-danger-soft: #3a1a17;
+  --color-bg: #0d1013;
+  --color-surface: #0d1013;
+  --color-surface-sunken: #171c21;
+  --color-surface-2: #20262c;
+  --color-ink: #e9edf1;
+  --color-ink-muted: #949faa;
+  --color-border: #262e36;
+  --color-border-strong: #66717c;
+  --shadow-sheet: 0 24px 48px -20px rgb(0 0 0 / 0.7);
 }
 
 @layer base {
