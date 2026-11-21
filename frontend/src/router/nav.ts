@@ -14,6 +14,15 @@ export const NAV_POR_ROL: Record<Rol, NavItem[]> = {
     { to: '/admin/inventario', label: 'Inventario', icon: 'box', donde: 'escritorio' },
     // HU-58 · Agenda de citas (pestaña «Citas» del prototipo, también en celular)
     { to: '/admin/citas', label: 'Citas', icon: 'calendar' },
+    // HU-75 · Recordatorios de mantenimiento («Alertas» en la barra del celular, como el prototipo)
+    {
+      to: '/admin/recordatorios',
+      label: 'Alertas',
+      labelEscritorio: 'Recordatorios',
+      icon: 'wrench',
+    },
+    // HU-71 · Reportes (en celular está en «Más»)
+    { to: '/admin/reportes', label: 'Reportes', icon: 'chart', donde: 'escritorio' },
     { to: '/admin/equipo', label: 'Usuarios', icon: 'user', donde: 'escritorio' },
     { to: '/admin/mas', label: 'Más', icon: 'menu', donde: 'celular' },
   ],

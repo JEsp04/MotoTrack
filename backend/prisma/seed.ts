@@ -23,6 +23,7 @@ async function limpiar() {
   await prisma.suscripcion.deleteMany();
   await prisma.resenaOrden.deleteMany();
   await prisma.invitacion.deleteMany();
+  await prisma.recordatorio.deleteMany();
   await prisma.aviso.deleteMany();
   await prisma.cita.deleteMany();
   await prisma.movimientoStock.deleteMany();
@@ -852,6 +853,96 @@ async function main() {
     },
   });
 
+  // HU-75 · Servicios ya entregados hace tiempo, para que salgan recordatorios de mantenimiento:
+  // - FZA78G (Juan): último aceite hace 3.500 km → «Cambio de aceite» por kilometraje.
+  // - BOX33E (Sofía, sin cuenta): pastillas de freno hace 13 meses → por tiempo.
+  // - XYZ12D (Juan): aceite hace 3 meses, ya rechazado, para ver la pestaña «Revisadas».
+  const DIA_MS = 24 * 60 * 60 * 1000;
+  let numeroHistorico = await prisma.ordenServicio.count({ where: { tallerId } });
+  async function entregadaAntes(
+    moto: { motocicletaId: number },
+    kilometrajeIngreso: number,
+    haceDias: number,
+    nombres: string[],
+    mecanicoId: number,
+  ) {
+    const detalles = nombres.map((n) => {
+      const sv = servicio(n);
+      return {
+        servicioId: sv.servicioId,
+        cantidad: 1,
+        precioUnitario: sv.precioBase,
+        subtotal: sv.precioBase,
+      };
+    });
+    const entrega = new Date(Date.now() - haceDias * DIA_MS);
+    return prisma.ordenServicio.create({
+      data: {
+        tallerId,
+        numero: ++numeroHistorico,
+        motocicletaId: moto.motocicletaId,
+        mecanicoId,
+        creadoPorId: admin.usuarioId,
+        estado: 'entregada',
+        motivoIngreso: 'Mantenimiento preventivo.',
+        kilometrajeIngreso,
+        fechaIngreso: new Date(entrega.getTime() - DIA_MS),
+        fechaEntrega: entrega,
+        costoTotal: detalles.reduce((t, d) => t + d.subtotal, 0),
+        servicios: { create: detalles },
+        historial: {
+          create: [
+            {
+              usuarioId: admin.usuarioId,
+              estadoNuevo: 'registrada',
+              creadoEn: new Date(entrega.getTime() - DIA_MS),
+            },
+            {
+              usuarioId: admin.usuarioId,
+              estadoAnterior: 'lista_entrega',
+              estadoNuevo: 'entregada',
+              creadoEn: entrega,
+            },
+          ],
+        },
+      },
+    });
+  }
+  await entregadaAntes(
+    fz,
+    fz.kilometraje - 3500,
+    40,
+    ['Cambio de aceite y filtro', 'Ajuste y lubricación de cadena'],
+    andres.usuarioId,
+  );
+  await entregadaAntes(
+    boxer,
+    boxer.kilometraje - 640,
+    400,
+    ['Cambio de pastillas de freno'],
+    felipe.usuarioId,
+  );
+  const aceitePulsar = await entregadaAntes(
+    pulsar,
+    pulsar.kilometraje - 1200,
+    100,
+    ['Cambio de aceite y filtro'],
+    felipe.usuarioId,
+  );
+  await prisma.recordatorio.create({
+    data: {
+      tallerId,
+      motocicletaId: pulsar.motocicletaId,
+      regla: 'aceite',
+      ordenServicioId: aceitePulsar.ordenServicioId,
+      estado: 'rechazado',
+      porQue: 'último cambio de aceite hace 3 meses',
+      motivo: 'El cliente no quiere recordatorios',
+      revisadoPorId: admin.usuarioId,
+      revisadoEn: new Date(Date.now() - 2 * DIA_MS),
+    },
+  });
+
   const resumen = {
     talleres: await prisma.taller.count(),
     usuarios: await prisma.usuario.count(),
@@ -866,6 +957,7 @@ async function main() {
     avisos: await prisma.aviso.count(),
     invitaciones: await prisma.invitacion.count(),
     resenas: await prisma.resenaOrden.count(),
+    recordatorios: await prisma.recordatorio.count(),
   };
   console.log('Datos de ejemplo creados:', resumen);
   console.log(

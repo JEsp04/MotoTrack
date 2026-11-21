@@ -53,6 +53,10 @@ const PATHS = {
   arrowRight: 'M5 12h14|M13 6l6 6-6 6',
   arrowDown: 'M12 4v16|M6 14l6 6 6-6',
   arrowUp: 'M12 20V4|M6 10l6-6 6 6',
+  // HU-71 · Reportes
+  chart: 'M4 20V11|M10 20V5|M16 20v-7|M21 20H3',
+  // HU-74 · Tema oscuro
+  sun: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z|M12 2v2|M12 20v2|M4.9 4.9l1.4 1.4|M17.7 17.7l1.4 1.4|M2 12h2|M20 12h2|M4.9 19.1l1.4-1.4|M17.7 6.3l1.4-1.4',
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -14,7 +14,7 @@ const VARIANTES: Record<ButtonVariant, string> = {
   // Secundario sobre una tarjeta gris (como «Ver seguimiento» en la tarjeta del cliente)
   light: 'bg-bg text-ink hover:bg-surface-2',
   danger: 'bg-danger text-on-primary hover:bg-danger/90',
-  accent: 'bg-accent text-ink',
+  accent: 'bg-accent text-on-accent',
   ghost: 'text-ink underline decoration-border-strong underline-offset-[5px]',
 };
 

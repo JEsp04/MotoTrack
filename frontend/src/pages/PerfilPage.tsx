@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { FilaTemaOscuro } from '@/components/layout';
 import { AppBar, Badge, Card, DataList, Initials, List, ListItem, Page } from '@/components/ui';
 import {
   CambiarPasswordSheet,
@@ -104,6 +105,8 @@ function Mas({ usuario }: { usuario: Usuario }) {
               }
               to="/admin/inventario"
             />
+            {/* HU-71 */}
+            <ListItem icon="chart" title="Reportes" to="/admin/reportes" />
             <ListItem icon="user" title="Usuarios y roles" to="/admin/equipo" />
             {/* HU-89 */}
             <ListItem
@@ -139,6 +142,8 @@ function Mas({ usuario }: { usuario: Usuario }) {
           </List>
         )}
         <List>
+          {/* HU-74 */}
+          <FilaTemaOscuro conPista />
           <CerrarSesion />
         </List>
       </Page>
@@ -199,6 +204,8 @@ function MiCuenta({ usuario }: { usuario: Usuario }) {
         {/* HU-91 · El cliente puede usar su cuenta en varios talleres */}
         {esCliente && <MisTalleres />}
         <List>
+          {/* HU-74 */}
+          <FilaTemaOscuro />
           <CerrarSesion />
         </List>
       </Page>
