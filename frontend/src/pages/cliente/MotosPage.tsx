@@ -10,6 +10,7 @@ import {
   SkeletonList,
 } from '@/components/ui';
 import { SelectorTaller, useSession } from '@/features/auth';
+import { CampanaAvisos } from '@/features/avisos';
 import { ProximaCita } from '@/features/citas';
 import { MotoSheet, useMotos } from '@/features/motos';
 import { OrdenClienteCard, useMisOrdenesActivas } from '@/features/ordenes';
@@ -40,10 +41,16 @@ export default function MotosPage() {
       {/* Saludo (.mt-hero) */}
       <header className="border-b border-border px-4 pt-4 pb-14 lg:px-8 lg:pt-6 lg:pb-16">
         <div className="mx-auto w-full max-w-300">
-          <p className="text-sm leading-5 text-ink-muted">Portal del cliente</p>
-          <h1 className="mt-1 text-[26px] leading-7 font-semibold tracking-[-0.03em]">
-            Hola, {usuario?.nombre.split(' ')[0]}
-          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm leading-5 text-ink-muted">Portal del cliente</p>
+              <h1 className="mt-1 text-[26px] leading-7 font-semibold tracking-[-0.03em]">
+                Hola, {usuario?.nombre.split(' ')[0]}
+              </h1>
+            </div>
+            {/* HU-70 · Campana de avisos; en computador está en la barra superior */}
+            <CampanaAvisos to="/cliente/avisos" className="-mr-2 lg:hidden" />
+          </div>
           {/* HU-91 · Con más de un taller, cambia entre ellos */}
           <div className="mt-3">
             <SelectorTaller />

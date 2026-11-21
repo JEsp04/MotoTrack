@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router';
 import { Icon, type IconName } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -26,6 +26,8 @@ export interface AppLayoutProps {
   /** Enlaces del menú del avatar (por ejemplo, «Mi cuenta») */
   enlacesCuenta?: Array<{ to: string; label: string; icon: IconName }>;
   onLogout: () => void;
+  /** Botones junto al avatar en computador (HU-70: la campana de avisos) */
+  acciones?: ReactNode;
 }
 
 /** Las rutas con `handle: { sinNav: true }` (detalle y formularios) esconden la barra inferior */
@@ -57,6 +59,7 @@ export function AppLayout({
   accionPrincipal,
   enlacesCuenta = [],
   onLogout,
+  acciones,
 }: AppLayoutProps) {
   const sinNav = useSinNav();
   const pestanas = items.filter((i) => i.donde !== 'celular');
@@ -101,6 +104,7 @@ export function AppLayout({
           </ul>
         </nav>
         <div className="relative ml-auto flex items-center gap-2.5">
+          {acciones}
           {accionPrincipal && (
             <Link
               to={accionPrincipal.to}

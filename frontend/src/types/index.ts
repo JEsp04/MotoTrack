@@ -507,6 +507,24 @@ export interface ResultadoPago {
   fecha: string;
 }
 
+// ─── HU-70 · Avisos ──────────────────────────────────────────────────────────
+
+export type TipoAviso = 'estado' | 'cotizacion' | 'cita' | 'recordatorio';
+
+export interface Aviso {
+  publicId: string;
+  tipo: TipoAviso;
+  titulo: string;
+  texto: string;
+  leido: boolean;
+  creadoEn: string;
+  orden: { publicId: string; numero: number } | null;
+}
+
+export interface AvisosLista extends ApiList<Aviso> {
+  meta: ApiList<Aviso>['meta'] & { noLeidos: number };
+}
+
 export interface ApiResponse<T> {
   data: T;
 }

@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { CampanaAvisos } from '@/features/avisos';
 import { Arc, Button, EmptyState, Fab, Icon, Initials, Plate, Skeleton } from '@/components/ui';
 import { useResumenInventario } from '@/features/repuestos';
 import { useResumenResenas } from '@/features/resenas';
@@ -56,11 +57,15 @@ export function PanelTaller() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-5 pb-24 md:px-7 md:pt-7 lg:pb-10">
       <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:justify-between">
-        <div>
-          <p className="text-sm leading-5 text-ink-muted">{hoy()}</p>
-          <h1 className="mt-1 text-[30px] leading-[1.05] font-semibold tracking-[-0.04em] md:text-[40px]">
-            Motos en el taller
-          </h1>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm leading-5 text-ink-muted">{hoy()}</p>
+            <h1 className="mt-1 text-[30px] leading-[1.05] font-semibold tracking-[-0.04em] md:text-[40px]">
+              Motos en el taller
+            </h1>
+          </div>
+          {/* HU-70 · Campana de avisos; en computador está en la barra superior */}
+          <CampanaAvisos to="/admin/avisos" className="-mr-2 lg:hidden" />
         </div>
         {data && (
           <Lecturas

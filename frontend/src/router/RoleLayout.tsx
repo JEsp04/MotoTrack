@@ -1,5 +1,6 @@
 import { AppLayout } from '@/components/layout';
 import { ROL_LABEL, useSalir, useSession } from '@/features/auth';
+import { CampanaAvisos } from '@/features/avisos';
 import type { Rol } from '@/types';
 import { RequireRole } from './guards';
 import { ACCION_PRINCIPAL, ENLACES_CUENTA, NAV_POR_ROL } from './nav';
@@ -29,6 +30,8 @@ function RoleShell({ rol }: { rol: Rol }) {
       accionPrincipal={ACCION_PRINCIPAL[rol]}
       enlacesCuenta={ENLACES_CUENTA[rol]}
       onLogout={salir}
+      // HU-70 · Campana de avisos (cliente y admin); el mecánico no recibe avisos
+      acciones={rol !== 'mecanico' && <CampanaAvisos to={`/${rol}/avisos`} />}
     />
   );
 }

@@ -18,6 +18,7 @@ const perfil = page(() => import('@/pages/PerfilPage'));
 const ordenDetalle = page(() => import('@/pages/OrdenDetallePage'));
 const inventario = page(() => import('@/pages/InventarioPage'));
 const asistente = page(() => import('@/pages/AsistentePage'));
+const avisos = page(() => import('@/pages/AvisosPage'));
 
 /** Pantallas sin barra inferior en celular (como en el prototipo): tienen su propia barra de acciones */
 const SIN_NAV = { sinNav: true };
@@ -117,6 +118,8 @@ export const routes: RouteObject[] = [
             element: page(() => import('@/pages/admin/DatosTallerPage')),
             handle: SIN_NAV,
           },
+          // HU-70 · Avisos (la campana)
+          { path: 'avisos', element: avisos },
           // HU-89 · Reseñas de los clientes
           { path: 'resenas', element: page(() => import('@/pages/admin/ResenasPage')) },
           // HU-80 · Plan del taller y facturas
@@ -158,6 +161,8 @@ export const routes: RouteObject[] = [
           { path: 'ordenes/:id', element: ordenDetalle, handle: SIN_NAV },
           { path: 'asistente', element: asistente },
           { path: 'perfil', element: perfil },
+          // HU-70 · Avisos (la campana)
+          { path: 'avisos', element: avisos },
           // HU-59 · Pedir una cita y su confirmación
           { path: 'citas', element: page(() => import('@/pages/cliente/MisCitasPage')) },
           {
