@@ -8,11 +8,19 @@ import { env } from '../src/config/env.js';
 import { avisoParaCliente } from '../src/modules/avisos/avisos.textos.js';
 import { desdeColombia, enColombia, horarioDelTaller } from '../src/modules/citas/horario.js';
 import type { CategoriaRepuesto, EstadoOrden } from '../src/generated/prisma/client.js';
+import {
+  desglose,
+  hoyColombia,
+  mesSiguiente,
+  PLANES,
+} from '../src/modules/suscripcion/suscripcion.planes.js';
 
 export const CLAVE_DE_PRUEBA = 'MotoTrack2026';
 
 async function limpiar() {
   // Orden inverso a las dependencias
+  await prisma.factura.deleteMany();
+  await prisma.suscripcion.deleteMany();
   await prisma.resenaOrden.deleteMany();
   await prisma.invitacion.deleteMany();
   await prisma.aviso.deleteMany();
@@ -740,6 +748,40 @@ async function main() {
       invitacion('K9ZD', 'Julián Arango', '3156610023', 'mecanico', 3, 'cancelada'),
     ],
   });
+
+  // HU-80 · Moto Express tiene el plan Básico, paga el 17 de cada mes con una tarjeta de prueba
+  // y ya pagó los dos últimos meses. Desde «Suscripción» puede pasar al plan Inteligente.
+  const hoyCobro = hoyColombia();
+  let proximoCobro = new Date(Date.UTC(hoyCobro.getUTCFullYear(), hoyCobro.getUTCMonth(), 17));
+  if (proximoCobro <= hoyCobro) proximoCobro = mesSiguiente(proximoCobro);
+  const mesAntes = (fecha: Date, meses: number) =>
+    new Date(Date.UTC(fecha.getUTCFullYear(), fecha.getUTCMonth() - meses, 17, 14));
+  await prisma.suscripcion.create({
+    data: {
+      tallerId,
+      plan: 'basico',
+      planDesde: mesAntes(proximoCobro, 2),
+      proximoCobro,
+      medioPago: 'Visa •••• 4242',
+    },
+  });
+  for (const [numero, meses] of [
+    [1, 2],
+    [2, 1],
+  ] as const) {
+    const fecha = mesAntes(proximoCobro, meses);
+    await prisma.factura.create({
+      data: {
+        tallerId,
+        numero,
+        plan: 'basico',
+        ...desglose(PLANES.basico.precio),
+        medioPago: 'Visa •••• 4242',
+        referencia: `MT-${String(fecha.getTime()).slice(-8)}`,
+        fecha,
+      },
+    });
+  }
 
   // HU-91 · Juan también lleva una moto a otro taller con la misma cuenta (su ficha allá tiene
   // el mismo documento). En «Mi cuenta» puede cambiar entre los dos talleres.

@@ -17,6 +17,11 @@ const envSchema = z.object({
     .transform((v) => v?.trim() || undefined),
   ANTHROPIC_MODEL: z.string().trim().min(1).default('claude-haiku-5-5'),
   ASISTENTE_LIMITE_DIARIO: z.coerce.number().int().min(1).default(10),
+  // HU-81 · Firma de la pasarela de pagos simulada. Cámbiala fuera de tu PC.
+  PASARELA_SECRETO: z
+    .string()
+    .min(32, 'Debe tener al menos 32 caracteres')
+    .default('pasarela-demo-mototrack-solo-para-desarrollo'),
 });
 
 export type Env = z.infer<typeof envSchema>;

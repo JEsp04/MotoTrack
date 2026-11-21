@@ -451,7 +451,61 @@ export interface RespuestaAsistente extends CupoAsistente {
   diagnostico: DiagnosticoIA | null;
 }
 
+// ─── HU-80 · Plan del taller y facturas ───────────────────────────────────
+
+export type PlanTaller = 'basico' | 'inteligente';
+
+export interface Desglose {
+  subtotal: number;
+  /** IVA del 19 % */
+  iva: number;
+  total: number;
+}
+
+export interface Suscripcion {
+  plan: PlanTaller;
+  nombre: string;
+  /** Precio mensual con IVA incluido */
+  precio: number;
+  estado: 'activa';
+  planDesde: string;
+  /** Fecha «2026-12-17» */
+  proximoCobro: string;
+  /** «Visa •••• 4242» */
+  medioPago: string | null;
+  proximaFactura: Desglose & { plan: PlanTaller };
+}
+
+export interface Factura extends Desglose {
+  publicId: string;
+  /** «FV-0001» */
+  numero: string;
+  plan: PlanTaller;
+  medioPago: string | null;
+  referencia: string;
+  fecha: string;
+}
+
+export interface EstadoSuscripcion {
+  /** null si el taller aún no tiene plan */
+  suscripcion: Suscripcion | null;
+  facturas: Factura[];
+}
+
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────
+
+/** HU-81 · Resultado de la pasarela de pagos simulada */
+export interface ResultadoPago {
+  referencia: string;
+  tipo: 'plan' | 'metodo';
+  plan: PlanTaller | null;
+  monto: number;
+  /** «Visa •••• 4242»: lo único que se conserva de la tarjeta */
+  medio: string;
+  estado: 'aprobada' | 'rechazada';
+  motivo: string | null;
+  fecha: string;
+}
 
 export interface ApiResponse<T> {
   data: T;
