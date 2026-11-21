@@ -494,6 +494,19 @@ export interface EstadoSuscripcion {
 
 // ─── Formato de la API (docs/CONTEXTO.md, sección 8) ─────────────────────
 
+/** HU-81 · Resultado de la pasarela de pagos simulada */
+export interface ResultadoPago {
+  referencia: string;
+  tipo: 'plan' | 'metodo';
+  plan: PlanTaller | null;
+  monto: number;
+  /** «Visa •••• 4242»: lo único que se conserva de la tarjeta */
+  medio: string;
+  estado: 'aprobada' | 'rechazada';
+  motivo: string | null;
+  fecha: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
 }

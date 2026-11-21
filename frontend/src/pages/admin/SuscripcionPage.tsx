@@ -11,6 +11,13 @@ export default function SuscripcionPage() {
     <SuscripcionVista
       taller={taller}
       onBack={() => void (key === 'default' ? navigate('/admin/mas') : navigate(-1))}
+      onPagar={(pago) =>
+        void navigate(
+          pago.tipo === 'plan'
+            ? `/admin/suscripcion/pago?tipo=plan&plan=${pago.plan}`
+            : '/admin/suscripcion/pago?tipo=metodo',
+        )
+      }
     />
   );
 }

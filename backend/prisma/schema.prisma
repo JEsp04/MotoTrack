@@ -624,7 +624,7 @@ model Factura {
   total      Int
   medioPago  String?    @db.VarChar(40)
   /// Referencia del pago, por ejemplo MT-12345678
-  referencia String     @db.VarChar(20)
+  referencia String     @unique @db.VarChar(20)
   fecha      DateTime   @default(now())
 
   taller Taller @relation(fields: [tallerId], references: [tallerId])

@@ -2,11 +2,7 @@ import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import app from '../src/app.js';
 import { prisma } from '../src/config/prisma.js';
-import {
-  desglose,
-  hoyColombia,
-  mesSiguiente,
-} from '../src/modules/suscripcion/suscripcion.planes.js';
+import { desglose, mesSiguiente } from '../src/modules/suscripcion/suscripcion.planes.js';
 import { auth, escenario, limpiarBase } from './helpers/db.js';
 
 beforeEach(limpiarBase);
@@ -61,57 +57,10 @@ describe('HU-80 · Plan del taller y facturas', () => {
     expect(res.body.data.facturas[0]).not.toHaveProperty('facturaId');
   });
 
-  it('al cambiar de plan aplica desde hoy y la próxima factura sale con el precio nuevo', async () => {
-    const e = await conPlan();
-    const antes = Date.now();
-    const res = await request(app)
-      .patch('/api/suscripcion/plan')
-      .set(auth(e.admin))
-      .send({ plan: 'inteligente' });
-
-    expect(res.status).toBe(200);
-    const s = res.body.data.suscripcion;
-    expect(s.plan).toBe('inteligente');
-    expect(Date.parse(s.planDesde)).toBeGreaterThanOrEqual(antes - 1000);
-    // La fecha de cobro no cambia; el valor sí
-    expect(s.proximoCobro).toBe('2026-12-17');
-    expect(s.proximaFactura).toEqual({
-      plan: 'inteligente',
-      subtotal: 109244,
-      iva: 20756,
-      total: 130000,
-    });
-    // Las facturas ya pagadas no cambian
-    expect(res.body.data.facturas[0]).toMatchObject({ plan: 'basico', total: 80000 });
-  });
-
-  it('no deja «cambiar» al mismo plan y valida el plan', async () => {
-    const e = await conPlan();
-    const igual = await request(app)
-      .patch('/api/suscripcion/plan')
-      .set(auth(e.admin))
-      .send({ plan: 'basico' });
-    expect(igual.status).toBe(409);
-    expect(igual.body.message).toMatch(/ya tiene el plan Básico/);
-
-    const malo = await request(app)
-      .patch('/api/suscripcion/plan')
-      .set(auth(e.admin))
-      .send({ plan: 'premium' });
-    expect(malo.status).toBe(400);
-  });
-
-  it('un taller sin plan lo ve vacío y al elegir uno queda con el primer cobro hoy', async () => {
+  it('un taller sin plan lo ve vacío', async () => {
     const e = await escenario();
     const vacio = await request(app).get('/api/suscripcion').set(auth(e.admin));
     expect(vacio.body.data).toEqual({ suscripcion: null, facturas: [] });
-
-    const res = await request(app)
-      .patch('/api/suscripcion/plan')
-      .set(auth(e.admin))
-      .send({ plan: 'inteligente' });
-    expect(res.status).toBe(200);
-    expect(res.body.data.suscripcion.proximoCobro).toBe(hoyColombia().toISOString().slice(0, 10));
   });
 
   it('solo el admin, y cada taller ve solo lo suyo', async () => {

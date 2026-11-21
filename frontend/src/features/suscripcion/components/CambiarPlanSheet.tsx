@@ -1,40 +1,28 @@
 import { useState } from 'react';
 import { BottomSheet, Button } from '@/components/ui';
-import { parseApiError } from '@/lib/api-error';
-import { toast } from '@/lib/toast';
 import type { PlanTaller } from '@/types';
-import { useCambiarPlan } from '../hooks/use-suscripcion';
 import { OTRO_PLAN, PLANES } from '../planes';
 import { OpcionPlan } from './OpcionPlan';
 
 /**
  * HU-80 · «Cambiar plan» (hoja del prototipo): muestra el otro plan con lo que gana o pierde.
- * Sin plan, deja elegir cualquiera de los dos.
+ * Sin plan, deja elegir cualquiera de los dos. «Continuar» lleva a «Pago seguro» (HU-81).
  */
 export function CambiarPlanSheet({
   open,
   actual,
   onClose,
+  onContinuar,
 }: {
   open: boolean;
   /** Plan actual; null si el taller aún no tiene */
   actual: PlanTaller | null;
   onClose: () => void;
+  onContinuar: (plan: PlanTaller) => void;
 }) {
   const opciones: PlanTaller[] = actual ? [OTRO_PLAN[actual]] : ['basico', 'inteligente'];
   const [elegido, setElegido] = useState<PlanTaller>(opciones[0]!);
   const plan = opciones.includes(elegido) ? elegido : opciones[0]!;
-  const cambiar = useCambiarPlan();
-
-  function confirmar() {
-    cambiar.mutate(plan, {
-      onSuccess: () => {
-        toast(`Listo: tu taller ahora tiene el plan ${PLANES[plan].nombre}`, 'success');
-        onClose();
-      },
-      onError: (e) => toast(parseApiError(e).message, 'danger'),
-    });
-  }
 
   return (
     <BottomSheet
@@ -42,7 +30,7 @@ export function CambiarPlanSheet({
       title={actual ? 'Cambiar plan' : 'Elige tu plan'}
       onClose={onClose}
       footer={
-        <Button fullWidth loading={cambiar.isPending} onClick={confirmar}>
+        <Button fullWidth onClick={() => onContinuar(plan)}>
           {actual ? `Continuar con ${PLANES[plan].nombre}` : `Elegir ${PLANES[plan].nombre}`}
         </Button>
       }

@@ -121,6 +121,10 @@ export const routes: RouteObject[] = [
           { path: 'resenas', element: page(() => import('@/pages/admin/ResenasPage')) },
           // HU-80 · Plan del taller y facturas
           { path: 'suscripcion', element: page(() => import('@/pages/admin/SuscripcionPage')) },
+          {
+            path: 'suscripcion/pago',
+            element: page(() => import('@/pages/admin/PagoSuscripcionPage')),
+          },
           // HU-58 · Agenda de citas
           { path: 'citas', element: page(() => import('@/pages/admin/CitasPage')) },
           // HU-61 · Ficha de la moto

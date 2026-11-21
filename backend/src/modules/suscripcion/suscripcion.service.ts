@@ -1,8 +1,17 @@
 import { prisma } from '../../config/prisma.js';
 import type { PlanTaller, Prisma } from '../../generated/prisma/client.js';
 import { HttpError } from '../../utils/http-error.js';
-import { desglose, hoyColombia, numeroFactura, PLANES } from './suscripcion.planes.js';
-import type { CambiarPlanInput } from './suscripcion.schemas.js';
+import { esDuplicado } from '../../utils/prisma-errors.js';
+import { verificarResultado } from '../pasarela/pasarela.firma.js';
+import { resultadoSchema } from '../pasarela/pasarela.schemas.js';
+import {
+  desglose,
+  hoyColombia,
+  mesSiguiente,
+  numeroFactura,
+  PLANES,
+} from './suscripcion.planes.js';
+import type { ConfirmarPagoInput } from './suscripcion.schemas.js';
 
 const facturaSelect = {
   publicId: true,
@@ -60,21 +69,82 @@ export async function obtener(tallerId: number) {
   return aRespuesta(suscripcion, facturas);
 }
 
+/** Más de esto y la confirmación se considera vieja: hay que pagar de nuevo */
+const VIGENCIA_CONFIRMACION_MS = 30 * 60 * 1000;
+
+const confirmacionInvalida = () =>
+  HttpError.badRequest('La confirmación de la pasarela no es válida. Intenta el pago de nuevo.');
+
 /**
- * PATCH /api/suscripcion/plan (HU-80) · El cambio aplica desde hoy y el próximo cobro
- * (la próxima factura) sale con el precio del plan nuevo. La fecha de cobro no cambia.
- * Un taller sin plan queda con ese plan y su primer cobro hoy.
+ * POST /api/suscripcion/pagos (HU-81) · Aplica el resultado de la pasarela, solo si su firma
+ * es válida y es de este taller.
+ * - «plan»: factura pagada con el siguiente consecutivo, el plan queda activo desde hoy y se
+ *   renueva el mismo día de cada mes.
+ * - «metodo»: solo cambia la tarjeta; no hay cobro.
  */
-export async function cambiarPlan(tallerId: number, { plan }: CambiarPlanInput) {
-  const actual = await prisma.suscripcion.findUnique({ where: { tallerId } });
-  if (actual?.plan === plan) {
-    throw HttpError.conflict(`Tu taller ya tiene el plan ${PLANES[plan].nombre}`);
-  }
-  const ahora = new Date();
-  await prisma.suscripcion.upsert({
+export async function confirmarPago(tallerId: number, { token }: ConfirmarPagoInput) {
+  const leido = resultadoSchema.safeParse(verificarResultado(token));
+  if (!leido.success) throw confirmacionInvalida();
+  const pago = leido.data;
+
+  const taller = await prisma.taller.findUnique({
     where: { tallerId },
-    create: { tallerId, plan, planDesde: ahora, proximoCobro: hoyColombia(ahora) },
-    update: { plan, planDesde: ahora },
+    select: { publicId: true },
   });
+  if (taller?.publicId !== pago.taller) throw confirmacionInvalida();
+  if (Date.now() - Date.parse(pago.fecha) > VIGENCIA_CONFIRMACION_MS) {
+    throw HttpError.badRequest('La confirmación de la pasarela venció. Intenta el pago de nuevo.');
+  }
+  if (pago.estado !== 'aprobada') {
+    throw HttpError.conflict(pago.motivo ?? 'La pasarela rechazó el pago');
+  }
+
+  if (pago.tipo === 'metodo') {
+    const { count } = await prisma.suscripcion.updateMany({
+      where: { tallerId },
+      data: { medioPago: pago.medio },
+    });
+    if (count === 0) throw HttpError.conflict('Tu taller aún no tiene un plan');
+    return obtener(tallerId);
+  }
+
+  const plan = pago.plan;
+  if (!plan || pago.monto !== PLANES[plan].precio) throw confirmacionInvalida();
+  const ahora = new Date();
+  try {
+    await prisma.$transaction(async (tx) => {
+      const ultima = await tx.factura.findFirst({
+        where: { tallerId },
+        orderBy: { numero: 'desc' },
+        select: { numero: true },
+      });
+      await tx.factura.create({
+        data: {
+          tallerId,
+          numero: (ultima?.numero ?? 0) + 1,
+          plan,
+          ...desglose(pago.monto),
+          medioPago: pago.medio,
+          referencia: pago.referencia,
+          fecha: ahora,
+        },
+      });
+      const datos = {
+        plan,
+        planDesde: ahora,
+        proximoCobro: mesSiguiente(hoyColombia(ahora)),
+        medioPago: pago.medio,
+      };
+      await tx.suscripcion.upsert({
+        where: { tallerId },
+        create: { tallerId, ...datos },
+        update: datos,
+      });
+    });
+  } catch (error) {
+    // La misma confirmación enviada dos veces: el pago ya quedó aplicado
+    if (esDuplicado(error, 'referencia')) throw HttpError.conflict('Este pago ya se aplicó');
+    throw error;
+  }
   return obtener(tallerId);
 }

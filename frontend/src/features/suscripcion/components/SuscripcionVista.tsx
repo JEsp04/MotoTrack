@@ -13,7 +13,7 @@ import {
 } from '@/components/ui';
 import { parseApiError } from '@/lib/api-error';
 import { formatFecha, formatPesos } from '@/lib/format';
-import type { Factura } from '@/types';
+import type { Factura, PlanTaller } from '@/types';
 import { useSuscripcion } from '../hooks/use-suscripcion';
 import { fechaDia, PLANES } from '../planes';
 import { CambiarPlanSheet } from './CambiarPlanSheet';
@@ -21,8 +21,18 @@ import { CambiarPlanSheet } from './CambiarPlanSheet';
 /**
  * HU-80 · «Taller y suscripción» (SubscriptionScreen del prototipo): plan actual, próximo
  * cobro, «Cambiar plan» y facturas con subtotal, IVA (19 %) y total.
+ * HU-81 · «Cambiar plan», «Elegir plan» y «Cambiar tarjeta» llevan a «Pago seguro».
  */
-export function SuscripcionVista({ taller, onBack }: { taller: string; onBack: () => void }) {
+export function SuscripcionVista({
+  taller,
+  onBack,
+  onPagar,
+}: {
+  taller: string;
+  onBack: () => void;
+  /** Abre «Pago seguro»: cobrar un plan o cambiar la tarjeta */
+  onPagar: (pago: { tipo: 'plan'; plan: PlanTaller } | { tipo: 'metodo' }) => void;
+}) {
   const datos = useSuscripcion();
   const [cambiando, setCambiando] = useState(false);
   const [factura, setFactura] = useState<Factura | null>(null);
@@ -63,6 +73,14 @@ export function SuscripcionVista({ taller, onBack }: { taller: string; onBack: (
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="light" icon="settings" onClick={() => setCambiando(true)}>
                 Cambiar plan
+              </Button>
+              <Button
+                size="sm"
+                variant="light"
+                icon="receipt"
+                onClick={() => onPagar({ tipo: 'metodo' })}
+              >
+                Cambiar tarjeta
               </Button>
             </div>
           </section>
@@ -110,6 +128,10 @@ export function SuscripcionVista({ taller, onBack }: { taller: string; onBack: (
         open={cambiando}
         actual={s?.plan ?? null}
         onClose={() => setCambiando(false)}
+        onContinuar={(plan) => {
+          setCambiando(false);
+          onPagar({ tipo: 'plan', plan });
+        }}
       />
       <BottomSheet open={Boolean(factura)} title="Factura" onClose={() => setFactura(null)}>
         {factura && (

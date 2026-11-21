@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { PlanTaller } from '@/types';
-import { suscripcionApi } from '../api/suscripcion-api';
+import { suscripcionApi, type SolicitudPago } from '../api/suscripcion-api';
 
 export const CLAVE_SUSCRIPCION = ['suscripcion'] as const;
 
@@ -12,10 +11,19 @@ export function useSuscripcion(activo = true) {
   });
 }
 
-export function useCambiarPlan() {
+/**
+ * HU-81 · Paga con la pasarela simulada y, si la aprueba, confirma el pago en el backend.
+ * Devuelve el resultado de la pasarela (aprobada o rechazada) para el comprobante.
+ */
+export function usePagar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (plan: PlanTaller) => suscripcionApi.cambiarPlan(plan),
-    onSuccess: (datos) => qc.setQueryData(CLAVE_SUSCRIPCION, datos),
+    mutationFn: async (solicitud: SolicitudPago) => {
+      const { resultado, token } = await suscripcionApi.pagar(solicitud);
+      if (resultado.estado === 'aprobada') {
+        qc.setQueryData(CLAVE_SUSCRIPCION, await suscripcionApi.confirmar(token));
+      }
+      return resultado;
+    },
   });
 }
