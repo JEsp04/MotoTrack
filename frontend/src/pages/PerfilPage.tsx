@@ -12,7 +12,9 @@ import {
 import { useMotos } from '@/features/motos';
 import { useResumenInventario } from '@/features/repuestos';
 import { useResumenResenas } from '@/features/resenas';
+import { useSuscripcion } from '@/features/suscripcion';
 import { TarjetaTaller } from '@/features/taller';
+import { formatPesos } from '@/lib/format';
 import { formatPromedio } from '@/lib/resenas';
 import type { Usuario } from '@/types';
 
@@ -64,6 +66,7 @@ function Mas({ usuario }: { usuario: Usuario }) {
   const criticos = resumen.data?.criticos ?? 0;
   const resenas = useResumenResenas(admin);
   const r = resenas.data;
+  const plan = useSuscripcion(admin).data?.suscripcion;
 
   return (
     <>
@@ -119,6 +122,13 @@ function Mas({ usuario }: { usuario: Usuario }) {
                 ) : undefined
               }
               to="/admin/resenas"
+            />
+            {/* HU-80 */}
+            <ListItem
+              icon="receipt"
+              title="Suscripción"
+              subtitle={plan ? `Plan ${plan.nombre} · ${formatPesos(plan.precio)}/mes` : undefined}
+              to="/admin/suscripcion"
             />
           </List>
         ) : (

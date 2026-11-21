@@ -93,6 +93,12 @@ enum TipoAviso {
 }
 
 /// HU-89 · Seguimiento de una reseña por parte del taller
+/// HU-80 · Planes de MotoTrack (precio mensual con IVA incluido)
+enum PlanTaller {
+  basico
+  inteligente
+}
+
 enum EstadoResena {
   pendiente
   revisada
@@ -127,6 +133,8 @@ model Taller {
   invitaciones     Invitacion[]
   resenas          ResenaOrden[]
   consultasIA      ConsultaAsistente[]
+  suscripcion      Suscripcion?
+  facturas         Factura[]
 
   @@map("talleres")
 }
@@ -579,4 +587,48 @@ model ConsultaAsistente {
   @@index([usuarioId, creadoEn])
   @@index([tallerId])
   @@map("consultas_asistente")
+}
+
+// ─── HU-80 · Plan del taller y facturas ───────────────────────────────────
+
+/// Plan de MotoTrack que paga el taller. Una por taller. Los cobros son simulados (sin pasarela real).
+model Suscripcion {
+  suscripcionId Int        @id @default(autoincrement())
+  tallerId      Int        @unique
+  plan          PlanTaller
+  /// Desde cuándo tiene el plan actual (un cambio de plan aplica desde ese día)
+  planDesde     DateTime   @default(now())
+  /// Día del próximo cobro, con el precio del plan actual
+  proximoCobro  DateTime   @db.Date
+  /// Solo la marca y los últimos 4 dígitos, por ejemplo «Visa •••• 4242». Nunca el número completo
+  medioPago     String?    @db.VarChar(40)
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+
+  taller Taller @relation(fields: [tallerId], references: [tallerId])
+
+  @@map("suscripciones")
+}
+
+/// Factura de un cobro aprobado de la suscripción. Valores en pesos: subtotal + IVA (19 %) = total.
+model Factura {
+  facturaId  Int        @id @default(autoincrement())
+  /// Identificador público (UUIDv7) para URLs y respuestas de la API. Nunca exponer el Int.
+  publicId   String     @unique @default(uuid(7)) @db.Char(36)
+  tallerId   Int
+  /// Consecutivo por taller: FV-0001, FV-0002…
+  numero     Int
+  plan       PlanTaller
+  subtotal   Int
+  iva        Int
+  total      Int
+  medioPago  String?    @db.VarChar(40)
+  /// Referencia del pago, por ejemplo MT-12345678
+  referencia String     @db.VarChar(20)
+  fecha      DateTime   @default(now())
+
+  taller Taller @relation(fields: [tallerId], references: [tallerId])
+
+  @@unique([tallerId, numero])
+  @@map("facturas")
 }

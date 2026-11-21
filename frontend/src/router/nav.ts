@@ -61,6 +61,8 @@ export const ENLACES_CUENTA: Record<Rol, Array<{ to: string; label: string; icon
     { to: '/admin/taller', label: 'Datos del taller', icon: 'settings' },
     // HU-89 · Reseñas de los clientes
     { to: '/admin/resenas', label: 'Reseñas', icon: 'star' },
+    // HU-80 · Plan de MotoTrack y facturas
+    { to: '/admin/suscripcion', label: 'Suscripción', icon: 'receipt' },
   ],
   mecanico: [{ to: '/mecanico/perfil', label: 'Mi cuenta', icon: 'user' }],
   cliente: [],
