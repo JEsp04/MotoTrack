@@ -154,6 +154,24 @@ describe('HU-20 · Registro', () => {
     );
   });
 
+  it('taller: con plan elegido en la landing, al crearlo sigue a pagar ese plan (HU-81)', async () => {
+    api.registrarTaller.mockResolvedValue({ accessToken: 't', usuario: USUARIOS_PRUEBA.admin });
+    const router = abrirApp('/registro/taller?plan=basico');
+    await userEvent.type(await screen.findByLabelText(/Nombre del taller/), 'Moto Express');
+    await userEvent.type(screen.getByLabelText(/Teléfono del taller/), '6044441234');
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+    await userEvent.type(screen.getByLabelText(/Tu nombre/), 'Carolina');
+    await userEvent.type(screen.getByLabelText(/^Correo/), 'caro@correo.co');
+    await userEvent.type(screen.getByLabelText(/^Contraseña/), 'MotoTrack2026');
+    await userEvent.type(screen.getByLabelText(/Confirma la contraseña/), 'MotoTrack2026');
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Crear cuenta' }),
+    );
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/suscripcion/pago'));
+    expect(router.state.location.search).toBe('?tipo=plan&plan=basico&origen=registro');
+    expect(await screen.findByRole('button', { name: 'Pagar $ 80.000' })).toBeInTheDocument();
+  });
+
   it('cliente: elige su taller, se registra y queda con sesión', async () => {
     api.talleresPublicos.mockResolvedValue([
       {

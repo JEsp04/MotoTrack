@@ -90,7 +90,8 @@ export function SuscripcionVista({
           <section className="flex flex-col gap-3 rounded-md bg-surface-sunken p-4">
             <h2 className="text-lg leading-6 font-semibold">Tu taller aún no tiene un plan</h2>
             <p className="text-sm leading-5 text-ink-muted">
-              Básico desde {formatPesos(PLANES.basico.precio)} al mes o Inteligente por{' '}
+              Para usar MotoTrack, elige un plan y págalo: Básico por{' '}
+              {formatPesos(PLANES.basico.precio)} al mes o Inteligente por{' '}
               {formatPesos(PLANES.inteligente.precio)}, IVA incluido.
             </p>
             <Button icon="receipt" onClick={() => setCambiando(true)}>
