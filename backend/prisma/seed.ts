@@ -805,6 +805,15 @@ async function main() {
       rol: 'admin',
     },
   });
+  // HU-81 · No hay plan gratis: el segundo taller también tiene su plan activo
+  await prisma.suscripcion.create({
+    data: {
+      tallerId: envigado.tallerId,
+      plan: 'inteligente',
+      proximoCobro,
+      medioPago: 'Mastercard •••• 4444',
+    },
+  });
   const juanEnvigado = await prisma.cliente.create({
     data: {
       tallerId: envigado.tallerId,

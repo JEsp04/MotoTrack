@@ -21,9 +21,8 @@ const CAMPOS_PASO_1 = [
 
 const NOTA_PLAN: Record<'basico' | 'inteligente', string> = {
   inteligente:
-    'Elegiste el plan Inteligente ($ 130.000/mes). Empiezas sin costo mientras activamos las funciones con IA y pagos en línea.',
-  basico:
-    'Elegiste el plan Básico ($ 80.000/mes). Empiezas sin costo mientras configuras tu taller.',
+    'Elegiste el plan Inteligente ($ 130.000/mes). Al crear tu cuenta lo activas con el pago.',
+  basico: 'Elegiste el plan Básico ($ 80.000/mes). Al crear tu cuenta lo activas con el pago.',
 };
 
 /** HU-20, HU-83 · Registro del taller y su administrador en 2 pasos. */

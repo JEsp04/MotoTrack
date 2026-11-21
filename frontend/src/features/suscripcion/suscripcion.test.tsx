@@ -185,3 +185,19 @@ describe('HU-81 · Pago seguro con tarjeta de prueba', () => {
     expect(screen.getByRole('button', { name: 'Guardar tarjeta' })).toBeDisabled();
   });
 });
+
+describe('HU-81 · Sin plan pagado no se usa el panel', () => {
+  it('un admin sin plan que entra al panel termina en «Taller y suscripción»', async () => {
+    api.obtener.mockResolvedValue({ suscripcion: null, facturas: [] });
+    const router = abrirApp('/admin/ordenes');
+    expect(await screen.findByText('Tu taller aún no tiene un plan')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/suscripcion');
+  });
+
+  it('con plan activo no redirige', async () => {
+    api.obtener.mockResolvedValue(BASICO);
+    const router = abrirApp('/admin/suscripcion/pago?tipo=metodo');
+    expect(await screen.findByText(/No se hace ningún cobro ahora/)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/suscripcion/pago');
+  });
+});

@@ -24,7 +24,12 @@ const ESPERA_MINIMA_MS = 1200;
 type Etapa = 'form' | 'procesando' | 'ok' | 'fallo';
 
 export type PagoProps =
-  | { tipo: 'plan'; plan: PlanTaller; onBack: () => void; onTerminar: () => void }
+  | {
+      tipo: 'plan';
+      plan: PlanTaller;
+      onBack: () => void;
+      onTerminar: () => void;
+    }
   | { tipo: 'metodo'; onBack: () => void; onTerminar: () => void };
 
 /**
